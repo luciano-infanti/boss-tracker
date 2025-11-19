@@ -21,7 +21,7 @@ export default function GlobalPage() {
   }
 
   const filtered = useMemo(() => {
-    let bosses = data.combined.filter(b => 
+    let bosses = data.combined.filter(b =>
       b.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -29,6 +29,9 @@ export default function GlobalPage() {
       bosses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'kills') {
       bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
+    } else if (sortBy === 'neverKilled') {
+      bosses = bosses.filter(b => (b.totalKills || 0) === 0);
+      bosses.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return bosses;

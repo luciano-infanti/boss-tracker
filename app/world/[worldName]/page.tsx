@@ -76,6 +76,9 @@ export default function WorldPage() {
           return 0;
         }
       });
+    } else if (sortBy === 'neverKilled') {
+      bosses = bosses.filter(b => (b.totalKills || 0) === 0);
+      bosses.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return bosses;
