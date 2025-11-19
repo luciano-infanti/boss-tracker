@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, Calendar, Clock, Trophy, Globe } from 'lucide-react';
+import { Calendar, Clock, Trophy, Globe } from 'lucide-react';
 import { useState } from 'react';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
@@ -12,13 +12,15 @@ interface BossCardProps {
 
 function isKilledToday(lastKillDate: string): boolean {
   if (lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
+  
   const today = new Date();
-  const killDate = new Date(lastKillDate.split('/').reverse().join('-'));
-  return (
-    killDate.getDate() === today.getDate() &&
-    killDate.getMonth() === today.getMonth() &&
-    killDate.getFullYear() === today.getFullYear()
-  );
+  today.setHours(0, 0, 0, 0);
+  
+  const [day, month, year] = lastKillDate.split('/').map(Number);
+  const killDate = new Date(year, month - 1, day);
+  killDate.setHours(0, 0, 0, 0);
+  
+  return killDate.getTime() === today.getTime();
 }
 
 export default function BossCard({ boss, type }: BossCardProps) {
@@ -26,7 +28,6 @@ export default function BossCard({ boss, type }: BossCardProps) {
   const bossImage = getBossImage(boss.name);
   
   const killedToday = type === 'world' && isKilledToday((boss as Boss).lastKillDate);
-  const isRecentKill = type === 'world' && (boss as Boss).lastKillDate !== 'Never';
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-emerald-500 transition-colors">
@@ -42,10 +43,7 @@ export default function BossCard({ boss, type }: BossCardProps) {
       
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-white">{boss.name}</h3>
-            {isRecentKill && <CheckCircle size={16} className="text-emerald-400" />}
-          </div>
+          <h3 className="font-semibold text-white">{boss.name}</h3>
         </div>
 
         {killedToday && (

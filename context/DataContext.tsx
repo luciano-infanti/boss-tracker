@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ParsedData, Boss, CombinedBoss } from '@/types';
+import { ParsedData } from '@/types';
 import { parseSingleWorldFile, parseCombinedFile, detectFileType, extractWorldName } from '@/utils/parser';
 
 interface DataContextType {
@@ -17,10 +17,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('bossTrackerData');
-    if (stored) {
-      setData(JSON.parse(stored));
-    }
+    // Fetch data from Blob on mount
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(data => setData(data))
+      .catch(() => setData({ worlds: {}, combined: [] }));
   }, []);
 
   const uploadFile = async (file: File) => {
@@ -29,22 +30,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const content = await file.text();
       const fileType = detectFileType(file.name);
 
+      let newData = { ...data };
+
       if (fileType === 'combined') {
         const parsed = parseCombinedFile(content);
-        const newData = { ...data, combined: parsed };
-        setData(newData);
-        localStorage.setItem('bossTrackerData', JSON.stringify(newData));
+        newData = { ...newData, combined: parsed };
       } else if (fileType === 'world') {
         const worldName = extractWorldName(file.name);
         if (worldName) {
           const parsed = parseSingleWorldFile(content);
-          const newData = {
-            ...data,
-            worlds: { ...data.worlds, [worldName]: parsed }
+          newData = {
+            ...newData,
+            worlds: { ...newData.worlds, [worldName]: parsed }
           };
-          setData(newData);
-          localStorage.setItem('bossTrackerData', JSON.stringify(newData));
         }
+      }
+
+      // Upload to Blob
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newData })
+      });
+
+      if (response.ok) {
+        setData(newData);
+      } else {
+        throw new Error('Upload failed');
       }
     } catch (error) {
       console.error('Error parsing file:', error);
@@ -59,7 +71,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       {children}
     </DataContext.Provider>
   );
-};
+}
 
 export const useData = () => {
   const context = useContext(DataContext);

@@ -9,13 +9,15 @@ import { useParams } from 'next/navigation';
 
 function isKilledToday(lastKillDate: string): boolean {
   if (lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
+  
   const today = new Date();
-  const killDate = new Date(lastKillDate.split('/').reverse().join('-'));
-  return (
-    killDate.getDate() === today.getDate() &&
-    killDate.getMonth() === today.getMonth() &&
-    killDate.getFullYear() === today.getFullYear()
-  );
+  today.setHours(0, 0, 0, 0);
+  
+  const [day, month, year] = lastKillDate.split('/').map(Number);
+  const killDate = new Date(year, month - 1, day);
+  killDate.setHours(0, 0, 0, 0);
+  
+  return killDate.getTime() === today.getTime();
 }
 
 export default function WorldPage() {
@@ -32,7 +34,12 @@ export default function WorldPage() {
       b.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    if (sortBy === 'name') {
+    // If "Killed Today" is selected, FILTER to only show those bosses
+    if (sortBy === 'killedToday') {
+      bosses = bosses.filter(b => isKilledToday(b.lastKillDate));
+      // Then sort by total kills descending
+      bosses.sort((a, b) => b.totalKills - a.totalKills);
+    } else if (sortBy === 'name') {
       bosses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'kills') {
       bosses.sort((a, b) => b.totalKills - a.totalKills);
@@ -41,16 +48,6 @@ export default function WorldPage() {
         if (a.nextExpectedSpawn === 'N/A') return 1;
         if (b.nextExpectedSpawn === 'N/A') return -1;
         return new Date(a.nextExpectedSpawn).getTime() - new Date(b.nextExpectedSpawn).getTime();
-      });
-    } else if (sortBy === 'killedToday') {
-      bosses.sort((a, b) => {
-        const aKilledToday = isKilledToday(a.lastKillDate);
-        const bKilledToday = isKilledToday(b.lastKillDate);
-        
-        if (aKilledToday && !bKilledToday) return -1;
-        if (!aKilledToday && bKilledToday) return 1;
-        
-        return b.totalKills - a.totalKills;
       });
     }
 
@@ -70,6 +67,13 @@ export default function WorldPage() {
         onSortChange={setSortBy}
         showKilledTodayFilter={true}
       />
+      
+      {sortBy === 'killedToday' && filtered.length === 0 && (
+        <div className="text-center py-12 text-gray-400">
+          <p>No bosses killed today</p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((boss) => (
           <BossCard key={boss.name} boss={boss} type="world" />
