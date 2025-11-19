@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Globe, Server, Calendar } from 'lucide-react';
 
-const WORLDS = ['Auroria', 'Belaria', 'Bellum', 'Elysian', 'Lunarian', 'Mystian', 'Solarian', 'Spectrum', 'Tenebrium', 'Vesperia'];
+import { WORLDS } from '@/utils/constants';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -19,9 +19,8 @@ export default function Sidebar() {
       <nav className="space-y-1">
         <Link
           href="/today"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-            pathname === '/today' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-          }`}
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === '/today' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+            }`}
         >
           <Calendar size={18} />
           Today's Kills
@@ -29,9 +28,8 @@ export default function Sidebar() {
 
         <Link
           href="/"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-            pathname === '/' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-          }`}
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+            }`}
         >
           <Globe size={18} />
           Global Stats
@@ -45,9 +43,8 @@ export default function Sidebar() {
           <Link
             key={world}
             href={`/world/${world}`}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              pathname === `/world/${world}` ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-            }`}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === `/world/${world}` ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+              }`}
           >
             <Server size={18} />
             {world}

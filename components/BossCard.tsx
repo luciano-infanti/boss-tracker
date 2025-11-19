@@ -5,32 +5,12 @@ import { useState } from 'react';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 
+import { isKilledToday } from '@/utils/dateUtils';
+
 interface BossCardProps {
   boss: Boss | CombinedBoss;
   type: 'world' | 'combined';
   isKilledToday?: boolean;
-}
-
-function isKilledToday(lastKillDate: string | undefined): boolean {
-  if (!lastKillDate || lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
-
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const parts = lastKillDate.split('/');
-    if (parts.length !== 3) return false;
-
-    const [day, month, year] = parts.map(Number);
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
-
-    const killDate = new Date(year, month - 1, day);
-    killDate.setHours(0, 0, 0, 0);
-
-    return killDate.getTime() === today.getTime();
-  } catch {
-    return false;
-  }
 }
 
 export default function BossCard({ boss, type, isKilledToday: propIsKilledToday }: BossCardProps) {

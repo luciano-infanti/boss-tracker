@@ -7,28 +7,6 @@ import SearchBar from '@/components/SearchBar';
 import EmptyState from '@/components/EmptyState';
 import { useParams } from 'next/navigation';
 
-function isKilledToday(lastKillDate: string | undefined): boolean {
-  if (!lastKillDate || lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
-
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const parts = lastKillDate.split('/');
-    if (parts.length !== 3) return false;
-
-    const [day, month, year] = parts.map(Number);
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
-
-    const killDate = new Date(year, month - 1, day);
-    killDate.setHours(0, 0, 0, 0);
-
-    return killDate.getTime() === today.getTime();
-  } catch {
-    return false;
-  }
-}
-
 export default function WorldPage() {
   const params = useParams();
   const worldName = params.worldName as string;
@@ -44,16 +22,24 @@ export default function WorldPage() {
     );
 
     if (sortBy === 'killedToday') {
-      // FILTER to only show killed today
-      bosses = bosses.filter(b => isKilledToday(b.lastKillDate));
+      // FILTER to only show killed today based on daily data
+      bosses = bosses.filter(b =>
+        data.daily?.kills.some(k =>
+          k.bossName === b.name && k.worlds.some(w => w.world === worldName)
+        )
+      );
       bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
     } else if (sortBy === 'name') {
       bosses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'kills') {
       // Sort by kills but show ALL bosses
       bosses.sort((a, b) => {
-        const aKilledToday = isKilledToday(a.lastKillDate) ? 1 : 0;
-        const bKilledToday = isKilledToday(b.lastKillDate) ? 1 : 0;
+        const isKilled = (name: string) => data.daily?.kills.some(k =>
+          k.bossName === name && k.worlds.some(w => w.world === worldName)
+        );
+
+        const aKilledToday = isKilled(a.name) ? 1 : 0;
+        const bKilledToday = isKilled(b.name) ? 1 : 0;
 
         // Killed today first
         if (aKilledToday !== bKilledToday) {
