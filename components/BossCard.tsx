@@ -8,48 +8,49 @@ import { getBossImage } from '@/utils/bossImages';
 interface BossCardProps {
   boss: Boss | CombinedBoss;
   type: 'world' | 'combined';
+  isKilledToday?: boolean;
 }
 
 function isKilledToday(lastKillDate: string | undefined): boolean {
   if (!lastKillDate || lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
-  
+
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const parts = lastKillDate.split('/');
     if (parts.length !== 3) return false;
-    
+
     const [day, month, year] = parts.map(Number);
     if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
-    
+
     const killDate = new Date(year, month - 1, day);
     killDate.setHours(0, 0, 0, 0);
-    
+
     return killDate.getTime() === today.getTime();
   } catch {
     return false;
   }
 }
 
-export default function BossCard({ boss, type }: BossCardProps) {
+export default function BossCard({ boss, type, isKilledToday: propIsKilledToday }: BossCardProps) {
   const [expanded, setExpanded] = useState(false);
   const bossImage = getBossImage(boss.name);
-  
-  const killedToday = type === 'world' && isKilledToday((boss as Boss).lastKillDate);
+
+  const killedToday = propIsKilledToday ?? (type === 'world' && isKilledToday((boss as Boss).lastKillDate));
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-emerald-500 transition-colors">
       {bossImage && (
         <div className="h-32 bg-gray-900 relative">
-          <img 
-            src={bossImage} 
+          <img
+            src={bossImage}
             alt={boss.name}
             className="w-full h-full object-contain"
           />
         </div>
       )}
-      
+
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <h3 className="font-semibold text-white">{boss.name}</h3>
