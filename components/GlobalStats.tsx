@@ -9,8 +9,10 @@ interface GlobalStatsProps {
 
 export default function GlobalStats({ bosses }: GlobalStatsProps) {
   const topKilledBosses = [...bosses]
-    .sort((a, b) => b.totalKills - a.totalKills)
+    .sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0))
     .slice(0, 10);
+
+  const totalKills = bosses.reduce((sum, boss) => sum + (boss.totalKills || 0), 0);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -26,7 +28,7 @@ export default function GlobalStats({ bosses }: GlobalStatsProps) {
                 <span className="text-emerald-400 font-bold w-6">{index + 1}.</span>
                 <span className="text-gray-200">{boss.name}</span>
               </div>
-              <span className="text-yellow-400 font-semibold">{boss.totalKills} kills</span>
+              <span className="text-yellow-400 font-semibold">{boss.totalKills || 0} kills</span>
             </div>
           ))}
         </div>
@@ -44,9 +46,7 @@ export default function GlobalStats({ bosses }: GlobalStatsProps) {
           </div>
           <div>
             <p className="text-gray-400 text-sm">Total Kills (All Worlds)</p>
-            <p className="text-2xl font-bold text-emerald-400">
-              {bosses.reduce((sum, boss) => sum + boss.totalKills, 0)}
-            </p>
+            <p className="text-2xl font-bold text-emerald-400">{totalKills}</p>
           </div>
           <div>
             <p className="text-gray-400 text-sm">Most Active Boss</p>

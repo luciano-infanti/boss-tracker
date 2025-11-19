@@ -7,17 +7,26 @@ import SearchBar from '@/components/SearchBar';
 import EmptyState from '@/components/EmptyState';
 import { useParams } from 'next/navigation';
 
-function isKilledToday(lastKillDate: string): boolean {
-  if (lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
+function isKilledToday(lastKillDate: string | undefined): boolean {
+  if (!lastKillDate || lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const [day, month, year] = lastKillDate.split('/').map(Number);
-  const killDate = new Date(year, month - 1, day);
-  killDate.setHours(0, 0, 0, 0);
-  
-  return killDate.getTime() === today.getTime();
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const parts = lastKillDate.split('/');
+    if (parts.length !== 3) return false;
+    
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    
+    const killDate = new Date(year, month - 1, day);
+    killDate.setHours(0, 0, 0, 0);
+    
+    return killDate.getTime() === today.getTime();
+  } catch {
+    return false;
+  }
 }
 
 export default function WorldPage() {
@@ -34,20 +43,25 @@ export default function WorldPage() {
       b.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    // If "Killed Today" is selected, FILTER to only show those bosses
     if (sortBy === 'killedToday') {
       bosses = bosses.filter(b => isKilledToday(b.lastKillDate));
-      // Then sort by total kills descending
-      bosses.sort((a, b) => b.totalKills - a.totalKills);
+      bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
     } else if (sortBy === 'name') {
       bosses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'kills') {
-      bosses.sort((a, b) => b.totalKills - a.totalKills);
+      bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
     } else if (sortBy === 'nextSpawn') {
       bosses.sort((a, b) => {
-        if (a.nextExpectedSpawn === 'N/A') return 1;
-        if (b.nextExpectedSpawn === 'N/A') return -1;
-        return new Date(a.nextExpectedSpawn).getTime() - new Date(b.nextExpectedSpawn).getTime();
+        if (!a.nextExpectedSpawn || a.nextExpectedSpawn === 'N/A') return 1;
+        if (!b.nextExpectedSpawn || b.nextExpectedSpawn === 'N/A') return -1;
+        
+        try {
+          const dateA = new Date(a.nextExpectedSpawn.split('/').reverse().join('-'));
+          const dateB = new Date(b.nextExpectedSpawn.split('/').reverse().join('-'));
+          return dateA.getTime() - dateB.getTime();
+        } catch {
+          return 0;
+        }
       });
     }
 

@@ -10,17 +10,26 @@ interface BossCardProps {
   type: 'world' | 'combined';
 }
 
-function isKilledToday(lastKillDate: string): boolean {
-  if (lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
+function isKilledToday(lastKillDate: string | undefined): boolean {
+  if (!lastKillDate || lastKillDate === 'Never' || lastKillDate === 'N/A') return false;
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const [day, month, year] = lastKillDate.split('/').map(Number);
-  const killDate = new Date(year, month - 1, day);
-  killDate.setHours(0, 0, 0, 0);
-  
-  return killDate.getTime() === today.getTime();
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const parts = lastKillDate.split('/');
+    if (parts.length !== 3) return false;
+    
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    
+    const killDate = new Date(year, month - 1, day);
+    killDate.setHours(0, 0, 0, 0);
+    
+    return killDate.getTime() === today.getTime();
+  } catch {
+    return false;
+  }
 }
 
 export default function BossCard({ boss, type }: BossCardProps) {
@@ -58,15 +67,15 @@ export default function BossCard({ boss, type }: BossCardProps) {
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2 text-gray-300">
               <Calendar size={14} className="text-emerald-400" />
-              <span>Next: {(boss as Boss).nextExpectedSpawn}</span>
+              <span>Next: {(boss as Boss).nextExpectedSpawn || 'N/A'}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Clock size={14} className="text-blue-400" />
-              <span>{(boss as Boss).spawnFrequency}</span>
+              <span>{(boss as Boss).spawnFrequency || 'N/A'}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Trophy size={14} className="text-yellow-400" />
-              <span>{(boss as Boss).totalKills} kills ({(boss as Boss).totalDaysSpawned} days)</span>
+              <span>{(boss as Boss).totalKills || 0} kills ({(boss as Boss).totalDaysSpawned || 0} days)</span>
             </div>
 
             {(boss as Boss).history && (boss as Boss).history !== 'None' && (
@@ -88,15 +97,15 @@ export default function BossCard({ boss, type }: BossCardProps) {
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2 text-gray-300">
               <Globe size={14} className="text-emerald-400" />
-              <span>{(boss as CombinedBoss).appearsInWorlds} worlds</span>
+              <span>{(boss as CombinedBoss).appearsInWorlds || 0} worlds</span>
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Clock size={14} className="text-blue-400" />
-              <span>{(boss as CombinedBoss).typicalSpawnFrequency}</span>
+              <span>{(boss as CombinedBoss).typicalSpawnFrequency || 'N/A'}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Trophy size={14} className="text-yellow-400" />
-              <span>{(boss as CombinedBoss).totalKills} total kills</span>
+              <span>{(boss as CombinedBoss).totalKills || 0} total kills</span>
             </div>
 
             <button
@@ -108,7 +117,7 @@ export default function BossCard({ boss, type }: BossCardProps) {
 
             {expanded && (
               <div className="mt-2 p-2 bg-gray-900 rounded text-xs text-gray-400 space-y-1">
-                {(boss as CombinedBoss).perWorldStats.map((stat) => (
+                {(boss as CombinedBoss).perWorldStats?.map((stat) => (
                   <div key={stat.world}>
                     <strong>{stat.world}:</strong> {stat.spawns} spawns, {stat.kills} kills
                   </div>
