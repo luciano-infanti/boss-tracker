@@ -7,9 +7,10 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   sortBy: string;
   onSortChange: (value: string) => void;
+  showKilledTodayFilter?: boolean;
 }
 
-export default function SearchBar({ value, onChange, sortBy, onSortChange }: SearchBarProps) {
+export default function SearchBar({ value, onChange, sortBy, onSortChange, showKilledTodayFilter = false }: SearchBarProps) {
   return (
     <div className="flex gap-4 mb-6">
       <div className="flex-1 relative">
@@ -30,6 +31,7 @@ export default function SearchBar({ value, onChange, sortBy, onSortChange }: Sea
         <option value="name">Alphabetical</option>
         <option value="nextSpawn">Next Spawn</option>
         <option value="kills">Most Kills</option>
+        {showKilledTodayFilter && <option value="killedToday">Killed Today</option>}
       </select>
     </div>
   );
