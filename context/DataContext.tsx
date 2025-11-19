@@ -56,7 +56,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setData(newData);
       } else {
-        throw new Error('Upload failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
       }
     } catch (error) {
       console.error('Error parsing file:', error);
@@ -71,7 +72,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const content = await file.text();
       const parsed = parseDailyUpdate(content);
-      
+
       if (!parsed) {
         throw new Error('Failed to parse daily update');
       }
@@ -87,7 +88,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setData(newData);
       } else {
-        throw new Error('Upload failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
       }
     } catch (error) {
       console.error('Error parsing daily file:', error);
