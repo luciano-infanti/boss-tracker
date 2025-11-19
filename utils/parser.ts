@@ -6,15 +6,24 @@ export function parseSingleWorldFile(content: string): Boss[] {
 
   for (const record of records) {
     const lines = record.trim().split('\n');
-    const boss: Partial<Boss> = {};
+    const boss: Partial<Boss> = {
+      totalDaysSpawned: 0,
+      totalKills: 0,
+      spawnFrequency: 'N/A',
+      nextExpectedSpawn: 'N/A',
+      lastKillDate: 'Never',
+      history: 'None'
+    };
 
     for (const line of lines) {
       if (line.startsWith('Boss:')) {
         boss.name = line.replace('Boss:', '').trim();
       } else if (line.startsWith('Total Days Spawned:')) {
-        boss.totalDaysSpawned = parseInt(line.split(':')[1].trim());
+        const val = parseInt(line.split(':')[1].trim());
+        boss.totalDaysSpawned = isNaN(val) ? 0 : val;
       } else if (line.startsWith('Total Kills:')) {
-        boss.totalKills = parseInt(line.split(':')[1].trim());
+        const val = parseInt(line.split(':')[1].trim());
+        boss.totalKills = isNaN(val) ? 0 : val;
       } else if (line.startsWith('Spawn Frequency:')) {
         boss.spawnFrequency = line.split(':')[1].trim();
       } else if (line.startsWith('Next Expected Spawn:')) {
@@ -40,7 +49,13 @@ export function parseCombinedFile(content: string): CombinedBoss[] {
 
   for (const record of records) {
     const lines = record.trim().split('\n');
-    const boss: Partial<CombinedBoss> = { perWorldStats: [] };
+    const boss: Partial<CombinedBoss> = { 
+      perWorldStats: [],
+      totalSpawnDays: 0,
+      totalKills: 0,
+      appearsInWorlds: 0,
+      typicalSpawnFrequency: 'N/A'
+    };
 
     let inPerWorldSection = false;
 
@@ -48,9 +63,11 @@ export function parseCombinedFile(content: string): CombinedBoss[] {
       if (line.startsWith('Boss:')) {
         boss.name = line.replace('Boss:', '').trim();
       } else if (line.includes('Total Spawn Days (All Worlds Combined):')) {
-        boss.totalSpawnDays = parseInt(line.split(':')[1].trim());
+        const val = parseInt(line.split(':')[1].trim());
+        boss.totalSpawnDays = isNaN(val) ? 0 : val;
       } else if (line.includes('Total Kills (All Worlds Combined):')) {
-        boss.totalKills = parseInt(line.split(':')[1].trim());
+        const val = parseInt(line.split(':')[1].trim());
+        boss.totalKills = isNaN(val) ? 0 : val;
       } else if (line.includes('Appears in')) {
         const match = line.match(/(\d+) world/);
         boss.appearsInWorlds = match ? parseInt(match[1]) : 0;

@@ -34,7 +34,7 @@ export default function WorldPage() {
   const worldName = params.worldName as string;
   const { data } = useData();
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('killedToday');
+  const [sortBy, setSortBy] = useState('kills'); // Changed default from 'killedToday' to 'kills'
 
   const worldData = data.worlds[worldName] || [];
 
@@ -44,12 +44,25 @@ export default function WorldPage() {
     );
 
     if (sortBy === 'killedToday') {
+      // FILTER to only show killed today
       bosses = bosses.filter(b => isKilledToday(b.lastKillDate));
       bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
     } else if (sortBy === 'name') {
       bosses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'kills') {
-      bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
+      // Sort by kills but show ALL bosses
+      bosses.sort((a, b) => {
+        const aKilledToday = isKilledToday(a.lastKillDate) ? 1 : 0;
+        const bKilledToday = isKilledToday(b.lastKillDate) ? 1 : 0;
+        
+        // Killed today first
+        if (aKilledToday !== bKilledToday) {
+          return bKilledToday - aKilledToday;
+        }
+        
+        // Then by total kills
+        return (b.totalKills || 0) - (a.totalKills || 0);
+      });
     } else if (sortBy === 'nextSpawn') {
       bosses.sort((a, b) => {
         if (!a.nextExpectedSpawn || a.nextExpectedSpawn === 'N/A') return 1;
