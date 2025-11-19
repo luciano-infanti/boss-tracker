@@ -19,27 +19,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    console.log('🔄 DataContext: Fetching initial data from API');
     fetch('/api/data')
       .then(res => res.json())
-      .then(data => setData(data))
-      .catch(() => setData({ worlds: {}, combined: [] }));
+      .then(data => {
+        console.log('✅ DataContext: Data loaded from API:', data);
+        console.log('✅ Combined bosses count:', data.combined?.length);
+        if (data.combined?.[0]) {
+          console.log('✅ First boss example:', data.combined[0]);
+        }
+        setData(data);
+      })
+      .catch((err) => {
+        console.error('❌ DataContext: Failed to load data:', err);
+        setData({ worlds: {}, combined: [] });
+      });
   }, []);
 
   const uploadFile = async (file: File) => {
     setIsLoading(true);
     try {
+      console.log('📤 Uploading file:', file.name);
       const content = await file.text();
       const fileType = detectFileType(file.name);
+      console.log('📝 File type detected:', fileType);
 
       let newData = { ...data };
 
       if (fileType === 'combined') {
+        console.log('🔍 Parsing combined file...');
         const parsed = parseCombinedFile(content);
+        console.log('✅ Parsed combined data:', parsed);
+        console.log('✅ Parsed bosses count:', parsed.length);
+        if (parsed[0]) {
+          console.log('✅ First parsed boss:', parsed[0]);
+        }
         newData = { ...newData, combined: parsed };
       } else if (fileType === 'world') {
         const worldName = extractWorldName(file.name);
+        console.log('🌍 World name:', worldName);
         if (worldName) {
           const parsed = parseSingleWorldFile(content);
+          console.log('✅ Parsed world data:', parsed.length, 'bosses');
           newData = {
             ...newData,
             worlds: { ...newData.worlds, [worldName]: parsed }
@@ -47,6 +68,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      console.log('💾 Saving to blob storage...');
       const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,13 +76,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
+        console.log('✅ Upload successful, updating state');
         setData(newData);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Upload failed');
+        const error = await response.json();
+        console.error('❌ Upload failed:', error);
+        throw new Error('Upload failed');
       }
     } catch (error) {
-      console.error('Error parsing file:', error);
+      console.error('❌ Error parsing file:', error);
       alert('Error parsing file. Please check the format.');
     } finally {
       setIsLoading(false);
@@ -72,7 +96,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const content = await file.text();
       const parsed = parseDailyUpdate(content);
-
+      
       if (!parsed) {
         throw new Error('Failed to parse daily update');
       }
@@ -88,8 +112,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setData(newData);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Upload failed');
+        throw new Error('Upload failed');
       }
     } catch (error) {
       console.error('Error parsing daily file:', error);
