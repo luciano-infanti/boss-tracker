@@ -1,53 +1,79 @@
 import { put, list } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { data } = await request.json();
+    console.log('POST /api/data - Starting upload');
     
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error('Missing BLOB_READ_WRITE_TOKEN');
-      return NextResponse.json({ error: 'Missing token' }, { status: 500 });
+    const body = await request.json();
+    console.log('Request body received:', Object.keys(body));
+    
+    if (!body.data) {
+      console.error('No data in request body');
+      return NextResponse.json({ error: 'No data provided' }, { status: 400 });
     }
     
-    const blob = await put('boss-tracker-data.json', JSON.stringify(data), {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      console.error('BLOB_READ_WRITE_TOKEN not found in environment');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    
+    console.log('Token found, uploading to blob...');
+    
+    const blob = await put('boss-tracker-data.json', JSON.stringify(body.data), {
       access: 'public',
       addRandomSuffix: false,
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      token: token,
     });
 
+    console.log('Upload successful:', blob.url);
     return NextResponse.json({ success: true, url: blob.url });
+    
   } catch (error: any) {
-    console.error('Upload error:', error?.message || error);
+    console.error('POST /api/data error:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json({ 
-      error: error?.message || 'Failed to upload data' 
+      error: error?.message || 'Failed to upload data',
+      details: error?.stack
     }, { status: 500 });
   }
 }
 
 export async function GET() {
   try {
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.log('GET /api/data - Fetching data');
+    
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) {
+      console.log('No token, returning empty data');
       return NextResponse.json({ worlds: {}, combined: [] });
     }
 
     const { blobs } = await list({ 
       prefix: 'boss-tracker-data',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      token: token,
     });
     
+    console.log('Found blobs:', blobs.length);
+    
     if (blobs.length === 0) {
+      console.log('No blobs found, returning empty data');
       return NextResponse.json({ worlds: {}, combined: [] });
     }
 
+    console.log('Fetching blob from:', blobs[0].url);
     const response = await fetch(blobs[0].url);
     const data = await response.json();
+    
+    console.log('Data fetched successfully');
     return NextResponse.json(data);
+    
   } catch (error: any) {
-    console.error('Fetch error:', error?.message || error);
+    console.error('GET /api/data error:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json({ worlds: {}, combined: [] });
   }
 }
