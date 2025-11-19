@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe, Server } from 'lucide-react';
+import { Globe, Server, Calendar } from 'lucide-react';
 
 const WORLDS = ['Auroria', 'Belaria', 'Bellum', 'Elysian', 'Lunarian', 'Mystian', 'Solarian', 'Spectrum', 'Tenebrium', 'Vesperia'];
 
@@ -17,6 +17,16 @@ export default function Sidebar() {
       </div>
 
       <nav className="space-y-1">
+        <Link
+          href="/today"
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+            pathname === '/today' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+          }`}
+        >
+          <Calendar size={18} />
+          Today's Kills
+        </Link>
+
         <Link
           href="/"
           className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${

@@ -29,4 +29,22 @@ export interface WorldData {
 export interface ParsedData {
   worlds: WorldData;
   combined: CombinedBoss[];
+  daily?: DailyUpdate;
+}
+
+export interface DailyKill {
+  bossName: string;
+  worlds: Array<{
+    world: string;
+    count: number;
+  }>;
+  totalKills: number;
+}
+
+export interface DailyUpdate {
+  date: string;
+  timestamp: string;
+  totalKills: number;
+  uniqueBosses: number;
+  kills: DailyKill[];
 }
