@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
-import { X, Calendar, Server, Clock } from 'lucide-react';
+import { X, Calendar, Server, Clock, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 
 interface BossDetailsDrawerProps {
@@ -18,9 +18,17 @@ type SortMode = 'server' | 'date';
 export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetailsDrawerProps) {
     const { data } = useData();
     const [sortMode, setSortMode] = useState<SortMode>('server');
+    const [expandedWorlds, setExpandedWorlds] = useState<Record<string, boolean>>({});
     const bossImage = getBossImage(boss.name);
     const totalKills = boss.totalKills || 0;
     const isZeroKills = totalKills === 0;
+
+    const toggleWorld = (worldName: string) => {
+        setExpandedWorlds(prev => ({
+            ...prev,
+            [worldName]: !prev[worldName]
+        }));
+    };
 
     // Helper to parse history string for World view
     const parseHistoryString = (historyStr: string) => {
@@ -62,7 +70,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                     const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                     kills.push({
                         date: `${day}/${month}/${year}`,
-                        world: 'Current World', // We don't have world name here easily unless passed, but it's implied
+                        world: 'Current World',
                         count,
                         timestamp: dateObj.getTime()
                     });
@@ -93,6 +101,81 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
         return kills.sort((a, b) => b.timestamp - a.timestamp);
     }, [boss, data.killDates]);
 
+    // Mini Calendar Component
+    const MiniCalendar = () => {
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+
+        const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+        const padding = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+
+        // Map kills to days
+        const killsOnDay: Record<number, { world: string, count: number }[]> = {};
+
+        allKillsByDate.forEach(kill => {
+            const [day, month, year] = kill.date.split('/').map(Number);
+            if (month === currentMonth + 1 && year === currentYear) {
+                if (!killsOnDay[day]) killsOnDay[day] = [];
+                killsOnDay[day].push({ world: kill.world, count: kill.count });
+            }
+        });
+
+        return (
+            <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-4 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-white">
+                        {new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
+                    </h4>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                        <div key={d} className="text-[10px] text-secondary font-medium py-1">{d}</div>
+                    ))}
+                    {padding.map(p => <div key={`pad-${p}`} />)}
+                    {days.map(day => {
+                        const kills = killsOnDay[day];
+                        const hasKill = kills && kills.length > 0;
+
+                        return (
+                            <div key={day} className="relative group">
+                                <div className={`
+                                aspect-square flex items-center justify-center rounded text-xs
+                                ${hasKill
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-help'
+                                        : 'text-secondary/50 hover:bg-surface-hover'
+                                    }
+                            `}>
+                                    {hasKill ? <Check size={12} strokeWidth={3} /> : day}
+                                </div>
+
+                                {hasKill && (
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 w-max max-w-[200px]">
+                                        <div className="bg-surface-hover text-xs text-white px-2 py-1.5 rounded shadow-xl border border-border">
+                                            <div className="font-medium mb-1 border-b border-white/10 pb-1">
+                                                {day}/{currentMonth + 1}/{currentYear}
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                {kills.map((k, i) => (
+                                                    <div key={i} className="flex items-center justify-between gap-3 text-[10px]">
+                                                        <span className="text-secondary">{k.world}</span>
+                                                        {k.count > 1 && <span className="text-emerald-400">x{k.count}</span>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
 
     return (
         <AnimatePresence>
@@ -113,7 +196,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-surface border-l border-border shadow-2xl flex flex-col"
+                        className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-surface border-l border-border shadow-2xl flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
@@ -142,7 +225,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 w-full">
+                                <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                         <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Total Kills</div>
                                         <div className="text-2xl font-bold text-white">{totalKills}</div>
@@ -156,6 +239,9 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Mini Calendar */}
+                            <MiniCalendar />
 
                             {/* History Section */}
                             <div className="flex-1 flex flex-col min-h-0">
@@ -192,7 +278,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
 
                                 <div className="bg-surface-hover/20 rounded-xl border border-border/50 overflow-hidden flex-1">
                                     {sortMode === 'server' ? (
-                                        <div className="p-4 space-y-4">
+                                        <div className="p-4 space-y-2">
                                             {'history' in boss ? (
                                                 // World View (Single World)
                                                 boss.history && boss.history !== 'None' ? (
@@ -213,21 +299,41 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                             ) : (
                                                 // Combined View
                                                 'perWorldStats' in boss ? (
-                                                    <div className="space-y-6">
+                                                    <div className="space-y-2">
                                                         {boss.perWorldStats.map(stat => (
-                                                            <div key={stat.world}>
-                                                                <div className="flex justify-between items-center mb-2 px-1">
-                                                                    <span className="font-semibold text-white">{stat.world}</span>
-                                                                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">{stat.kills} kills</span>
-                                                                </div>
-                                                                <div className="space-y-1.5 pl-2 border-l-2 border-border/30 ml-1">
-                                                                    {getDatesForWorld(stat.world).map((date, i) => (
-                                                                        <div key={i} className="text-sm text-secondary/80 bg-surface-hover/30 p-2 rounded border border-border/30 flex items-center gap-2">
-                                                                            <Calendar size={12} className="opacity-50" />
-                                                                            {date}
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
+                                                            <div key={stat.world} className="border border-border/30 rounded-lg overflow-hidden bg-surface-hover/10">
+                                                                <button
+                                                                    onClick={() => toggleWorld(stat.world)}
+                                                                    className="w-full flex items-center justify-between p-3 hover:bg-surface-hover/30 transition-colors"
+                                                                >
+                                                                    <div className="flex items-center gap-2">
+                                                                        {expandedWorlds[stat.world] ? <ChevronDown size={16} className="text-secondary" /> : <ChevronRight size={16} className="text-secondary" />}
+                                                                        <span className="font-medium text-white">{stat.world}</span>
+                                                                    </div>
+                                                                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 font-medium">
+                                                                        {stat.kills} kills
+                                                                    </span>
+                                                                </button>
+
+                                                                <AnimatePresence>
+                                                                    {expandedWorlds[stat.world] && (
+                                                                        <motion.div
+                                                                            initial={{ height: 0, opacity: 0 }}
+                                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                                            exit={{ height: 0, opacity: 0 }}
+                                                                            className="overflow-hidden"
+                                                                        >
+                                                                            <div className="p-3 pt-0 border-t border-border/30 space-y-1.5 bg-black/20">
+                                                                                {getDatesForWorld(stat.world).map((date, i) => (
+                                                                                    <div key={i} className="text-sm text-secondary/80 flex items-center gap-2 pl-6">
+                                                                                        <div className="w-1 h-1 rounded-full bg-secondary/50"></div>
+                                                                                        {date}
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </motion.div>
+                                                                    )}
+                                                                </AnimatePresence>
                                                             </div>
                                                         ))}
                                                     </div>
