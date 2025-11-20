@@ -16,7 +16,12 @@ interface BossCardProps {
   dailyKill?: DailyKill;
 }
 
+import { useData } from '@/context/DataContext';
+
+
+
 export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill }: BossCardProps) {
+  const { data } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
 
@@ -37,12 +42,46 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
+  // Helper to parse history string for World view
+  const parseHistoryString = (historyStr: string) => {
+    if (!historyStr || historyStr === 'None') return [];
+    return historyStr.split(',').map(s => s.trim());
+  };
+
+  // Helper to get dates for Combined view
+  const getDatesForWorld = (worldName: string) => {
+    if (!data.killDates) return [];
+    const bossHistory = data.killDates.find(h => h.bossName === boss.name);
+    if (!bossHistory || !bossHistory.killsByWorld[worldName]) return [];
+
+    // Group by date to handle multiple kills on same day
+    const dates = bossHistory.killsByWorld[worldName];
+    const grouped = dates.reduce((acc, curr) => {
+      acc[curr.date] = (acc[curr.date] || 0) + curr.count;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(grouped).map(([date, count]) =>
+      `${date}${count > 1 ? ` (${count}x)` : ''}`
+    );
+  };
+
   return (
     <>
-      <div
+      <motion.div
+        whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+        transition={{ duration: 0.2 }}
         onClick={handleCardClick}
-        className={`bg-surface border border-border rounded-lg p-4 hover:border-border/80 hover:shadow-lg hover:bg-surface-hover transition-all cursor-pointer group relative ${isZeroKills ? 'opacity-80' : ''}`}
+        className={`
+          relative rounded-lg p-5 border transition-all cursor-pointer group
+          ${isKilledToday
+            ? 'bg-surface border-emerald-500/30 shadow-[0_0_15px_-3px_rgba(16,185,129,0.1)]'
+            : 'bg-surface border-border'
+          }
+          ${isZeroKills ? 'opacity-80' : ''}
+        `}
       >
+        {/* ... (keep existing card content) ... */}
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
           {/* Today Tag - Hide on Today's Kills page (combined view) */}
           {isKilledToday && type !== 'combined' && (
@@ -122,7 +161,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Modal */}
       {isModalOpen && (
@@ -131,10 +170,10 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-surface border border-border rounded-lg w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-surface border border-border rounded-lg w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-hover/30">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-hover/30 shrink-0">
               <h3 className="font-medium text-white">{boss.name} Details</h3>
               <button
                 onClick={(e) => { e.stopPropagation(); setIsModalOpen(false); }}
@@ -144,7 +183,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto">
               <div className="flex justify-center">
                 <div className={`w-24 h-24 bg-surface-hover rounded-lg flex items-center justify-center border border-border/50 ${isZeroKills ? 'grayscale' : ''}`}>
                   {bossImage ? (
@@ -177,14 +216,32 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
                   </h4>
                   <div className="bg-surface-hover/20 rounded border border-border/50 p-3 max-h-[200px] overflow-y-auto text-xs text-secondary font-mono leading-relaxed">
                     {'history' in boss ? (
-                      boss.history && boss.history !== 'None' ? boss.history : 'No history available'
+                      // World View
+                      boss.history && boss.history !== 'None' ? (
+                        <ul className="space-y-1">
+                          {parseHistoryString(boss.history).map((date, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/50"></span>
+                              {date}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : 'No history available'
                     ) : (
+                      // Combined View
                       'perWorldStats' in boss ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {boss.perWorldStats.map(stat => (
-                            <div key={stat.world} className="flex justify-between">
-                              <span>{stat.world}</span>
-                              <span className="text-white">{stat.kills} kills</span>
+                            <div key={stat.world} className="border-b border-border/30 last:border-0 pb-2 last:pb-0">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-semibold text-white/90">{stat.world}</span>
+                                <span className="text-primary">{stat.kills} kills</span>
+                              </div>
+                              <div className="pl-2 border-l-2 border-border/30 ml-1">
+                                {getDatesForWorld(stat.world).map((date, i) => (
+                                  <div key={i} className="text-secondary/80 text-[10px]">{date}</div>
+                                ))}
+                              </div>
                             </div>
                           ))}
                         </div>
