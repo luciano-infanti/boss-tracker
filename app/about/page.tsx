@@ -82,32 +82,32 @@ export default function AboutPage() {
                     <div className="bg-surface-hover/30 p-8 rounded-lg border border-border/50 overflow-x-auto">
                         <h3 className="text-white font-bold mb-6 border-b border-border/50 pb-2">Mathematical Formulation</h3>
 
-                        <div className="space-y-8 font-serif">
+                        <div className="space-y-8 font-mono text-sm">
                             {/* Outlier Filtering */}
                             <div>
-                                <p className="text-secondary text-sm mb-2 font-sans">
-                                    <strong>1. Outlier Filtering (IQR):</strong> We first filter the set of intervals <span className="font-serif italic">I</span> using the Interquartile Range to remove anomalies.
+                                <p className="text-secondary mb-2 font-sans">
+                                    <strong>1. Outlier Filtering (IQR):</strong> We first filter the set of intervals <em>I</em> using the Interquartile Range to remove anomalies.
                                 </p>
                                 <div className="flex justify-center my-4">
                                     <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
-                                        IQR = Q_3 - Q_1 \quad \text{where} \quad Q_1, Q_3 \in \text{Quartiles}(I)
+                                        IQR = Q3 - Q1
                                     </span>
                                 </div>
-                                <div className="flex justify-center my-2">
+                                <div className="flex justify-center my-2 text-center">
                                     <span className="text-sm text-gray-400">
-                                        Keep x \in I \iff Q_1 - 1.5 \cdot IQR \le x \le Q_3 + 1.5 \cdot IQR
+                                        Keep x if: (Q1 - 1.5 × IQR) ≤ x ≤ (Q3 + 1.5 × IQR)
                                     </span>
                                 </div>
                             </div>
 
                             {/* Prediction Window */}
                             <div>
-                                <p className="text-secondary text-sm mb-2 font-sans">
-                                    <strong>2. Prediction Window:</strong> Instead of a single date, we calculate a 95% Probability Window based on the Median and Standard Deviation ($\sigma$).
+                                <p className="text-secondary mb-2 font-sans">
+                                    <strong>2. Prediction Window:</strong> Instead of a single date, we calculate a 95% Probability Window based on the Median and Standard Deviation (σ).
                                 </p>
                                 <div className="flex justify-center my-4">
                                     <span className="text-xl text-emerald-400 bg-emerald-500/10 px-6 py-3 rounded border border-emerald-500/20">
-                                        W = (t_n + \text{Median}) \pm 1.5\sigma
+                                        Window = (LastKill + Median) ± 1.5σ
                                     </span>
                                 </div>
                             </div>
