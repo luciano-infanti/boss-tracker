@@ -69,13 +69,11 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
   return (
     <>
       <motion.div
-        whileHover={{ y: -4, backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
-        transition={{ duration: 0.2 }}
         onClick={handleCardClick}
         className={`
-          relative rounded-lg p-5 border transition-all cursor-pointer group
+          relative rounded-lg p-5 border transition-all cursor-pointer group hover:bg-surface-hover
           ${isKilledToday
-            ? 'bg-surface border-emerald-500/30 shadow-[0_0_15px_-3px_rgba(16,185,129,0.1)]'
+            ? 'bg-surface border-border'
             : 'bg-surface border-border'
           }
           ${isZeroKills ? 'opacity-80' : ''}
