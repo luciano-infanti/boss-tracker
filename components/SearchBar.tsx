@@ -15,7 +15,16 @@ interface SearchBarProps {
   };
 }
 
-export default function SearchBar({ value, onChange, sortBy, onSortChange, showKilledTodayFilter = false, counts }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChange,
+  sortBy,
+  onSortChange,
+  showKilledTodayFilter = false,
+  showMostKills = true,
+  showNeverKilled = true,
+  counts
+}: SearchBarProps & { showMostKills?: boolean; showNeverKilled?: boolean }) {
   return (
     <div className="flex flex-col gap-4 mb-6">
       <div className="relative group">
@@ -30,11 +39,13 @@ export default function SearchBar({ value, onChange, sortBy, onSortChange, showK
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <FilterPill
-          label="Most Kills"
-          active={sortBy === 'kills'}
-          onClick={() => onSortChange('kills')}
-        />
+        {showMostKills && (
+          <FilterPill
+            label="Most Kills"
+            active={sortBy === 'kills'}
+            onClick={() => onSortChange('kills')}
+          />
+        )}
         {/* Alphabetical sort removed as requested */}
         {showKilledTodayFilter && (
           <FilterPill
@@ -43,11 +54,13 @@ export default function SearchBar({ value, onChange, sortBy, onSortChange, showK
             onClick={() => onSortChange('killedToday')}
           />
         )}
-        <FilterPill
-          label={`Never Killed${counts?.neverKilled !== undefined ? ` (${counts.neverKilled})` : ''}`}
-          active={sortBy === 'neverKilled'}
-          onClick={() => onSortChange('neverKilled')}
-        />
+        {showNeverKilled && (
+          <FilterPill
+            label={`Never Killed${counts?.neverKilled !== undefined ? ` (${counts.neverKilled})` : ''}`}
+            active={sortBy === 'neverKilled'}
+            onClick={() => onSortChange('neverKilled')}
+          />
+        )}
       </div>
     </div>
   );
