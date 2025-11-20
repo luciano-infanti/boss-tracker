@@ -150,75 +150,77 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="bg-surface p-3 text-center text-[10px] font-medium text-secondary uppercase tracking-wider">
-                        {day}
-                    </div>
-                ))}
+            <div className="overflow-x-auto pb-2">
+                <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border min-w-[600px]">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                        <div key={day} className="bg-surface p-3 text-center text-[10px] font-medium text-secondary uppercase tracking-wider">
+                            {day}
+                        </div>
+                    ))}
 
-                {calendarDays.map((day, idx) => {
-                    const isToday = new Date().toDateString() === day.date.toDateString();
+                    {calendarDays.map((day, idx) => {
+                        const isToday = new Date().toDateString() === day.date.toDateString();
 
-                    return (
-                        <div
-                            key={idx}
-                            className={`bg-surface min-h-[100px] p-2 transition-colors hover:bg-surface-hover/50 
+                        return (
+                            <div
+                                key={idx}
+                                className={`bg-surface min-h-[100px] p-2 transition-colors hover:bg-surface-hover/50 
                                 ${!day.isCurrentMonth ? 'opacity-30 bg-surface/50' : ''}
                                 ${isToday ? 'bg-white/5 ring-1 ring-white/10' : ''}
                             `}
-                        >
-                            <div className={`text-right text-xs mb-2 font-medium ${isToday ? 'text-primary' : 'text-secondary'}`}>
-                                {day.date.getDate()}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                                {/* Group kills by boss name */}
-                                {(() => {
-                                    const groupedKills: { [key: string]: { count: number, world: string, timestamp: string } } = {};
-                                    day.kills.forEach(kill => {
-                                        if (!groupedKills[kill.bossName]) {
-                                            groupedKills[kill.bossName] = { count: 0, world: kill.world, timestamp: kill.timestamp };
-                                        }
-                                        groupedKills[kill.bossName].count++;
-                                    });
+                            >
+                                <div className={`text-right text-xs mb-2 font-medium ${isToday ? 'text-primary' : 'text-secondary'}`}>
+                                    {day.date.getDate()}
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                    {/* Group kills by boss name */}
+                                    {(() => {
+                                        const groupedKills: { [key: string]: { count: number, world: string, timestamp: string } } = {};
+                                        day.kills.forEach(kill => {
+                                            if (!groupedKills[kill.bossName]) {
+                                                groupedKills[kill.bossName] = { count: 0, world: kill.world, timestamp: kill.timestamp };
+                                            }
+                                            groupedKills[kill.bossName].count++;
+                                        });
 
-                                    return Object.entries(groupedKills).map(([bossName, info]) => {
-                                        const bossImg = getBossImage(bossName);
-                                        return (
-                                            <div
-                                                key={bossName}
-                                                className="relative group cursor-help"
-                                            >
-                                                {bossImg ? (
-                                                    <img
-                                                        src={bossImg}
-                                                        alt={bossName}
-                                                        className="w-10 h-10 object-contain rounded bg-surface-hover p-0.5 border border-border/50 transition-transform hover:scale-110"
-                                                    />
-                                                ) : (
-                                                    <div className="w-10 h-10 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
-                                                        {bossName.slice(0, 2)}
-                                                    </div>
-                                                )}
-
-                                                {/* Tooltip */}
-                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
-                                                    <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-                                                        <div className="font-medium text-white">
-                                                            {bossName} {info.count > 1 ? `(${info.count} kills)` : ''}
+                                        return Object.entries(groupedKills).map(([bossName, info]) => {
+                                            const bossImg = getBossImage(bossName);
+                                            return (
+                                                <div
+                                                    key={bossName}
+                                                    className="relative group cursor-help"
+                                                >
+                                                    {bossImg ? (
+                                                        <img
+                                                            src={bossImg}
+                                                            alt={bossName}
+                                                            className="w-10 h-10 object-contain rounded bg-surface-hover p-0.5 border border-border/50 transition-transform hover:scale-110"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
+                                                            {bossName.slice(0, 2)}
                                                         </div>
+                                                    )}
+
+                                                    {/* Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
+                                                        <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+                                                            <div className="font-medium text-white">
+                                                                {bossName} {info.count > 1 ? `(${info.count} kills)` : ''}
+                                                            </div>
+                                                        </div>
+                                                        {/* Arrow */}
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
                                                     </div>
-                                                    {/* Arrow */}
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
                                                 </div>
-                                            </div>
-                                        );
-                                    });
-                                })()}
+                                            );
+                                        });
+                                    })()}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

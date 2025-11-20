@@ -18,6 +18,18 @@ export default function WorldPage() {
 
   const worldData = data.worlds[worldName] || [];
 
+  const counts = useMemo(() => {
+    return {
+      killedToday: worldData.filter(b =>
+        data.daily?.kills.some(k =>
+          k.bossName === b.name && k.worlds.some(w => w.world === worldName)
+        )
+      ).length,
+      neverKilled: worldData.filter(b => (b.totalKills || 0) === 0).length,
+      nextSpawn: worldData.filter(b => b.nextExpectedSpawn && b.nextExpectedSpawn !== 'N/A').length
+    };
+  }, [worldData, data.daily, worldName]);
+
   const filtered = useMemo(() => {
     let bosses = worldData.filter(b =>
       b.name.toLowerCase().includes(search.toLowerCase())
@@ -31,8 +43,6 @@ export default function WorldPage() {
         )
       );
       bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
-    } else if (sortBy === 'name') {
-      bosses.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'kills') {
       // Sort by kills but show ALL bosses
       bosses.sort((a, b) => {
@@ -82,6 +92,9 @@ export default function WorldPage() {
     } else if (sortBy === 'neverKilled') {
       bosses = bosses.filter(b => (b.totalKills || 0) === 0);
       bosses.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // Default fallback
+      bosses.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return bosses;
@@ -91,14 +104,38 @@ export default function WorldPage() {
     return <EmptyState worldName={worldName} />;
   }
 
+  const totalKills = worldData.reduce((sum, boss) => sum + (boss.totalKills || 0), 0);
+  const mostKilled = [...worldData].sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0))[0];
+
   return (
     <div>
+      {/* Overview Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Most Killed</p>
+          <p className="text-lg font-medium text-white truncate">{mostKilled?.name || 'N/A'}</p>
+        </div>
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Killed Today</p>
+          <p className="text-lg font-medium text-emerald-400">{counts.killedToday}</p>
+        </div>
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Never Killed</p>
+          <p className="text-lg font-medium text-red-400">{counts.neverKilled}</p>
+        </div>
+        <div className="bg-surface border border-border rounded-lg p-4">
+          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Total Kills</p>
+          <p className="text-lg font-medium text-white">{totalKills}</p>
+        </div>
+      </div>
+
       <SearchBar
         value={search}
         onChange={setSearch}
         sortBy={sortBy}
         onSortChange={setSortBy}
         showKilledTodayFilter={true}
+        counts={counts}
       />
 
       {sortBy === 'killedToday' && filtered.length === 0 && (

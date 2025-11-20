@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#0F1115', // Very dark, almost black
+        background: '#161920', // Matches surface for flat look
         surface: '#161920',    // Slightly lighter for sidebars/cards
         'surface-hover': '#1C1F26',
         border: '#242730',     // Subtle border

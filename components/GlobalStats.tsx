@@ -48,6 +48,12 @@ export default function GlobalStats({ bosses }: GlobalStatsProps) {
               <p className="text-2xl font-semibold text-emerald-400">{totalKills}</p>
             </div>
             <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
+              <p className="text-secondary text-xs mb-1">Never Killed</p>
+              <p className="text-2xl font-semibold text-red-400">
+                {bosses.filter(b => (b.totalKills || 0) === 0).length}
+              </p>
+            </div>
+            <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
               <p className="text-secondary text-xs mb-1">Most Active Boss</p>
               <p className="text-lg font-medium text-white">
                 {topKilledBosses[0]?.name || 'N/A'}

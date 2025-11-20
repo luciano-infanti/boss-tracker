@@ -106,6 +106,8 @@ export const bossImages: Record<string, string> = {
   "Zevelon Duskbringer": "https://www.tibiawiki.com.br/images/1/15/Zevelon_Duskbringer.gif",
   "Zomba": "https://www.tibiawiki.com.br/images/b/bb/Zomba.gif",
   "Zulazza the Corruptor": "https://www.tibiawiki.com.br/images/b/ba/Zulazza_the_Corruptor.gif",
+  "Yeti": "https://www.tibiawiki.com.br/images/e/e9/Yeti.gif",
+  "Midnight Panther": "https://www.tibiawiki.com.br/images/1/15/Midnight_Panther.gif",
   "Zushuka": "https://www.tibiawiki.com.br/images/b/b5/Zushuka.gif"
 };
 
