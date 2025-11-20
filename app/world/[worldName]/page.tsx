@@ -27,8 +27,7 @@ export default function WorldPage() {
           k.bossName === b.name && k.worlds.some(w => w.world === worldName)
         )
       ).length,
-      neverKilled: worldData.filter(b => (b.totalKills || 0) === 0).length,
-      nextSpawn: worldData.filter(b => b.nextExpectedSpawn && b.nextExpectedSpawn !== 'N/A').length
+      neverKilled: worldData.filter(b => (b.totalKills || 0) === 0).length
     };
   }, [worldData, data.daily, worldName]);
 
@@ -77,19 +76,6 @@ export default function WorldPage() {
 
         // Then by total kills
         return (b.totalKills || 0) - (a.totalKills || 0);
-      });
-    } else if (sortBy === 'nextSpawn') {
-      bosses.sort((a, b) => {
-        if (!a.nextExpectedSpawn || a.nextExpectedSpawn === 'N/A') return 1;
-        if (!b.nextExpectedSpawn || b.nextExpectedSpawn === 'N/A') return -1;
-
-        try {
-          const dateA = new Date(a.nextExpectedSpawn.split('/').reverse().join('-'));
-          const dateB = new Date(b.nextExpectedSpawn.split('/').reverse().join('-'));
-          return dateA.getTime() - dateB.getTime();
-        } catch {
-          return 0;
-        }
       });
     } else if (sortBy === 'neverKilled') {
       bosses = bosses.filter(b => (b.totalKills || 0) === 0);

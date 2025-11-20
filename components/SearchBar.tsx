@@ -37,18 +37,11 @@ export default function SearchBar({ value, onChange, sortBy, onSortChange, showK
         />
         {/* Alphabetical sort removed as requested */}
         {showKilledTodayFilter && (
-          <>
-            <FilterPill
-              label={`Next Spawn${counts?.nextSpawn !== undefined ? ` (${counts.nextSpawn})` : ''}`}
-              active={sortBy === 'nextSpawn'}
-              onClick={() => onSortChange('nextSpawn')}
-            />
-            <FilterPill
-              label={`Killed Today${counts?.killedToday !== undefined ? ` (${counts.killedToday})` : ''}`}
-              active={sortBy === 'killedToday'}
-              onClick={() => onSortChange('killedToday')}
-            />
-          </>
+          <FilterPill
+            label={`Killed Today${counts?.killedToday !== undefined ? ` (${counts.killedToday})` : ''}`}
+            active={sortBy === 'killedToday'}
+            onClick={() => onSortChange('killedToday')}
+          />
         )}
         <FilterPill
           label={`Never Killed${counts?.neverKilled !== undefined ? ` (${counts.neverKilled})` : ''}`}

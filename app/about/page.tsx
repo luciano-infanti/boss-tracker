@@ -8,7 +8,7 @@ export default function AboutPage() {
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
                     <Calculator className="text-primary" />
-                    Just About
+                    About
                 </h1>
                 <p className="text-secondary">
                     A technical deep dive into the mathematical models and data collection architecture.

@@ -98,7 +98,7 @@ export default function Sidebar() {
               }`}
           >
             <Calculator size={16} />
-            Just About
+            About
           </Link>
           <Link
             href="/backups"
