@@ -43,8 +43,8 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
         className={`bg-surface border border-border rounded-lg p-4 hover:border-border/80 hover:shadow-lg transition-all cursor-pointer group relative ${isZeroKills ? 'opacity-80' : ''}`}
       >
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
-          {/* Today Tag */}
-          {isKilledToday && (
+          {/* Today Tag - Hide on Today's Kills page (combined view) */}
+          {isKilledToday && type !== 'combined' && (
             <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
               TODAY
             </div>
