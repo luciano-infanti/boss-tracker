@@ -128,25 +128,25 @@ export default function BossCalendar() {
     ];
 
     return (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        <div className="bg-surface border border-border rounded-lg p-6">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">Boss Kill Calendar</h2>
+                <h2 className="text-sm font-medium text-white">Boss Kill Calendar</h2>
                 <div className="flex items-center gap-4">
-                    <button onClick={prevMonth} className="p-2 hover:bg-gray-700 rounded-full text-gray-300">
-                        <ChevronLeft size={20} />
+                    <button onClick={prevMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
+                        <ChevronLeft size={16} />
                     </button>
-                    <span className="text-lg font-semibold text-emerald-400 min-w-[140px] text-center">
+                    <span className="text-sm font-medium text-white min-w-[120px] text-center">
                         {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                     </span>
-                    <button onClick={nextMonth} className="p-2 hover:bg-gray-700 rounded-full text-gray-300">
-                        <ChevronRight size={20} />
+                    <button onClick={nextMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
+                        <ChevronRight size={16} />
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-px bg-gray-700 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="bg-gray-800 p-2 text-center text-sm font-medium text-gray-400">
+                    <div key={day} className="bg-surface p-3 text-center text-[10px] font-medium text-secondary uppercase tracking-wider">
                         {day}
                     </div>
                 ))}
@@ -154,10 +154,10 @@ export default function BossCalendar() {
                 {calendarDays.map((day, idx) => (
                     <div
                         key={idx}
-                        className={`bg-gray-800 min-h-[100px] p-2 transition-colors hover:bg-gray-750 ${!day.isCurrentMonth ? 'opacity-50 bg-gray-800/50' : ''
+                        className={`bg-surface min-h-[100px] p-2 transition-colors hover:bg-surface-hover/50 ${!day.isCurrentMonth ? 'opacity-30 bg-surface/50' : ''
                             }`}
                     >
-                        <div className="text-right text-sm text-gray-500 mb-2">{day.date.getDate()}</div>
+                        <div className="text-right text-xs text-secondary mb-2 font-medium">{day.date.getDate()}</div>
                         <div className="flex flex-wrap gap-1">
                             {day.kills.map((kill, kIdx) => {
                                 const bossImg = getBossImage(kill.bossName);
@@ -170,23 +170,23 @@ export default function BossCalendar() {
                                             <img
                                                 src={bossImg}
                                                 alt={kill.bossName}
-                                                className="w-8 h-8 object-contain rounded bg-gray-900/50 p-0.5 border border-gray-700"
+                                                className="w-6 h-6 object-contain rounded bg-surface-hover p-0.5 border border-border/50 opacity-80 group-hover:opacity-100 transition-opacity"
                                             />
                                         ) : (
-                                            <div className="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-[10px] text-white">
+                                            <div className="w-6 h-6 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
                                                 {kill.bossName.slice(0, 2)}
                                             </div>
                                         )}
 
                                         {/* Tooltip */}
                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
-                                            <div className="bg-gray-900 text-xs text-white p-2 rounded shadow-xl border border-gray-700">
-                                                <div className="font-bold text-emerald-400">{kill.bossName}</div>
-                                                <div className="text-gray-300">World: {kill.world}</div>
-                                                <div className="text-gray-400 text-[10px]">{kill.timestamp}</div>
+                                            <div className="bg-surface-hover text-xs text-white p-2 rounded shadow-xl border border-border">
+                                                <div className="font-medium text-white mb-0.5">{kill.bossName}</div>
+                                                <div className="text-secondary text-[10px]">World: {kill.world}</div>
+                                                <div className="text-secondary text-[10px]">{kill.timestamp}</div>
                                             </div>
                                             {/* Arrow */}
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
                                         </div>
                                     </div>
                                 );

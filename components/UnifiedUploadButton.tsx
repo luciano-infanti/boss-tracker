@@ -30,12 +30,12 @@ export default function UnifiedUploadButton() {
             <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 py-1.5 bg-surface border border-border hover:border-primary/50 text-secondary hover:text-white rounded-md text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
             >
                 {isLoading ? (
-                    <Loader2 className="animate-spin" size={20} />
+                    <Loader2 className="animate-spin" size={14} />
                 ) : (
-                    <Upload size={20} />
+                    <Upload size={14} />
                 )}
                 Upload Data
             </button>

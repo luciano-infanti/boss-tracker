@@ -10,43 +10,49 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 overflow-y-auto">
-      <div className="mb-8">
-        <h1 className="text-xl font-bold text-emerald-400 mb-2">RubinOT Tracker</h1>
-        <p className="text-sm text-gray-400">Boss Kill Analytics</p>
+    <aside className="w-64 bg-surface border-r border-border p-4 overflow-y-auto">
+      <div className="mb-8 px-3">
+        <h1 className="text-sm font-medium text-white tracking-wide uppercase opacity-80 mb-1">RubinOT Tracker</h1>
+        <p className="text-xs text-secondary">Boss Analytics</p>
       </div>
 
-      <nav className="space-y-1">
+      <nav className="space-y-0.5">
         <Link
           href="/today"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === '/today' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/today'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
             }`}
         >
-          <Calendar size={18} />
+          <Calendar size={16} />
           Today's Kills
         </Link>
 
         <Link
           href="/"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === '/' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
             }`}
         >
-          <Globe size={18} />
+          <Globe size={16} />
           Global Stats
         </Link>
 
-        <div className="pt-4 pb-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase px-3">Worlds</p>
+        <div className="pt-6 pb-2">
+          <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider px-3">Worlds</p>
         </div>
 
         {WORLDS.map((world) => (
           <Link
             key={world}
             href={`/world/${world}`}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${pathname === `/world/${world}` ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === `/world/${world}`
+                ? 'bg-surface-hover text-white'
+                : 'text-secondary hover:text-white hover:bg-surface-hover/50'
               }`}
           >
-            <Server size={18} />
+            <Server size={16} />
             {world}
           </Link>
         ))}

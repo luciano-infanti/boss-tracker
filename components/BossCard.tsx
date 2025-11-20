@@ -20,93 +20,89 @@ export default function BossCard({ boss, type, isKilledToday: propIsKilledToday 
   const killedToday = propIsKilledToday ?? (type === 'world' && isKilledToday((boss as Boss).lastKillDate));
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-emerald-500 transition-colors">
-      {bossImage && (
-        <div className="h-32 bg-gray-900 relative">
-          <img
-            src={bossImage}
-            alt={boss.name}
-            className="w-full h-full object-contain"
-          />
-        </div>
-      )}
-
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="font-semibold text-white">{boss.name}</h3>
-        </div>
-
-        {killedToday && (
-          <div className="mb-3">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-600 text-white">
-              Killed Today
-            </span>
+    <div className="group bg-surface border border-border rounded-md overflow-hidden hover:border-border/80 hover:shadow-lg transition-all duration-200">
+      <div className="flex p-4 gap-4">
+        {bossImage && (
+          <div className="w-12 h-12 shrink-0 bg-surface-hover rounded-md flex items-center justify-center border border-border/50">
+            <img
+              src={bossImage}
+              alt={boss.name}
+              className="w-10 h-10 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
+            />
           </div>
         )}
 
-        {type === 'world' ? (
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-gray-300">
-              <Calendar size={14} className="text-emerald-400" />
-              <span>Next: {(boss as Boss).nextExpectedSpawn || 'N/A'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Clock size={14} className="text-blue-400" />
-              <span>{(boss as Boss).spawnFrequency || 'N/A'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Trophy size={14} className="text-yellow-400" />
-              <span>{(boss as Boss).totalKills || 0} kills ({(boss as Boss).totalDaysSpawned || 0} days)</span>
-            </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-medium text-white text-sm truncate pr-2">{boss.name}</h3>
+            {killedToday && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Today
+              </span>
+            )}
+          </div>
 
-            {(boss as Boss).history && (boss as Boss).history !== 'None' && (
+          {type === 'world' ? (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-xs text-secondary">
+                <Calendar size={12} className="text-secondary/70" />
+                <span>Next: <span className="text-gray-300">{(boss as Boss).nextExpectedSpawn || 'N/A'}</span></span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-secondary">
+                <Clock size={12} className="text-secondary/70" />
+                <span>{(boss as Boss).spawnFrequency || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-secondary">
+                <Trophy size={12} className="text-secondary/70" />
+                <span>{(boss as Boss).totalKills || 0} kills</span>
+              </div>
+
+              {(boss as Boss).history && (boss as Boss).history !== 'None' && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-[10px] font-medium text-primary hover:text-primary/80 mt-1 transition-colors"
+                >
+                  {expanded ? 'Hide' : 'View'} History
+                </button>
+              )}
+
+              {expanded && (
+                <div className="mt-2 p-2 bg-surface-hover/50 rounded text-[10px] text-secondary border border-border/50">
+                  {(boss as Boss).history}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-xs text-secondary">
+                <Globe size={12} className="text-secondary/70" />
+                <span>{(boss as CombinedBoss).appearsInWorlds || 0} worlds</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-secondary">
+                <Trophy size={12} className="text-secondary/70" />
+                <span>{(boss as CombinedBoss).totalKills || 0} total kills</span>
+              </div>
+
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="text-emerald-400 hover:text-emerald-300 text-xs mt-2"
+                className="text-[10px] font-medium text-primary hover:text-primary/80 mt-1 transition-colors"
               >
-                {expanded ? 'Hide' : 'Show'} History
+                {expanded ? 'Hide' : 'View'} Stats
               </button>
-            )}
 
-            {expanded && (
-              <div className="mt-2 p-2 bg-gray-900 rounded text-xs text-gray-400">
-                {(boss as Boss).history}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-gray-300">
-              <Globe size={14} className="text-emerald-400" />
-              <span>{(boss as CombinedBoss).appearsInWorlds || 0} worlds</span>
+              {expanded && (
+                <div className="mt-2 p-2 bg-surface-hover/50 rounded text-[10px] text-secondary border border-border/50 space-y-1">
+                  {(boss as CombinedBoss).perWorldStats?.map((stat) => (
+                    <div key={stat.world} className="flex justify-between">
+                      <span className="text-gray-300">{stat.world}</span>
+                      <span>{stat.spawns}s / {stat.kills}k</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Clock size={14} className="text-blue-400" />
-              <span>{(boss as CombinedBoss).typicalSpawnFrequency || 'N/A'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Trophy size={14} className="text-yellow-400" />
-              <span>{(boss as CombinedBoss).totalKills || 0} total kills</span>
-            </div>
-
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="text-emerald-400 hover:text-emerald-300 text-xs mt-2"
-            >
-              {expanded ? 'Hide' : 'Show'} Per-World Stats
-            </button>
-
-            {expanded && (
-              <div className="mt-2 p-2 bg-gray-900 rounded text-xs text-gray-400 space-y-1">
-                {(boss as CombinedBoss).perWorldStats?.map((stat) => (
-                  <div key={stat.world}>
-                    <strong>{stat.world}:</strong> {stat.spawns} spawns, {stat.kills} kills
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
