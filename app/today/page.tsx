@@ -4,9 +4,11 @@ import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
 import { Trophy, Server, Calendar } from 'lucide-react';
 import BossCard from '@/components/BossCard';
+import Loading from '@/components/Loading';
+import PageTransition from '@/components/PageTransition';
 
 export default function TodayPage() {
-  const { data } = useData();
+  const { data, isLoading } = useData();
   const daily = data.daily;
 
   const sortedKills = [...(data.daily?.kills || [])].sort((a, b) => {
@@ -26,8 +28,12 @@ export default function TodayPage() {
     return b.totalKills - a.totalKills;
   });
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
-    <div>
+    <PageTransition>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white mb-2">Today's Kills</h1>
         <p className="text-secondary">
@@ -70,7 +76,7 @@ export default function TodayPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sortedKills.map((kill) => {
               const boss = data.combined.find(b => b.name === kill.bossName) || {
                 name: kill.bossName,
@@ -97,6 +103,6 @@ export default function TodayPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

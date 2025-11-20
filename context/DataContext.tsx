@@ -16,7 +16,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<ParsedData>({ worlds: {}, combined: [] });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('🔄 DataContext: Fetching initial data from API');
@@ -29,6 +29,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .catch((err) => {
         console.error('❌ DataContext: Failed to load data:', err);
         setData({ worlds: {}, combined: [] });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 

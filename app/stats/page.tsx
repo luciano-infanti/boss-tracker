@@ -6,9 +6,11 @@ import BossCard from '@/components/BossCard';
 import SearchBar from '@/components/SearchBar';
 import EmptyState from '@/components/EmptyState';
 import GlobalStats from '@/components/GlobalStats';
+import Loading from '@/components/Loading';
+import PageTransition from '@/components/PageTransition';
 
 export default function GlobalPage() {
-  const { data } = useData();
+  const { data, isLoading } = useData();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('kills');
 
@@ -82,12 +84,16 @@ export default function GlobalPage() {
     return bosses;
   }, [data.combined, search, sortBy, aggregatedStats]);
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   if (!data.combined || data.combined.length === 0) {
     return <EmptyState />;
   }
 
   return (
-    <div>
+    <PageTransition>
       <GlobalStats bosses={data.combined} />
       <SearchBar
         value={search}
@@ -96,11 +102,11 @@ export default function GlobalPage() {
         onSortChange={setSortBy}
         counts={counts}
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((boss) => (
           <BossCard key={boss.name} boss={boss} type="combined" />
         ))}
       </div>
-    </div>
+    </PageTransition>
   );
 }

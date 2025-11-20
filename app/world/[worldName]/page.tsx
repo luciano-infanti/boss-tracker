@@ -8,11 +8,13 @@ import EmptyState from '@/components/EmptyState';
 import BossCalendar from '@/components/BossCalendar';
 import { useParams } from 'next/navigation';
 import { Boss } from '@/types';
+import Loading from '@/components/Loading';
+import PageTransition from '@/components/PageTransition';
 
 export default function WorldPage() {
   const params = useParams();
   const worldName = params.worldName as string;
-  const { data } = useData();
+  const { data, isLoading } = useData();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('kills');
 
@@ -100,6 +102,10 @@ export default function WorldPage() {
     return bosses;
   }, [worldData, search, sortBy, data.daily, worldName]);
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   if (worldData.length === 0) {
     return <EmptyState worldName={worldName} />;
   }
@@ -108,7 +114,7 @@ export default function WorldPage() {
   const mostKilled = [...worldData].sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0))[0];
 
   return (
-    <div>
+    <PageTransition>
       {/* Overview Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-surface border border-border rounded-lg p-4">
@@ -144,7 +150,7 @@ export default function WorldPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         {filtered.map((boss) => {
           const isKilledToday = data.daily?.kills.some(k =>
             k.bossName === boss.name && k.worlds.some(w => w.world === worldName)
@@ -168,6 +174,6 @@ export default function WorldPage() {
       </div>
 
       <BossCalendar worldName={worldName} />
-    </div>
+    </PageTransition>
   );
 }

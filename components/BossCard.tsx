@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 import { Clock, Crosshair, Calendar, X, Trophy } from 'lucide-react';
@@ -15,7 +16,7 @@ interface BossCardProps {
   dailyKill?: DailyKill;
 }
 
-export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }: BossCardProps) {
+export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill }: BossCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
 
