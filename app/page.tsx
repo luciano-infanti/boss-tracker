@@ -43,7 +43,7 @@ export default function GlobalPage() {
 
   return (
     <div>
-      <GlobalStats bosses={data.combined} />
+      <GlobalStats bosses={data.combined} worlds={data.worlds} />
       <SearchBar value={search} onChange={setSearch} sortBy={sortBy} onSortChange={setSortBy} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((boss) => (
