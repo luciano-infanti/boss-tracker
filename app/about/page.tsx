@@ -1,6 +1,6 @@
 'use client';
 
-import { Calculator, Activity, Target, AlertCircle } from 'lucide-react';
+import { Calculator, Activity, Target, AlertCircle, Database, Zap, FileText } from 'lucide-react';
 
 export default function AboutPage() {
     return (
@@ -11,12 +11,44 @@ export default function AboutPage() {
                     Algorithm & Methodology
                 </h1>
                 <p className="text-secondary">
-                    A technical deep dive into the mathematical models used for boss respawn predictions.
+                    A technical deep dive into the mathematical models and data collection architecture.
                 </p>
             </div>
 
             <div className="space-y-8">
-                {/* Core Concept */}
+                {/* Data Collection Architecture */}
+                <section className="bg-surface border border-border rounded-lg p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Database className="text-blue-400" size={24} />
+                        <h2 className="text-xl font-semibold text-white">Data Collection Architecture</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+                                <Zap size={16} className="text-yellow-400" />
+                                Async Parallel Scraping
+                            </h3>
+                            <p className="text-secondary text-sm leading-relaxed mb-4">
+                                The system utilizes an asynchronous, event-driven architecture powered by <strong>Playwright</strong>.
+                                It spawns multiple headless browser contexts to scrape game worlds in parallel, significantly reducing data acquisition time while maintaining session isolation.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+                                <FileText size={16} className="text-emerald-400" />
+                                "The Backpack" Retention
+                            </h3>
+                            <p className="text-secondary text-sm leading-relaxed mb-4">
+                                To prevent data loss, the system implements a smart history retention mechanism known as <em>"The Backpack"</em>.
+                                Before every update, existing kill history is loaded into memory, merged with new daily findings, and then persisted back to storage. This ensures a continuous, unbroken timeline of boss activity.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Mathematical Model */}
                 <section className="bg-surface border border-border rounded-lg p-8">
                     <div className="flex items-center gap-3 mb-6">
                         <Activity className="text-emerald-400" size={24} />
@@ -24,73 +56,52 @@ export default function AboutPage() {
                     </div>
                     <p className="text-secondary leading-relaxed mb-6">
                         The core of our prediction engine relies on <strong>Time Series Analysis</strong> of historical kill data.
-                        Unlike static timers, our algorithm dynamically adapts to the observed behavior of each boss across multiple game worlds.
+                        We model the spawn behavior as a stochastic process with a periodic component.
                     </p>
 
-                    <div className="bg-surface-hover/30 p-6 rounded-lg border border-border/50 font-mono text-sm text-gray-300 overflow-x-auto">
-                        <h3 className="text-white font-bold mb-4">Mathematical Formulation</h3>
+                    <div className="bg-surface-hover/30 p-8 rounded-lg border border-border/50 overflow-x-auto">
+                        <h3 className="text-white font-bold mb-6 border-b border-border/50 pb-2">Mathematical Formulation</h3>
 
-                        <p className="mb-4">
-                            Let <span className="text-primary">K</span> be the ordered set of kill dates for a specific boss:
-                            <br />
-                            <span className="block mt-2 bg-black/20 p-3 rounded text-emerald-400">
-                                K = &#123; t_1, t_2, ..., t_n &#125; where t_i &lt; t_&#123;i+1&#125;
-                            </span>
-                        </p>
-
-                        <p className="mb-4">
-                            We define the spawn interval <span className="text-yellow-400">Δt</span> between consecutive kills as:
-                            <br />
-                            <span className="block mt-2 bg-black/20 p-3 rounded text-yellow-400">
-                                Δt_i = t_i - t_&#123;i-1&#125; for i ∈ [2, n]
-                            </span>
-                        </p>
-
-                        <p>
-                            The predicted mean interval <span className="text-blue-400">μ</span> is calculated as the arithmetic mean of all observed intervals:
-                            <br />
-                            <span className="block mt-2 bg-black/20 p-3 rounded text-blue-400">
-                                μ = (1 / (n-1)) * Σ(Δt_i)
-                            </span>
-                        </p>
-                    </div>
-                </section>
-
-                {/* Next Spawn Calculation */}
-                <section className="bg-surface border border-border rounded-lg p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                        <Target className="text-primary" size={24} />
-                        <h2 className="text-xl font-semibold text-white">Next Respawn Calculation</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 className="text-white font-medium mb-3">The Formula</h3>
-                            <p className="text-secondary mb-4">
-                                The next expected spawn date <span className="text-emerald-400">D_next</span> is projected by adding the calculated mean interval to the most recent kill date.
-                            </p>
-                            <div className="bg-surface-hover/30 p-4 rounded border border-border/50 font-mono text-sm text-white">
-                                D_next = t_n + round(μ)
+                        <div className="space-y-8 font-serif">
+                            {/* Set Definition */}
+                            <div>
+                                <p className="text-secondary text-sm mb-2 font-sans">Let <span className="font-serif italic">K</span> be the ordered set of kill timestamps:</p>
+                                <div className="flex justify-center my-4">
+                                    <span className="text-xl text-white bg-black/20 px-6 py-3 rounded border border-white/10">
+                                        K = &#123; t_1, t_2, ..., t_n &#125; : t_i &lt; t_&#123;i+1&#125;
+                                    </span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <h3 className="text-white font-medium mb-3">Frequency Classification</h3>
-                            <p className="text-secondary mb-2">We categorize bosses based on μ:</p>
-                            <ul className="space-y-2 text-sm text-secondary">
-                                <li className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
-                                    <span><strong>Daily:</strong> μ ≈ 1.0 days</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-                                    <span><strong>Weekly:</strong> μ ≈ 7.0 days</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                                    <span><strong>Monthly:</strong> μ ≈ 30.0 days</span>
-                                </li>
-                            </ul>
+                            {/* Interval Calculation */}
+                            <div>
+                                <p className="text-secondary text-sm mb-2 font-sans">We define the spawn interval <span className="font-serif italic">Δt</span> as the time difference between consecutive events:</p>
+                                <div className="flex justify-center my-4">
+                                    <span className="text-xl text-white bg-black/20 px-6 py-3 rounded border border-white/10">
+                                        Δt_i = t_i - t_&#123;i-1&#125;, \quad \forall i \in [2, n]
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Mean Interval */}
+                            <div>
+                                <p className="text-secondary text-sm mb-2 font-sans">The predicted mean interval <span className="font-serif italic">μ</span> is the arithmetic mean of observed intervals:</p>
+                                <div className="flex justify-center my-4">
+                                    <span className="text-xl text-white bg-black/20 px-6 py-3 rounded border border-white/10">
+                                        \mu = \frac&#123;1&#125;&#123;n-1&#125; \sum_&#123;i=2&#125;^&#123;n&#125; \Delta t_i
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Prediction */}
+                            <div>
+                                <p className="text-secondary text-sm mb-2 font-sans">The next expected spawn date <span className="font-serif italic">D_&#123;next&#125;</span> is projected as:</p>
+                                <div className="flex justify-center my-4">
+                                    <span className="text-xl text-emerald-400 bg-emerald-500/10 px-6 py-3 rounded border border-emerald-500/20">
+                                        D_&#123;next&#125; = t_n + \mu
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -130,6 +141,12 @@ export default function AboutPage() {
                         </div>
                     </div>
                 </section>
+
+                <div className="text-right pt-8 border-t border-border">
+                    <p className="text-secondary text-sm italic">
+                        By Even Worse, Lunarian
+                    </p>
+                </div>
             </div>
         </div>
     );
