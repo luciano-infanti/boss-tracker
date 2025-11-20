@@ -73,15 +73,22 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
             </div>
 
             {dailyKill ? (
-              // Daily Stats Layout
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Trophy size={12} className="text-yellow-500/70" />
-                  <span className="text-white font-medium">
-                    {dailyKill.totalKills} {dailyKill.totalKills === 1 ? 'kill' : 'kills'} today
-                  </span>
+              // Daily Stats Layout - Show both kills today AND total kills
+              <div className="space-y-1.5">
+                {/* Status with kills today */}
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-emerald-400 font-medium">✅ KILLED TODAY</span>
+                  <span className="text-white/90">({dailyKill.totalKills} {dailyKill.totalKills === 1 ? 'kill' : 'kills'})</span>
                 </div>
-                <div className="flex flex-wrap gap-1">
+
+                {/* Total Kills */}
+                <div className="flex items-center gap-1.5 text-xs text-secondary">
+                  <Crosshair size={12} className="text-secondary/70" />
+                  <span>Total Kills: <span className="text-white/90 font-medium">{totalKills}</span></span>
+                </div>
+
+                {/* World badges */}
+                <div className="flex flex-wrap gap-1 mt-2">
                   {dailyKill.worlds.map((w) => (
                     <span
                       key={w.world}
@@ -106,11 +113,11 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
                   </span>
                 </div>
 
-                {/* Last Kill */}
-                {'lastKillDate' in boss && (
+                {/* Last Kill - Only show if not "Never" */}
+                {'lastKillDate' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && (
                   <div className="flex items-center gap-1.5 text-xs text-secondary">
                     <Clock size={12} className="text-secondary/70" />
-                    <span>{boss.lastKillDate || 'Never'}</span>
+                    <span>{boss.lastKillDate}</span>
                   </div>
                 )}
 
