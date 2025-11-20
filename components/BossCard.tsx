@@ -72,23 +72,41 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
               <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors">{boss.name}</h3>
             </div>
 
-            {dailyKill ? (
-              // Daily Stats Layout - Show both kills today AND total kills
-              <div className="space-y-1.5">
-                {/* Status with kills today */}
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-emerald-400 font-medium">✅ KILLED TODAY</span>
-                  <span className="text-white/90">({dailyKill.totalKills} {dailyKill.totalKills === 1 ? 'kill' : 'kills'})</span>
-                </div>
+            <div className="space-y-1">
+              {/* Next Spawn */}
+              <div className="flex items-center gap-1.5 text-xs text-secondary">
+                <Calendar size={12} className="text-secondary/70" />
+                <span>
+                  Next: <span className="text-white/90">
+                    {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
+                  </span>
+                </span>
+              </div>
 
-                {/* Total Kills */}
+              {/* Last Kill - Only show if not "Never" */}
+              {'lastKillDate' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && (
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Crosshair size={12} className="text-secondary/70" />
-                  <span>Total Kills: <span className="text-white/90 font-medium">{totalKills}</span></span>
+                  <Clock size={12} className="text-secondary/70" />
+                  <span>{boss.lastKillDate}</span>
                 </div>
+              )}
 
-                {/* World badges */}
-                <div className="flex flex-wrap gap-1 mt-2">
+              {/* Total Kills */}
+              <div className="flex items-center gap-1.5 text-xs text-secondary">
+                <Trophy size={12} className="text-secondary/70" />
+                <span>
+                  <span className="text-white font-medium">{totalKills} kills</span>
+                  {dailyKill && (
+                    <span className="text-emerald-400 ml-1">
+                      ({dailyKill.totalKills} today)
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              {/* World Badges (only if dailyKill exists) */}
+              {dailyKill && (
+                <div className="flex flex-wrap gap-1 pt-1">
                   {dailyKill.worlds.map((w) => (
                     <span
                       key={w.world}
@@ -99,35 +117,8 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
                     </span>
                   ))}
                 </div>
-              </div>
-            ) : (
-              // Standard Stats Layout
-              <div className="space-y-1">
-                {/* Next Spawn */}
-                <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Calendar size={12} className="text-secondary/70" />
-                  <span>
-                    Next: <span className="text-white/90">
-                      {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
-                    </span>
-                  </span>
-                </div>
-
-                {/* Last Kill - Only show if not "Never" */}
-                {'lastKillDate' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && (
-                  <div className="flex items-center gap-1.5 text-xs text-secondary">
-                    <Clock size={12} className="text-secondary/70" />
-                    <span>{boss.lastKillDate}</span>
-                  </div>
-                )}
-
-                {/* Total Kills */}
-                <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Crosshair size={12} className="text-secondary/70" />
-                  <span>{totalKills} kills</span>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
