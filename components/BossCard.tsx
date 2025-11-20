@@ -1,18 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
-import { Clock, Crosshair, Calendar, X } from 'lucide-react';
+import { Clock, Crosshair, Calendar, X, Trophy } from 'lucide-react';
+
+import { DailyKill } from '@/types';
 
 interface BossCardProps {
   boss: Boss | CombinedBoss;
   type: 'world' | 'combined';
   isKilledToday?: boolean;
   isNew?: boolean;
+  dailyKill?: DailyKill;
 }
 
-export default function BossCard({ boss, type, isKilledToday, isNew }: BossCardProps) {
+export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }: BossCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
 
@@ -24,18 +27,36 @@ export default function BossCard({ boss, type, isKilledToday, isNew }: BossCardP
     setIsModalOpen(true);
   };
 
+  // Close modal on Esc key
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
   return (
     <>
       <div
         onClick={handleCardClick}
         className={`bg-surface border border-border rounded-lg p-4 hover:border-border/80 hover:shadow-lg transition-all cursor-pointer group relative ${isZeroKills ? 'opacity-80' : ''}`}
       >
-        {/* New Tag */}
-        {isNew && (
-          <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30 z-10">
-            NEW
-          </div>
-        )}
+        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
+          {/* Today Tag */}
+          {isKilledToday && (
+            <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
+              TODAY
+            </div>
+          )}
+
+          {/* New Tag */}
+          {isNew && (
+            <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
+              NEW
+            </div>
+          )}
+        </div>
 
         <div className="flex items-start gap-4">
           <div className={`w-12 h-12 bg-surface-hover rounded-md flex items-center justify-center shrink-0 border border-border/50 overflow-hidden ${isZeroKills ? 'grayscale' : ''}`}>
@@ -51,38 +72,65 @@ export default function BossCard({ boss, type, isKilledToday, isNew }: BossCardP
               <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors">{boss.name}</h3>
             </div>
 
-            <div className="space-y-1">
-              {/* Next Spawn */}
-              <div className="flex items-center gap-1.5 text-xs text-secondary">
-                <Calendar size={12} className="text-secondary/70" />
-                <span>
-                  Next: <span className="text-white/90">
-                    {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
-                  </span>
-                </span>
-              </div>
-
-              {/* Last Kill */}
-              {'lastKillDate' in boss && (
+            {dailyKill ? (
+              // Daily Stats Layout
+              <div className="space-y-2">
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Clock size={12} className="text-secondary/70" />
-                  <span>{boss.lastKillDate || 'Never'}</span>
+                  <Trophy size={12} className="text-yellow-500/70" />
+                  <span className="text-white font-medium">
+                    {dailyKill.totalKills} {dailyKill.totalKills === 1 ? 'kill' : 'kills'} today
+                  </span>
                 </div>
-              )}
-
-              {/* Total Kills */}
-              <div className="flex items-center gap-1.5 text-xs text-secondary">
-                <Crosshair size={12} className="text-secondary/70" />
-                <span>{totalKills} kills</span>
+                <div className="flex flex-wrap gap-1">
+                  {dailyKill.worlds.map((w) => (
+                    <span
+                      key={w.world}
+                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
+                    >
+                      {w.world}
+                      {w.count > 1 && <span className="ml-1 text-white opacity-70">x{w.count}</span>}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              // Standard Stats Layout
+              <div className="space-y-1">
+                {/* Next Spawn */}
+                <div className="flex items-center gap-1.5 text-xs text-secondary">
+                  <Calendar size={12} className="text-secondary/70" />
+                  <span>
+                    Next: <span className="text-white/90">
+                      {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
+                    </span>
+                  </span>
+                </div>
+
+                {/* Last Kill */}
+                {'lastKillDate' in boss && (
+                  <div className="flex items-center gap-1.5 text-xs text-secondary">
+                    <Clock size={12} className="text-secondary/70" />
+                    <span>{boss.lastKillDate || 'Never'}</span>
+                  </div>
+                )}
+
+                {/* Total Kills */}
+                <div className="flex items-center gap-1.5 text-xs text-secondary">
+                  <Crosshair size={12} className="text-secondary/70" />
+                  <span>{totalKills} kills</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setIsModalOpen(false)}
+        >
           <div
             className="bg-surface border border-border rounded-lg w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}

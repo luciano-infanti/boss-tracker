@@ -90,6 +90,7 @@ export default function TodayPage() {
                   type="combined"
                   isKilledToday={true}
                   isNew={isNew}
+                  dailyKill={kill}
                 />
               );
             })}

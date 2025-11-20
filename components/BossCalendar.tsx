@@ -165,36 +165,49 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                     >
                         <div className="text-right text-xs text-secondary mb-2 font-medium">{day.date.getDate()}</div>
                         <div className="flex flex-wrap gap-1">
-                            {day.kills.map((kill, kIdx) => {
-                                const bossImg = getBossImage(kill.bossName);
-                                return (
-                                    <div
-                                        key={`${kill.bossName}-${kIdx}`}
-                                        className="relative group cursor-help"
-                                    >
-                                        {bossImg ? (
-                                            <img
-                                                src={bossImg}
-                                                alt={kill.bossName}
-                                                className="w-8 h-8 object-contain rounded bg-surface-hover p-0.5 border border-border/50 opacity-80 group-hover:opacity-100 transition-opacity"
-                                            />
-                                        ) : (
-                                            <div className="w-8 h-8 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
-                                                {kill.bossName.slice(0, 2)}
-                                            </div>
-                                        )}
+                            {/* Group kills by boss name */}
+                            {(() => {
+                                const groupedKills: { [key: string]: { count: number, world: string, timestamp: string } } = {};
+                                day.kills.forEach(kill => {
+                                    if (!groupedKills[kill.bossName]) {
+                                        groupedKills[kill.bossName] = { count: 0, world: kill.world, timestamp: kill.timestamp };
+                                    }
+                                    groupedKills[kill.bossName].count++;
+                                });
 
-                                        {/* Tooltip */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
-                                            <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-                                                <div className="font-medium text-white">{kill.bossName}</div>
+                                return Object.entries(groupedKills).map(([bossName, info]) => {
+                                    const bossImg = getBossImage(bossName);
+                                    return (
+                                        <div
+                                            key={bossName}
+                                            className="relative group cursor-help"
+                                        >
+                                            {bossImg ? (
+                                                <img
+                                                    src={bossImg}
+                                                    alt={bossName}
+                                                    className="w-8 h-8 object-contain rounded bg-surface-hover p-0.5 border border-border/50 opacity-80 group-hover:opacity-100 transition-opacity"
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
+                                                    {bossName.slice(0, 2)}
+                                                </div>
+                                            )}
+
+                                            {/* Tooltip */}
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
+                                                <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+                                                    <div className="font-medium text-white">
+                                                        {bossName} {info.count > 1 ? `(${info.count} kills)` : ''}
+                                                    </div>
+                                                </div>
+                                                {/* Arrow */}
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
                                             </div>
-                                            {/* Arrow */}
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
                 ))}

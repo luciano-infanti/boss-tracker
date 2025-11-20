@@ -124,6 +124,7 @@ export default function WorldPage() {
               type="world"
               isKilledToday={isKilledToday}
               isNew={isNew}
+              dailyKill={isKilledToday ? dailyKill : undefined}
             />
           );
         })}
