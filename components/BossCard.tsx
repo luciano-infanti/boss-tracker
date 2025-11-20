@@ -1,109 +1,174 @@
 'use client';
 
-import { Calendar, Clock, Trophy, Globe } from 'lucide-react';
 import { useState } from 'react';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
-
-import { isKilledToday } from '@/utils/dateUtils';
+import { Clock, Crosshair, Calendar, X } from 'lucide-react';
 
 interface BossCardProps {
   boss: Boss | CombinedBoss;
   type: 'world' | 'combined';
   isKilledToday?: boolean;
+  isNew?: boolean;
 }
 
-export default function BossCard({ boss, type, isKilledToday: propIsKilledToday }: BossCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export default function BossCard({ boss, type, isKilledToday, isNew }: BossCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
 
-  const killedToday = propIsKilledToday ?? (type === 'world' && isKilledToday((boss as Boss).lastKillDate));
+  // Determine if boss has 0 kills (grayscale)
+  const totalKills = boss.totalKills || 0;
+  const isZeroKills = totalKills === 0;
+
+  const handleCardClick = () => {
+    setIsModalOpen(true);
+  };
 
   return (
-    <div className="group bg-surface border border-border rounded-md overflow-hidden hover:border-border/80 hover:shadow-lg transition-all duration-200">
-      <div className="flex p-4 gap-4">
-        {bossImage && (
-          <div className="w-12 h-12 shrink-0 bg-surface-hover rounded-md flex items-center justify-center border border-border/50">
-            <img
-              src={bossImage}
-              alt={boss.name}
-              className="w-10 h-10 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
-            />
+    <>
+      <div
+        onClick={handleCardClick}
+        className={`bg-surface border border-border rounded-lg p-4 hover:border-border/80 hover:shadow-lg transition-all cursor-pointer group relative ${isZeroKills ? 'opacity-80' : ''}`}
+      >
+        {/* New Tag */}
+        {isNew && (
+          <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30 z-10">
+            NEW
           </div>
         )}
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-medium text-white text-sm truncate pr-2">{boss.name}</h3>
-            {killedToday && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Today
-              </span>
+        <div className="flex items-start gap-4">
+          <div className={`w-12 h-12 bg-surface-hover rounded-md flex items-center justify-center shrink-0 border border-border/50 overflow-hidden ${isZeroKills ? 'grayscale' : ''}`}>
+            {bossImage ? (
+              <img src={bossImage} alt={boss.name} className="w-full h-full object-contain p-1" />
+            ) : (
+              <span className="text-xs font-bold text-secondary">{boss.name.slice(0, 2)}</span>
             )}
           </div>
 
-          {type === 'world' ? (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-xs text-secondary">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors">{boss.name}</h3>
+            </div>
+
+            <div className="space-y-1">
+              {/* Next Spawn */}
+              <div className="flex items-center gap-1.5 text-xs text-secondary">
                 <Calendar size={12} className="text-secondary/70" />
-                <span>Next: <span className="text-gray-300">{(boss as Boss).nextExpectedSpawn || 'N/A'}</span></span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-secondary">
-                <Clock size={12} className="text-secondary/70" />
-                <span>{(boss as Boss).spawnFrequency || 'N/A'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-secondary">
-                <Trophy size={12} className="text-secondary/70" />
-                <span>{(boss as Boss).totalKills || 0} kills</span>
+                <span>
+                  Next: <span className="text-white/90">
+                    {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
+                  </span>
+                </span>
               </div>
 
-              {(boss as Boss).history && (boss as Boss).history !== 'None' && (
-                <button
-                  onClick={() => setExpanded(!expanded)}
-                  className="text-[10px] font-medium text-primary hover:text-primary/80 mt-1 transition-colors"
-                >
-                  {expanded ? 'Hide' : 'View'} History
-                </button>
-              )}
-
-              {expanded && (
-                <div className="mt-2 p-2 bg-surface-hover/50 rounded text-[10px] text-secondary border border-border/50">
-                  {(boss as Boss).history}
+              {/* Last Kill */}
+              {'lastKillDate' in boss && (
+                <div className="flex items-center gap-1.5 text-xs text-secondary">
+                  <Clock size={12} className="text-secondary/70" />
+                  <span>{boss.lastKillDate || 'Never'}</span>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-xs text-secondary">
-                <Globe size={12} className="text-secondary/70" />
-                <span>{(boss as CombinedBoss).appearsInWorlds || 0} worlds</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-secondary">
-                <Trophy size={12} className="text-secondary/70" />
-                <span>{(boss as CombinedBoss).totalKills || 0} total kills</span>
-              </div>
 
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="text-[10px] font-medium text-primary hover:text-primary/80 mt-1 transition-colors"
-              >
-                {expanded ? 'Hide' : 'View'} Stats
-              </button>
-
-              {expanded && (
-                <div className="mt-2 p-2 bg-surface-hover/50 rounded text-[10px] text-secondary border border-border/50 space-y-1">
-                  {(boss as CombinedBoss).perWorldStats?.map((stat) => (
-                    <div key={stat.world} className="flex justify-between">
-                      <span className="text-gray-300">{stat.world}</span>
-                      <span>{stat.spawns}s / {stat.kills}k</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Total Kills */}
+              <div className="flex items-center gap-1.5 text-xs text-secondary">
+                <Crosshair size={12} className="text-secondary/70" />
+                <span>{totalKills} kills</span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="bg-surface border border-border rounded-lg w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-hover/30">
+              <h3 className="font-medium text-white">{boss.name} Details</h3>
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsModalOpen(false); }}
+                className="text-secondary hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="flex justify-center">
+                <div className={`w-24 h-24 bg-surface-hover rounded-lg flex items-center justify-center border border-border/50 ${isZeroKills ? 'grayscale' : ''}`}>
+                  {bossImage ? (
+                    <img src={bossImage} alt={boss.name} className="w-full h-full object-contain p-2" />
+                  ) : (
+                    <span className="text-xl font-bold text-secondary">{boss.name.slice(0, 2)}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface-hover/30 p-3 rounded border border-border/50">
+                    <div className="text-xs text-secondary mb-1">Total Kills</div>
+                    <div className="text-lg font-medium text-white">{totalKills}</div>
+                  </div>
+                  <div className="bg-surface-hover/30 p-3 rounded border border-border/50">
+                    <div className="text-xs text-secondary mb-1">Spawn Frequency</div>
+                    <div className="text-lg font-medium text-white">
+                      {'spawnFrequency' in boss ? boss.spawnFrequency :
+                        'typicalSpawnFrequency' in boss ? boss.typicalSpawnFrequency : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+                    <HistoryIcon size={14} />
+                    Kill History
+                  </h4>
+                  <div className="bg-surface-hover/20 rounded border border-border/50 p-3 max-h-[200px] overflow-y-auto text-xs text-secondary font-mono leading-relaxed">
+                    {'history' in boss ? (
+                      boss.history && boss.history !== 'None' ? boss.history : 'No history available'
+                    ) : (
+                      'perWorldStats' in boss ? (
+                        <div className="space-y-2">
+                          {boss.perWorldStats.map(stat => (
+                            <div key={stat.world} className="flex justify-between">
+                              <span>{stat.world}</span>
+                              <span className="text-white">{stat.kills} kills</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : 'No history'
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function HistoryIcon({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12" />
+      <path d="M3 3v9h9" />
+      <path d="M12 7v5l4 2" />
+    </svg>
   );
 }

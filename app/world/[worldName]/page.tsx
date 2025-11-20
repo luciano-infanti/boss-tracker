@@ -7,13 +7,14 @@ import SearchBar from '@/components/SearchBar';
 import EmptyState from '@/components/EmptyState';
 import BossCalendar from '@/components/BossCalendar';
 import { useParams } from 'next/navigation';
+import { Boss } from '@/types';
 
 export default function WorldPage() {
   const params = useParams();
   const worldName = params.worldName as string;
   const { data } = useData();
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('kills'); // Changed default from 'killedToday' to 'kills'
+  const [sortBy, setSortBy] = useState('kills');
 
   const worldData = data.worlds[worldName] || [];
 
@@ -47,6 +48,21 @@ export default function WorldPage() {
           return bKilledToday - aKilledToday;
         }
 
+        // Check for "New" (First kill ever)
+        const getIsNew = (boss: Boss) => {
+          if (!isKilled(boss.name)) return false;
+          const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
+          const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
+          if (!worldKill) return false;
+          // If total kills in this world == kills today in this world, it's new
+          return boss.totalKills === worldKill.count;
+        };
+
+        const aNew = getIsNew(a) ? 1 : 0;
+        const bNew = getIsNew(b) ? 1 : 0;
+
+        if (aNew !== bNew) return bNew - aNew;
+
         // Then by total kills
         return (b.totalKills || 0) - (a.totalKills || 0);
       });
@@ -69,7 +85,7 @@ export default function WorldPage() {
     }
 
     return bosses;
-  }, [worldData, search, sortBy]);
+  }, [worldData, search, sortBy, data.daily, worldName]);
 
   if (worldData.length === 0) {
     return <EmptyState worldName={worldName} />;
@@ -92,16 +108,25 @@ export default function WorldPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {filtered.map((boss) => (
-          <BossCard
-            key={boss.name}
-            boss={boss}
-            type="world"
-            isKilledToday={data.daily?.kills.some(k =>
-              k.bossName === boss.name && k.worlds.some(w => w.world === worldName)
-            )}
-          />
-        ))}
+        {filtered.map((boss) => {
+          const isKilledToday = data.daily?.kills.some(k =>
+            k.bossName === boss.name && k.worlds.some(w => w.world === worldName)
+          );
+
+          const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
+          const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
+          const isNew = isKilledToday && worldKill ? boss.totalKills === worldKill.count : false;
+
+          return (
+            <BossCard
+              key={boss.name}
+              boss={boss}
+              type="world"
+              isKilledToday={isKilledToday}
+              isNew={isNew}
+            />
+          );
+        })}
       </div>
 
       <BossCalendar worldName={worldName} />

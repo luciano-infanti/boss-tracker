@@ -176,20 +176,18 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                             <img
                                                 src={bossImg}
                                                 alt={kill.bossName}
-                                                className="w-6 h-6 object-contain rounded bg-surface-hover p-0.5 border border-border/50 opacity-80 group-hover:opacity-100 transition-opacity"
+                                                className="w-8 h-8 object-contain rounded bg-surface-hover p-0.5 border border-border/50 opacity-80 group-hover:opacity-100 transition-opacity"
                                             />
                                         ) : (
-                                            <div className="w-6 h-6 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
+                                            <div className="w-8 h-8 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">
                                                 {kill.bossName.slice(0, 2)}
                                             </div>
                                         )}
 
                                         {/* Tooltip */}
                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
-                                            <div className="bg-surface-hover text-xs text-white p-2 rounded shadow-xl border border-border">
-                                                <div className="font-medium text-white mb-0.5">{kill.bossName}</div>
-                                                <div className="text-secondary text-[10px]">World: {kill.world}</div>
-                                                <div className="text-secondary text-[10px]">{kill.timestamp}</div>
+                                            <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+                                                <div className="font-medium text-white">{kill.bossName}</div>
                                             </div>
                                             {/* Arrow */}
                                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-hover"></div>
