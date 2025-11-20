@@ -1,6 +1,6 @@
 'use client';
 
-import { Calculator, Activity, Target, AlertCircle, Database, Zap, FileText, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Calculator, Activity, Target, AlertCircle, Database, Zap, FileText } from 'lucide-react';
 
 export default function AboutPage() {
     return (
@@ -11,7 +11,7 @@ export default function AboutPage() {
                     Just About
                 </h1>
                 <p className="text-secondary">
-                    A technical deep dive into the robust statistical models and data collection architecture.
+                    A technical deep dive into the mathematical models and data collection architecture.
                 </p>
             </div>
 
@@ -48,66 +48,57 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                {/* Robust Statistical Model */}
+                {/* Mathematical Model */}
                 <section className="bg-surface border border-border rounded-lg p-8">
                     <div className="flex items-center gap-3 mb-6">
-                        <ShieldCheck className="text-emerald-400" size={24} />
-                        <h2 className="text-xl font-semibold text-white">Robust Statistical Model</h2>
+                        <Activity className="text-emerald-400" size={24} />
+                        <h2 className="text-xl font-semibold text-white">The Prediction Model</h2>
                     </div>
                     <p className="text-secondary leading-relaxed mb-6">
-                        We have evolved from simple arithmetic means to a <strong>Robust Statistical Framework</strong> designed to handle the irregularities of game data, such as missed scans or server downtimes.
+                        The core of our prediction engine relies on <strong>Time Series Analysis</strong> of historical kill data.
+                        We model the spawn behavior as a stochastic process with a periodic component.
                     </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <div className="bg-surface-hover/20 p-5 rounded border border-border/50">
-                            <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                                <BarChart3 size={18} className="text-purple-400" />
-                                Median vs. Mean
-                            </h3>
-                            <p className="text-sm text-secondary">
-                                We use the <strong>Median</strong> interval instead of the Mean. The Median is resistant to massive outliers (e.g., a missed scan that makes an interval look like 50 days instead of 5).
-                            </p>
-                        </div>
-                        <div className="bg-surface-hover/20 p-5 rounded border border-border/50">
-                            <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                                <Activity size={18} className="text-orange-400" />
-                                Volatility (σ)
-                            </h3>
-                            <p className="text-sm text-secondary">
-                                We calculate the <strong>Standard Deviation (σ)</strong> to measure how "random" a boss is. A low σ means the boss is clockwork; a high σ means it's chaotic.
-                            </p>
-                        </div>
-                    </div>
 
                     <div className="bg-surface-hover/30 p-8 rounded-lg border border-border/50 overflow-x-auto">
                         <h3 className="text-white font-bold mb-6 border-b border-border/50 pb-2">Mathematical Formulation</h3>
 
                         <div className="space-y-8 font-mono text-sm">
-                            {/* Outlier Filtering */}
+                            {/* Set Definition */}
                             <div>
-                                <p className="text-secondary mb-2 font-sans">
-                                    <strong>1. Outlier Filtering (IQR):</strong> We first filter the set of intervals <em>I</em> using the Interquartile Range to remove anomalies.
-                                </p>
+                                <p className="text-secondary mb-2 font-sans">Let <em>K</em> be the ordered set of kill timestamps:</p>
                                 <div className="flex justify-center my-4">
                                     <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
-                                        IQR = Q3 - Q1
-                                    </span>
-                                </div>
-                                <div className="flex justify-center my-2 text-center">
-                                    <span className="text-sm text-gray-400">
-                                        Keep x if: (Q1 - 1.5 × IQR) ≤ x ≤ (Q3 + 1.5 × IQR)
+                                        K = &#123; t1, t2, ..., tn &#125; where ti &lt; t(i+1)
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Prediction Window */}
+                            {/* Interval Calculation */}
                             <div>
-                                <p className="text-secondary mb-2 font-sans">
-                                    <strong>2. Prediction Window:</strong> Instead of a single date, we calculate a 95% Probability Window based on the Median and Standard Deviation (σ).
-                                </p>
+                                <p className="text-secondary mb-2 font-sans">We define the spawn interval <em>Δt</em> as the time difference between consecutive events:</p>
+                                <div className="flex justify-center my-4">
+                                    <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
+                                        Δti = ti - t(i-1)
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Mean Interval */}
+                            <div>
+                                <p className="text-secondary mb-2 font-sans">The predicted mean interval <em>μ</em> is the arithmetic mean of observed intervals:</p>
+                                <div className="flex justify-center my-4">
+                                    <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
+                                        μ = (1 / (n-1)) × Σ Δti
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Prediction */}
+                            <div>
+                                <p className="text-secondary mb-2 font-sans">The next expected spawn date <em>D_next</em> is projected as:</p>
                                 <div className="flex justify-center my-4">
                                     <span className="text-xl text-emerald-400 bg-emerald-500/10 px-6 py-3 rounded border border-emerald-500/20">
-                                        Window = (LastKill + Median) ± 1.5σ
+                                        D_next = tn + μ
                                     </span>
                                 </div>
                             </div>
@@ -115,57 +106,38 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                {/* Classification & Status */}
+                {/* Precision & Constraints */}
                 <section className="bg-surface border border-border rounded-lg p-8">
                     <div className="flex items-center gap-3 mb-6">
-                        <Target className="text-primary" size={24} />
-                        <h2 className="text-xl font-semibold text-white">Classification & Status</h2>
+                        <AlertCircle className="text-yellow-400" size={24} />
+                        <h2 className="text-xl font-semibold text-white">Precision & Confidence</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
                         <div>
-                            <h3 className="text-white font-medium mb-3">Volatility Classes</h3>
-                            <ul className="space-y-3 text-sm text-secondary">
-                                <li className="flex items-center gap-3">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                    <div>
-                                        <strong className="text-white block">🕒 Precise (σ &lt; 1.0)</strong>
-                                        <span>Clockwork spawns. Camp the exact hour.</span>
-                                    </div>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-                                    <div>
-                                        <strong className="text-white block">🎲 Regular (σ &lt; 3.0)</strong>
-                                        <span>Predictable but has some variance.</span>
-                                    </div>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                                    <div>
-                                        <strong className="text-white block">🌀 Chaotic (σ ≥ 3.0)</strong>
-                                        <span>Highly random. Hard to predict.</span>
-                                    </div>
-                                </li>
-                            </ul>
+                            <h3 className="text-white font-medium mb-2">Minimum Data Requirements</h3>
+                            <p className="text-secondary">
+                                To generate a valid prediction, the algorithm requires a minimum of <strong>2 confirmed kills</strong> (n ≥ 2).
+                                With only 1 kill, it is mathematically impossible to calculate an interval (Δt), and thus the prediction returns "N/A".
+                            </p>
                         </div>
 
-                        <div>
-                            <h3 className="text-white font-medium mb-3">Prediction Status</h3>
-                            <ul className="space-y-3 text-sm text-secondary">
-                                <li className="flex items-center gap-3">
-                                    <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/30">🔥 VERY OVERDUE</span>
-                                    <span>Current date &gt; Max Window. Spawn is imminent.</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <span className="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-xs font-bold border border-yellow-500/30">⚡ ACTIVE WINDOW</span>
-                                    <span>Current date is inside the probability window.</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/30">💤 SLEEPS</span>
-                                    <span>Not expected yet. Days remaining shown.</span>
-                                </li>
-                            </ul>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
+                                <div className="text-red-400 font-bold mb-1">Low Confidence</div>
+                                <div className="text-xs text-secondary">n = 2 kills</div>
+                                <div className="text-xs text-secondary mt-1">Single interval observed. High variance risk.</div>
+                            </div>
+                            <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
+                                <div className="text-yellow-400 font-bold mb-1">Medium Confidence</div>
+                                <div className="text-xs text-secondary">n = 3-5 kills</div>
+                                <div className="text-xs text-secondary mt-1">Pattern begins to emerge. Outliers may skew results.</div>
+                            </div>
+                            <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
+                                <div className="text-emerald-400 font-bold mb-1">High Confidence</div>
+                                <div className="text-xs text-secondary">n &gt; 5 kills</div>
+                                <div className="text-xs text-secondary mt-1">Robust average. Anomalies are smoothed out.</div>
+                            </div>
                         </div>
                     </div>
                 </section>
