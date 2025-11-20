@@ -144,7 +144,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
                   <span className="text-white font-medium">{totalKills} kills</span>
-                  {dailyKill && (
+                  {dailyKill && type === 'combined' && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills} today)
                     </span>
