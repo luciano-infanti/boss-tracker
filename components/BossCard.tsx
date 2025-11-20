@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
-import { Clock, Crosshair, Calendar, X, Trophy } from 'lucide-react';
+import { Clock, Calendar, Trophy } from 'lucide-react';
 
 import { DailyKill } from '@/types';
 
@@ -20,10 +20,11 @@ interface BossCardProps {
 import { useData } from '@/context/DataContext';
 
 
+import BossDetailsDrawer from './BossDetailsDrawer';
 
 export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill, worldName }: BossCardProps) {
   const { data } = useData();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
 
   // Determine if boss has 0 kills (grayscale)
@@ -40,40 +41,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
   }, [dailyKill, type, worldName]);
 
   const handleCardClick = () => {
-    setIsModalOpen(true);
-  };
-
-  // Close modal on Esc key
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsModalOpen(false);
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
-
-  // Helper to parse history string for World view
-  const parseHistoryString = (historyStr: string) => {
-    if (!historyStr || historyStr === 'None') return [];
-    return historyStr.split(',').map(s => s.trim());
-  };
-
-  // Helper to get dates for Combined view
-  const getDatesForWorld = (worldName: string) => {
-    if (!data.killDates) return [];
-    const bossHistory = data.killDates.find(h => h.bossName === boss.name);
-    if (!bossHistory || !bossHistory.killsByWorld[worldName]) return [];
-
-    // Group by date to handle multiple kills on same day
-    const dates = bossHistory.killsByWorld[worldName];
-    const grouped = dates.reduce((acc, curr) => {
-      acc[curr.date] = (acc[curr.date] || 0) + curr.count;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(grouped).map(([date, count]) =>
-      `${date}${count > 1 ? ` (${count}x)` : ''}`
-    );
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -171,97 +139,11 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
         </div>
       </motion.div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-lg w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[80vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-hover/30 shrink-0">
-              <h3 className="font-medium text-white">{boss.name} Details</h3>
-              <button
-                onClick={(e) => { e.stopPropagation(); setIsModalOpen(false); }}
-                className="text-secondary hover:text-white transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6 overflow-y-auto">
-              <div className="flex justify-center">
-                <div className={`w-24 h-24 bg-surface-hover rounded-lg flex items-center justify-center border border-border/50 ${isZeroKills ? 'grayscale' : ''}`}>
-                  {bossImage ? (
-                    <img src={bossImage} alt={boss.name} className="w-full h-full object-contain p-2" />
-                  ) : (
-                    <span className="text-xl font-bold text-secondary">{boss.name.slice(0, 2)}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-surface-hover/30 p-3 rounded border border-border/50">
-                    <div className="text-xs text-secondary mb-1">Total Kills</div>
-                    <div className="text-lg font-medium text-white">{totalKills}</div>
-                  </div>
-                  <div className="bg-surface-hover/30 p-3 rounded border border-border/50">
-                    <div className="text-xs text-secondary mb-1">Spawn Frequency</div>
-                    <div className="text-lg font-medium text-white">
-                      {'spawnFrequency' in boss ? boss.spawnFrequency :
-                        'typicalSpawnFrequency' in boss ? boss.typicalSpawnFrequency : 'N/A'}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
-                    <HistoryIcon size={14} />
-                    Kill History
-                  </h4>
-                  <div className="bg-surface-hover/20 rounded border border-border/50 p-3 max-h-[200px] overflow-y-auto text-xs text-secondary font-mono leading-relaxed">
-                    {'history' in boss ? (
-                      // World View
-                      boss.history && boss.history !== 'None' ? (
-                        <ul className="space-y-1">
-                          {parseHistoryString(boss.history).map((date, i) => (
-                            <li key={i} className="flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary/50"></span>
-                              {date}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : 'No history available'
-                    ) : (
-                      // Combined View
-                      'perWorldStats' in boss ? (
-                        <div className="space-y-3">
-                          {boss.perWorldStats.map(stat => (
-                            <div key={stat.world} className="border-b border-border/30 last:border-0 pb-2 last:pb-0">
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="font-semibold text-white/90">{stat.world}</span>
-                                <span className="text-primary">{stat.kills} kills</span>
-                              </div>
-                              <div className="pl-2 border-l-2 border-border/30 ml-1">
-                                {getDatesForWorld(stat.world).map((date, i) => (
-                                  <div key={i} className="text-secondary/80 text-[10px]">{date}</div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : 'No history'
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <BossDetailsDrawer
+        boss={boss}
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+      />
     </>
   );
 }
