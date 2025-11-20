@@ -44,49 +44,6 @@ export default function BossCalendar({ worlds }: BossCalendarProps) {
             days.push({ date: new Date(year, month, i), isCurrentMonth: true, kills: [] });
         }
 
-        // Add padding days for next month
-        const endPadding = 42 - days.length; // Ensure 6 rows
-        for (let i = 1; i <= endPadding; i++) {
-            const date = new Date(year, month + 1, i);
-            days.push({ date, isCurrentMonth: false, kills: [] });
-        }
-
-        // Populate kills
-        // Iterate through all worlds and bosses to find kills matching these dates
-        Object.entries(worlds).forEach(([worldName, bosses]) => {
-            bosses.forEach(boss => {
-                if (!boss.history || boss.history === 'None') return;
-
-                // Assuming history format is comma separated dates/timestamps
-                // Example: "2023-10-27 14:30, 2023-10-25 09:15" or similar
-                // We need to be robust here.
-                const historyEntries = boss.history.split(',').map(s => s.trim());
-
-                historyEntries.forEach(entry => {
-                    // Try to parse date. 
-                    // If entry is just a date "2023-10-27", it works.
-                    // If it has time "2023-10-27 14:30", it works.
-                    const killDate = new Date(entry);
-                    if (isNaN(killDate.getTime())) return;
-
-                    // Find matching day in our calendar grid
-                    const day = days.find(d =>
-                        d.date.getDate() === killDate.getDate() &&
-                        d.date.getMonth() === killDate.getMonth() &&
-                        d.date.getFullYear() === killDate.getFullYear()
-                    );
-
-                    if (day) {
-                        day.kills.push({
-                            bossName: boss.name,
-                            world: worldName,
-                            timestamp: entry
-                        });
-                    }
-                });
-            });
-        });
-
         return days;
     }, [currentDate, worlds]);
 
