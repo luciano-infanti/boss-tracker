@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe, Server, Calendar } from 'lucide-react';
+import { Globe, Server, Calendar, History } from 'lucide-react';
 
 import { WORLDS } from '@/utils/constants';
 
@@ -20,8 +20,8 @@ export default function Sidebar() {
         <Link
           href="/today"
           className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/today'
-              ? 'bg-surface-hover text-white'
-              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+            ? 'bg-surface-hover text-white'
+            : 'text-secondary hover:text-white hover:bg-surface-hover/50'
             }`}
         >
           <Calendar size={16} />
@@ -31,12 +31,23 @@ export default function Sidebar() {
         <Link
           href="/"
           className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/'
-              ? 'bg-surface-hover text-white'
-              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+            ? 'bg-surface-hover text-white'
+            : 'text-secondary hover:text-white hover:bg-surface-hover/50'
             }`}
         >
           <Globe size={16} />
           Global Stats
+        </Link>
+
+        <Link
+          href="/backups"
+          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/backups'
+            ? 'bg-surface-hover text-white'
+            : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+            }`}
+        >
+          <History size={16} />
+          Backups
         </Link>
 
         <div className="pt-6 pb-2">
@@ -48,8 +59,8 @@ export default function Sidebar() {
             key={world}
             href={`/world/${world}`}
             className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === `/world/${world}`
-                ? 'bg-surface-hover text-white'
-                : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
               }`}
           >
             <Server size={16} />

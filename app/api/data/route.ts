@@ -33,6 +33,18 @@ export async function POST(request: Request) {
       });
 
       console.log('Upload successful:', blob.url);
+
+      // Create a backup
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupFilename = `backups/backup-${timestamp}.json`;
+      console.log(`Creating backup: ${backupFilename}`);
+
+      await put(backupFilename, JSON.stringify(body.data), {
+        access: 'public',
+        addRandomSuffix: false,
+        token: token,
+      });
+
       return NextResponse.json({ success: true, url: blob.url });
     } catch (blobError: any) {
       console.error('Vercel Blob put error:', blobError);

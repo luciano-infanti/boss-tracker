@@ -8,6 +8,7 @@ import { parseDailyUpdate } from '@/utils/dailyParser';
 interface DataContextType {
   data: ParsedData;
   uploadFiles: (files: FileList | File[]) => Promise<void>;
+  restoreData: (data: ParsedData) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -87,8 +88,39 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const restoreData = async (newData: ParsedData) => {
+    setIsLoading(true);
+    try {
+      console.log('🔄 Restoring data...');
+
+      // Update state immediately
+      setData(newData);
+
+      // Save to blob storage (this will also trigger a new backup via the API)
+      console.log('💾 Saving restored data to blob storage...');
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newData })
+      });
+
+      if (response.ok) {
+        console.log('✅ Restore and save successful');
+      } else {
+        const error = await response.json();
+        console.error('❌ Save failed during restore:', error);
+        throw new Error('Save failed during restore');
+      }
+    } catch (error) {
+      console.error('❌ Error restoring data:', error);
+      alert('Error restoring data.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <DataContext.Provider value={{ data, uploadFiles, isLoading }}>
+    <DataContext.Provider value={{ data, uploadFiles, restoreData, isLoading }}>
       {children}
     </DataContext.Provider>
   );
