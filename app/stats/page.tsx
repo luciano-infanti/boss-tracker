@@ -88,7 +88,7 @@ export default function GlobalPage() {
 
   return (
     <div>
-      <GlobalStats bosses={data.combined} neverKilledCount={counts.neverKilled} />
+      <GlobalStats bosses={data.combined} />
       <SearchBar
         value={search}
         onChange={setSearch}
