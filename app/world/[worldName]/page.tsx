@@ -5,6 +5,7 @@ import { useData } from '@/context/DataContext';
 import BossCard from '@/components/BossCard';
 import SearchBar from '@/components/SearchBar';
 import EmptyState from '@/components/EmptyState';
+import BossCalendar from '@/components/BossCalendar';
 import { useParams } from 'next/navigation';
 
 export default function WorldPage() {
@@ -90,7 +91,7 @@ export default function WorldPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {filtered.map((boss) => (
           <BossCard
             key={boss.name}
@@ -102,6 +103,8 @@ export default function WorldPage() {
           />
         ))}
       </div>
+
+      <BossCalendar worldName={worldName} />
     </div>
   );
 }

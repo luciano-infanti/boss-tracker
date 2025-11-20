@@ -1,7 +1,5 @@
 import { Trophy, Calendar } from 'lucide-react';
 import { CombinedBoss } from '@/types';
-import BossCalendar from './BossCalendar';
-import ContributionGraph from './ContributionGraph';
 
 interface GlobalStatsProps {
   bosses: CombinedBoss[];
@@ -58,9 +56,6 @@ export default function GlobalStats({ bosses }: GlobalStatsProps) {
           </div>
         </div>
       </div>
-
-      <ContributionGraph />
-      {/* <BossCalendar /> */}
     </div>
   );
 }

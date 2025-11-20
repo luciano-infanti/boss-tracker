@@ -15,7 +15,7 @@ interface CalendarDay {
     }>;
 }
 
-export default function BossCalendar() {
+export default function BossCalendar({ worldName }: { worldName?: string }) {
     const { data } = useData();
     const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -52,6 +52,9 @@ export default function BossCalendar() {
         if (data.killDates) {
             data.killDates.forEach(bossHistory => {
                 bossHistory.chronologicalHistory.forEach(kill => {
+                    // Filter by world if worldName is provided
+                    if (worldName && kill.world !== worldName) return;
+
                     // kill.date is "DD/MM/YYYY"
                     const [dayStr, monthStr, yearStr] = kill.date.split('/');
                     const dayNum = parseInt(dayStr, 10);
@@ -77,7 +80,10 @@ export default function BossCalendar() {
             });
         } else if (data.worlds) {
             // Fallback
-            Object.entries(data.worlds).forEach(([worldName, bosses]) => {
+            Object.entries(data.worlds).forEach(([wName, bosses]) => {
+                // Filter by world if worldName is provided
+                if (worldName && wName !== worldName) return;
+
                 bosses.forEach(boss => {
                     if (!boss.history || boss.history === 'None') return;
                     const historyEntries = boss.history.split(',').map(s => s.trim());
@@ -100,7 +106,7 @@ export default function BossCalendar() {
                                 for (let i = 0; i < count; i++) {
                                     day.kills.push({
                                         bossName: boss.name,
-                                        world: worldName,
+                                        world: wName,
                                         timestamp: `${dayStr}/${monthStr}/${yearStr}`
                                     });
                                 }
@@ -112,7 +118,7 @@ export default function BossCalendar() {
         }
 
         return days;
-    }, [currentDate, data]);
+    }, [currentDate, data, worldName]);
 
     const nextMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
@@ -130,7 +136,7 @@ export default function BossCalendar() {
     return (
         <div className="bg-surface border border-border rounded-lg p-6">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-sm font-medium text-white">Boss Kill Calendar</h2>
+                <h2 className="text-sm font-medium text-white">Boss Kill Calendar {worldName ? `(${worldName})` : ''}</h2>
                 <div className="flex items-center gap-4">
                     <button onClick={prevMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
                         <ChevronLeft size={16} />
