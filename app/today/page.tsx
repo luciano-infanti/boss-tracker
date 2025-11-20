@@ -1,68 +1,28 @@
 'use client';
 
-import { useState } from 'react';
 import { useData } from '@/context/DataContext';
-import { Upload, Calendar, Trophy, Server } from 'lucide-react';
+import { Calendar, Trophy, Server } from 'lucide-react';
 import { getBossImage } from '@/utils/bossImages';
-import { useRef } from 'react';
 
 export default function TodayPage() {
-  const { data, uploadDailyFile, isLoading } = useData();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { data } = useData();
   const daily = data.daily;
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadDailyFile(file);
-  };
 
   if (!daily) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
         <Calendar size={48} className="text-gray-600 mb-4" />
         <h2 className="text-xl font-semibold text-gray-300 mb-2">No Daily Data</h2>
-        <p className="text-gray-400 mb-6">Upload today's kill report to see statistics</p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".txt"
-          onChange={handleUpload}
-          className="hidden"
-        />
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
-        >
-          <Upload size={18} />
-          {isLoading ? 'Uploading...' : 'Upload Daily Report'}
-        </button>
+        <p className="text-gray-400">Upload today's kill report using the 'Upload Data' button above</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Today's Kills</h2>
-          <p className="text-gray-400">{daily.date} at {daily.timestamp}</p>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".txt"
-          onChange={handleUpload}
-          className="hidden"
-        />
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
-        >
-          <Upload size={18} />
-          Update
-        </button>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-white">Today's Kills</h2>
+        <p className="text-gray-400">{daily.date} at {daily.timestamp}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

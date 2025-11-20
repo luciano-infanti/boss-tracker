@@ -26,12 +26,6 @@ export interface WorldData {
   [worldName: string]: Boss[];
 }
 
-export interface ParsedData {
-  worlds: WorldData;
-  combined: CombinedBoss[];
-  daily?: DailyUpdate;
-}
-
 export interface DailyKill {
   bossName: string;
   worlds: Array<{
@@ -47,4 +41,27 @@ export interface DailyUpdate {
   totalKills: number;
   uniqueBosses: number;
   kills: DailyKill[];
+}
+
+export interface KillDateEntry {
+  date: string;
+  world: string;
+  count: number;
+}
+
+export interface BossKillHistory {
+  bossName: string;
+  totalSpawnDays: number;
+  totalKills: number;
+  killsByWorld: {
+    [world: string]: KillDateEntry[];
+  };
+  chronologicalHistory: KillDateEntry[];
+}
+
+export interface ParsedData {
+  worlds: WorldData;
+  combined: CombinedBoss[];
+  daily?: DailyUpdate;
+  killDates?: BossKillHistory[];
 }

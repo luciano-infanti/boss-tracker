@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { DataProvider } from '@/context/DataContext';
 import Sidebar from '@/components/Sidebar';
-import UploadButton from '@/components/UploadButton';
+import UnifiedUploadButton from '@/components/UnifiedUploadButton';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h1 className="text-2xl font-bold">Boss Statistics</h1>
-                  <UploadButton />
+                  <UnifiedUploadButton />
                 </div>
                 {children}
               </div>

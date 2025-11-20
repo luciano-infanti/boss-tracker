@@ -47,12 +47,12 @@ export function parseCombinedFile(content: string): CombinedBoss[] {
   console.log('🔍 Starting to parse combined file');
   const bosses: CombinedBoss[] = [];
   const records = content.split('---').filter(r => r.trim() && !r.includes('SUMMARY STATISTICS'));
-  
+
   console.log(`📊 Found ${records.length} boss records`);
 
   for (const record of records) {
     const lines = record.trim().split('\n');
-    const boss: Partial<CombinedBoss> = { 
+    const boss: Partial<CombinedBoss> = {
       perWorldStats: [],
       totalSpawnDays: 0,
       totalKills: 0,
@@ -64,7 +64,7 @@ export function parseCombinedFile(content: string): CombinedBoss[] {
 
     for (const line of lines) {
       const trimmedLine = line.trim();
-      
+
       if (trimmedLine.startsWith('Boss:')) {
         boss.name = trimmedLine.replace('Boss:', '').trim();
       } else if (trimmedLine.startsWith('Total Spawn Days:')) {
@@ -104,13 +104,60 @@ export function parseCombinedFile(content: string): CombinedBoss[] {
   return bosses;
 }
 
-export function detectFileType(filename: string): 'world' | 'combined' | null {
+export function detectFileType(filename: string, content?: string): 'world' | 'combined' | 'daily' | null {
   if (filename.includes('ALL_WORLDS_COMBINED')) return 'combined';
   if (filename.includes('RubinOT_Kills_')) return 'world';
+  if (content && content.includes('RUBINOT DAILY UPDATE')) return 'daily';
   return null;
 }
 
 export function extractWorldName(filename: string): string | null {
   const match = filename.match(/RubinOT_Kills_([^.]+)\.txt/);
   return match ? match[1] : null;
+}
+
+export function aggregateKillHistory(worlds: Record<string, Boss[]>): any[] {
+  const historyMap = new Map<string, any>();
+
+  Object.entries(worlds).forEach(([worldName, bosses]) => {
+    bosses.forEach(boss => {
+      if (!boss.history || boss.history === 'None') return;
+
+      if (!historyMap.has(boss.name)) {
+        historyMap.set(boss.name, {
+          bossName: boss.name,
+          totalSpawnDays: 0,
+          totalKills: 0,
+          killsByWorld: {},
+          chronologicalHistory: []
+        });
+      }
+
+      const entry = historyMap.get(boss.name);
+      entry.totalSpawnDays += boss.totalDaysSpawned;
+      entry.totalKills += boss.totalKills;
+
+      // Parse history: "11/11/2025 (1x)"
+      const historyEntries = boss.history.split(',').map(s => s.trim());
+      const killDates: any[] = [];
+
+      historyEntries.forEach(h => {
+        const match = h.match(/^(\d{2})\/(\d{2})\/(\d{4})\s*\((\d+)x\)$/);
+        if (match) {
+          const [_, day, month, year, countStr] = match;
+          const count = parseInt(countStr);
+          const dateStr = `${day}/${month}/${year}`;
+
+          for (let i = 0; i < count; i++) {
+            killDates.push({ date: dateStr, world: worldName, count: 1 });
+            entry.chronologicalHistory.push({ date: dateStr, world: worldName, count: 1 });
+          }
+        }
+      });
+
+      entry.killsByWorld[worldName] = killDates;
+    });
+  });
+
+  return Array.from(historyMap.values());
 }

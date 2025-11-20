@@ -1,24 +1,29 @@
 'use client';
 
+import { useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { useData } from '@/context/DataContext';
-import { useRef } from 'react';
 
 export default function UploadButton() {
-  const { uploadFile, isLoading } = useData();
+  const { uploadFiles, isLoading } = useData();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadFile(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await uploadFiles(Array.from(files));
+      // Reset input so same files can be uploaded again
+      if (inputRef.current) inputRef.current.value = '';
+    }
   };
 
   return (
-    <div>
+    <>
       <input
         ref={inputRef}
         type="file"
         accept=".txt"
+        multiple
         onChange={handleUpload}
         className="hidden"
       />
@@ -30,6 +35,6 @@ export default function UploadButton() {
         <Upload size={18} />
         {isLoading ? 'Uploading...' : 'Upload Data'}
       </button>
-    </div>
+    </>
   );
 }

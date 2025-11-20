@@ -2,13 +2,12 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ParsedData } from '@/types';
-import { parseSingleWorldFile, parseCombinedFile, detectFileType, extractWorldName } from '@/utils/parser';
+import { parseSingleWorldFile, parseCombinedFile, detectFileType, extractWorldName, aggregateKillHistory } from '@/utils/parser';
 import { parseDailyUpdate } from '@/utils/dailyParser';
 
 interface DataContextType {
   data: ParsedData;
-  uploadFile: (file: File) => Promise<void>;
-  uploadDailyFile: (file: File) => Promise<void>;
+  uploadFiles: (files: FileList | File[]) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -24,10 +23,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .then(res => res.json())
       .then(data => {
         console.log('✅ DataContext: Data loaded from API:', data);
-        console.log('✅ Combined bosses count:', data.combined?.length);
-        if (data.combined?.[0]) {
-          console.log('✅ First boss example:', data.combined[0]);
-        }
         setData(data);
       })
       .catch((err) => {
@@ -36,36 +31,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const uploadFile = async (file: File) => {
+  const uploadFiles = async (files: FileList | File[]) => {
     setIsLoading(true);
     try {
-      console.log('📤 Uploading file:', file.name);
-      const content = await file.text();
-      const fileType = detectFileType(file.name);
-      console.log('📝 File type detected:', fileType);
-
+      console.log('📤 Uploading files:', files.length);
+      const fileArray = files instanceof FileList ? Array.from(files) : files;
       let newData = { ...data };
+      let worldsUpdated = false;
 
-      if (fileType === 'combined') {
-        console.log('🔍 Parsing combined file...');
-        const parsed = parseCombinedFile(content);
-        console.log('✅ Parsed combined data:', parsed);
-        console.log('✅ Parsed bosses count:', parsed.length);
-        if (parsed[0]) {
-          console.log('✅ First parsed boss:', parsed[0]);
+      for (const file of fileArray) {
+        const content = await file.text();
+        const fileType = detectFileType(file.name, content);
+        console.log(`📝 File: ${file.name}, Type: ${fileType}`);
+
+        if (fileType === 'combined') {
+          newData.combined = parseCombinedFile(content);
+        } else if (fileType === 'world') {
+          const worldName = extractWorldName(file.name);
+          if (worldName) {
+            newData.worlds = { ...newData.worlds, [worldName]: parseSingleWorldFile(content) };
+            worldsUpdated = true;
+          }
+        } else if (fileType === 'daily') {
+          const parsed = parseDailyUpdate(content);
+          if (parsed) newData.daily = parsed;
         }
-        newData = { ...newData, combined: parsed };
-      } else if (fileType === 'world') {
-        const worldName = extractWorldName(file.name);
-        console.log('🌍 World name:', worldName);
-        if (worldName) {
-          const parsed = parseSingleWorldFile(content);
-          console.log('✅ Parsed world data:', parsed.length, 'bosses');
-          newData = {
-            ...newData,
-            worlds: { ...newData.worlds, [worldName]: parsed }
-          };
-        }
+      }
+
+      if (worldsUpdated) {
+        console.log('🔄 Aggregating kill history...');
+        // @ts-ignore
+        newData.killDates = aggregateKillHistory(newData.worlds);
       }
 
       console.log('💾 Saving to blob storage...');
@@ -84,46 +80,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error('Upload failed');
       }
     } catch (error) {
-      console.error('❌ Error parsing file:', error);
-      alert('Error parsing file. Please check the format.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const uploadDailyFile = async (file: File) => {
-    setIsLoading(true);
-    try {
-      const content = await file.text();
-      const parsed = parseDailyUpdate(content);
-      
-      if (!parsed) {
-        throw new Error('Failed to parse daily update');
-      }
-
-      const newData = { ...data, daily: parsed };
-
-      const response = await fetch('/api/data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: newData })
-      });
-
-      if (response.ok) {
-        setData(newData);
-      } else {
-        throw new Error('Upload failed');
-      }
-    } catch (error) {
-      console.error('Error parsing daily file:', error);
-      alert('Error parsing daily file. Please check the format.');
+      console.error('❌ Error processing files:', error);
+      alert('Error processing files. Please check the format.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <DataContext.Provider value={{ data, uploadFile, uploadDailyFile, isLoading }}>
+    <DataContext.Provider value={{ data, uploadFiles, isLoading }}>
       {children}
     </DataContext.Provider>
   );

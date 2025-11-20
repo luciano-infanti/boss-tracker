@@ -1,13 +1,12 @@
 import { Trophy, Calendar } from 'lucide-react';
-import { CombinedBoss, WorldData } from '@/types';
+import { CombinedBoss } from '@/types';
 import BossCalendar from './BossCalendar';
 
 interface GlobalStatsProps {
   bosses: CombinedBoss[];
-  worlds: WorldData;
 }
 
-export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
+export default function GlobalStats({ bosses }: GlobalStatsProps) {
   const topKilledBosses = [...bosses]
     .sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0))
     .slice(0, 10);
@@ -59,7 +58,7 @@ export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
         </div>
       </div>
 
-      <BossCalendar worlds={worlds} />
+      <BossCalendar />
     </div>
   );
 }

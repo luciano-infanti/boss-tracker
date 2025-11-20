@@ -2,12 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { WorldData, Boss } from '@/types';
+import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
-
-interface BossCalendarProps {
-    worlds: WorldData;
-}
 
 interface CalendarDay {
     date: Date;
@@ -19,7 +15,8 @@ interface CalendarDay {
     }>;
 }
 
-export default function BossCalendar({ worlds }: BossCalendarProps) {
+export default function BossCalendar() {
+    const { data } = useData();
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // Helper to get days in month
@@ -44,8 +41,78 @@ export default function BossCalendar({ worlds }: BossCalendarProps) {
             days.push({ date: new Date(year, month, i), isCurrentMonth: true, kills: [] });
         }
 
+        // Add padding days for next month
+        const endPadding = 42 - days.length; // Ensure 6 rows
+        for (let i = 1; i <= endPadding; i++) {
+            const date = new Date(year, month + 1, i);
+            days.push({ date, isCurrentMonth: false, kills: [] });
+        }
+
+        // Populate kills
+        if (data.killDates) {
+            data.killDates.forEach(bossHistory => {
+                bossHistory.chronologicalHistory.forEach(kill => {
+                    // kill.date is "DD/MM/YYYY"
+                    const [dayStr, monthStr, yearStr] = kill.date.split('/');
+                    const dayNum = parseInt(dayStr, 10);
+                    const monthNum = parseInt(monthStr, 10) - 1;
+                    const yearNum = parseInt(yearStr, 10);
+
+                    const day = days.find(d =>
+                        d.date.getDate() === dayNum &&
+                        d.date.getMonth() === monthNum &&
+                        d.date.getFullYear() === yearNum
+                    );
+
+                    if (day) {
+                        for (let i = 0; i < kill.count; i++) {
+                            day.kills.push({
+                                bossName: bossHistory.bossName,
+                                world: kill.world,
+                                timestamp: kill.date
+                            });
+                        }
+                    }
+                });
+            });
+        } else if (data.worlds) {
+            // Fallback
+            Object.entries(data.worlds).forEach(([worldName, bosses]) => {
+                bosses.forEach(boss => {
+                    if (!boss.history || boss.history === 'None') return;
+                    const historyEntries = boss.history.split(',').map(s => s.trim());
+                    historyEntries.forEach(entry => {
+                        const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})\s*\((\d+)x\)$/);
+                        if (match) {
+                            const [_, dayStr, monthStr, yearStr, countStr] = match;
+                            const dayNum = parseInt(dayStr, 10);
+                            const monthNum = parseInt(monthStr, 10) - 1;
+                            const yearNum = parseInt(yearStr, 10);
+                            const count = parseInt(countStr, 10);
+
+                            const day = days.find(d =>
+                                d.date.getDate() === dayNum &&
+                                d.date.getMonth() === monthNum &&
+                                d.date.getFullYear() === yearNum
+                            );
+
+                            if (day) {
+                                for (let i = 0; i < count; i++) {
+                                    day.kills.push({
+                                        bossName: boss.name,
+                                        world: worldName,
+                                        timestamp: `${dayStr}/${monthStr}/${yearStr}`
+                                    });
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        }
+
         return days;
-    }, [currentDate, worlds]);
+    }, [currentDate, data]);
 
     const nextMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
