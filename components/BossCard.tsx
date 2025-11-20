@@ -104,8 +104,8 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
                 </span>
               </div>
 
-              {/* World Badges (only if dailyKill exists) */}
-              {dailyKill && (
+              {/* World Badges (only if dailyKill exists AND not on world page) */}
+              {dailyKill && type !== 'world' && (
                 <div className="flex flex-wrap gap-1 pt-1">
                   {dailyKill.worlds.map((w) => (
                     <span
