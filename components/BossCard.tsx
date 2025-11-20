@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
@@ -14,13 +14,14 @@ interface BossCardProps {
   isKilledToday?: boolean;
   isNew?: boolean;
   dailyKill?: DailyKill;
+  worldName?: string;
 }
 
 import { useData } from '@/context/DataContext';
 
 
 
-export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill }: BossCardProps) {
+export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill, worldName }: BossCardProps) {
   const { data } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
@@ -28,6 +29,15 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
   // Determine if boss has 0 kills (grayscale)
   const totalKills = boss.totalKills || 0;
   const isZeroKills = totalKills === 0;
+
+  // Calculate today's kills for display
+  const todayKills = useMemo(() => {
+    if (!dailyKill) return 0;
+    if (type === 'world' && worldName) {
+      return dailyKill.worlds.find(w => w.world === worldName)?.count || 0;
+    }
+    return dailyKill.totalKills;
+  }, [dailyKill, type, worldName]);
 
   const handleCardClick = () => {
     setIsModalOpen(true);
@@ -136,7 +146,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
                   <span className="text-white font-medium">{totalKills} kills</span>
                   {dailyKill && (
                     <span className="text-emerald-400 ml-1">
-                      ({dailyKill.totalKills} today)
+                      ({todayKills} today)
                     </span>
                   )}
                 </span>

@@ -154,6 +154,7 @@ export default function WorldPage() {
               isKilledToday={isKilledToday}
               isNew={isNew}
               dailyKill={isKilledToday ? dailyKill : undefined}
+              worldName={worldName}
             />
           );
         })}
