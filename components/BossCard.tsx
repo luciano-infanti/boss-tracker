@@ -40,7 +40,7 @@ export default function BossCard({ boss, type, isKilledToday, isNew, dailyKill }
     <>
       <div
         onClick={handleCardClick}
-        className={`bg-surface border border-border rounded-lg p-4 hover:border-border/80 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer group relative ${isZeroKills ? 'opacity-80' : ''}`}
+        className={`bg-surface border border-border rounded-lg p-4 hover:border-border/80 hover:shadow-lg hover:bg-surface-hover transition-all cursor-pointer group relative ${isZeroKills ? 'opacity-80' : ''}`}
       >
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
           {/* Today Tag - Hide on Today's Kills page (combined view) */}

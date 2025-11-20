@@ -3,14 +3,18 @@ import { CombinedBoss } from '@/types';
 
 interface GlobalStatsProps {
   bosses: CombinedBoss[];
+  neverKilledCount?: number;
 }
 
-export default function GlobalStats({ bosses }: GlobalStatsProps) {
+export default function GlobalStats({ bosses, neverKilledCount }: GlobalStatsProps) {
   const topKilledBosses = [...bosses]
     .sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0))
     .slice(0, 10);
 
   const totalKills = bosses.reduce((sum, boss) => sum + (boss.totalKills || 0), 0);
+  const neverKilled = neverKilledCount !== undefined
+    ? neverKilledCount
+    : bosses.filter(b => (b.totalKills || 0) === 0).length;
 
   return (
     <div className="space-y-6 mb-8">
@@ -50,7 +54,7 @@ export default function GlobalStats({ bosses }: GlobalStatsProps) {
             <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
               <p className="text-secondary text-xs mb-1">Never Killed</p>
               <p className="text-2xl font-semibold text-red-400">
-                {bosses.filter(b => (b.totalKills || 0) === 0).length}
+                {neverKilled}
               </p>
             </div>
             <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
