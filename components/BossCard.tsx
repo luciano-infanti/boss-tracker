@@ -107,7 +107,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
         </div>
 
         <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 bg-surface-hover rounded-md flex items-center justify-center shrink-0 border border-border/50 overflow-hidden ${isZeroKills ? 'grayscale' : ''}`}>
+          <div className={`w-16 h-16 bg-surface-hover rounded-md flex items-center justify-center shrink-0 border border-border/50 overflow-hidden ${isZeroKills ? 'grayscale' : ''}`}>
             {bossImage ? (
               <img src={bossImage} alt={boss.name} className="w-full h-full object-contain p-1" />
             ) : (
