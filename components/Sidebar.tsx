@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe, Server, Calendar, History, Menu, X } from 'lucide-react';
+import { Globe, Server, Calendar, History, Menu, X, Calculator } from 'lucide-react';
 import { useState } from 'react';
 
 import { WORLDS } from '@/utils/constants';
@@ -89,6 +89,17 @@ export default function Sidebar() {
         </div>
 
         <div className="mt-auto p-4 border-t border-border">
+          <Link
+            href="/about"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/about'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+              }`}
+          >
+            <Calculator size={16} />
+            About Algorithm
+          </Link>
           <Link
             href="/backups"
             onClick={() => setIsOpen(false)}
