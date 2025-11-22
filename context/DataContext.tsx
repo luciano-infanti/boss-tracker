@@ -64,7 +64,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (worldsUpdated) {
         console.log('🔄 Aggregating kill history...');
-        // @ts-ignore
         newData.killDates = aggregateKillHistory(newData.worlds);
       }
 

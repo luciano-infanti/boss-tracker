@@ -1,4 +1,4 @@
-import { Boss, CombinedBoss } from '@/types';
+import { Boss, CombinedBoss, BossKillHistory } from '@/types';
 
 export function parseSingleWorldFile(content: string): Boss[] {
   const bosses: Boss[] = [];
@@ -116,8 +116,8 @@ export function extractWorldName(filename: string): string | null {
   return match ? match[1] : null;
 }
 
-export function aggregateKillHistory(worlds: Record<string, Boss[]>): any[] {
-  const historyMap = new Map<string, any>();
+export function aggregateKillHistory(worlds: Record<string, Boss[]>): BossKillHistory[] {
+  const historyMap = new Map<string, BossKillHistory>();
 
   Object.entries(worlds).forEach(([worldName, bosses]) => {
     bosses.forEach(boss => {
@@ -133,7 +133,7 @@ export function aggregateKillHistory(worlds: Record<string, Boss[]>): any[] {
         });
       }
 
-      const entry = historyMap.get(boss.name);
+      const entry = historyMap.get(boss.name)!;
       entry.totalSpawnDays += boss.totalDaysSpawned;
       entry.totalKills += boss.totalKills;
 

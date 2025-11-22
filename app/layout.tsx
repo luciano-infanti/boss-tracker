@@ -11,6 +11,28 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'RubinOT Boss Tracker',
   description: 'Track boss spawns and kills across all worlds',
+  openGraph: {
+    title: 'RubinOT Boss Tracker',
+    description: 'Track boss spawns and kills across all worlds',
+    url: 'https://rubinot-boss-tracker.vercel.app', // Assuming this is the URL, can be updated
+    siteName: 'RubinOT Boss Tracker',
+    images: [
+      {
+        url: '/icon.png', // Using the existing icon
+        width: 800,
+        height: 600,
+        alt: 'RubinOT Boss Tracker Logo',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RubinOT Boss Tracker',
+    description: 'Track boss spawns and kills across all worlds',
+    images: ['/icon.png'],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
