@@ -1,6 +1,15 @@
+import { cookies } from 'next/headers';
 import BackupManager from '@/components/BackupManager';
+import PasswordProtection from '@/components/PasswordProtection';
 
-export default function BackupsPage() {
+export default async function BackupsPage() {
+    const cookieStore = await cookies();
+    const isAuthenticated = cookieStore.get('backup_auth')?.value === 'true';
+
+    if (!isAuthenticated) {
+        return <PasswordProtection />;
+    }
+
     return (
         <div>
             <div className="mb-8">
