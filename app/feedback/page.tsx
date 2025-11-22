@@ -19,7 +19,6 @@ export default function FeedbackPage() {
 
         if (result.success) {
             setStatus('success');
-            e.currentTarget.reset();
         } else {
             setStatus('error');
             setErrorMessage(result.error || 'Something went wrong. Please try again.');

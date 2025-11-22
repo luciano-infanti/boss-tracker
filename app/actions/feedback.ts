@@ -1,5 +1,7 @@
 'use server';
 
+import nodemailer from 'nodemailer';
+
 export async function submitFeedback(formData: FormData) {
     const type = formData.get('type') as string;
     const email = formData.get('email') as string;
@@ -10,18 +12,53 @@ export async function submitFeedback(formData: FormData) {
         return { success: false, error: 'Please fill in all required fields.' };
     }
 
-    // Rate limiting simulation (basic)
-    // In a real app, we'd use a database or Redis to track IP/User submissions
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('❌ Missing email credentials in .env.local');
+        return { success: false, error: 'Server configuration error: Missing email credentials.' };
+    }
 
-    console.log('📨 New Feedback Received:');
-    console.log('Type:', type);
-    console.log('Email:', email);
-    console.log('Title:', title);
-    console.log('Description:', description);
-    console.log('To: lucianoinfanti369@gmail.com');
+    try {
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
 
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: 'lucianoinfanti369@gmail.com', // Sending to yourself
+            replyTo: email, // So you can reply to the user directly
+            subject: `[Boss Tracker Feedback] ${type.toUpperCase()}: ${title}`,
+            text: `
+New Feedback Received:
 
-    return { success: true };
+Type: ${type}
+From: ${email}
+
+Title: ${title}
+
+Description:
+${description}
+            `,
+            html: `
+                <h2>New Feedback Received</h2>
+                <p><strong>Type:</strong> ${type}</p>
+                <p><strong>From:</strong> ${email}</p>
+                <hr />
+                <h3>${title}</h3>
+                <p>${description}</p>
+            `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully');
+        return { success: true };
+
+    } catch (error) {
+        console.error('❌ Error sending email:', error);
+        // Return the error message to the client for debugging (in a real app, we might hide this)
+        return { success: false, error: `Failed to send email: ${(error as Error).message}` };
+    }
 }
