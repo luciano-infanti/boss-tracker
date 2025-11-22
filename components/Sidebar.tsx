@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull } from 'lucide-react';
+import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 import { WORLDS } from '@/utils/constants';
@@ -13,6 +13,16 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const getWorldIcon = (worldName: string) => {
+    if (['Auroria', 'Belaria'].includes(worldName)) {
+      return 'https://wiki.rubinot.com/icons/open-pvp.gif';
+    }
+    if (['Bellum', 'Tenebrium', 'Spectrum'].includes(worldName)) {
+      return 'https://wiki.rubinot.com/icons/retro-open-pvp.gif';
+    }
+    return 'https://wiki.rubinot.com/icons/optional-pvp.gif';
+  };
 
   return (
     <>
@@ -32,14 +42,14 @@ export default function Sidebar() {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="p-4 overflow-y-auto flex-1">
-          <div className="mb-8 px-3 flex justify-between items-center">
-            <div className="mb-8 px-3 flex items-center gap-3">
+          <div className="mb-8 flex justify-between items-center">
+            <div className="mb-8  flex items-center gap-3">
               <img
                 src="https://wiki.rubinot.com/battle-pass/others/daily-mission.gif"
                 alt="RubinOT Boss Tracker"
-                className="h-16 w-auto object-contain"
+                className="h-12 w-auto"
               />
-              <h1 className="text-sm font-medium text-white tracking-wide uppercase opacity-80">RubinOT Boss Tracker</h1>
+              <h1 className="text-xs font-medium text-white tracking-wide opacity-80">RubinOT Boss Tracker</h1>
             </div>
             {/* Close button for mobile only */}
             <button onClick={toggleMenu} className="md:hidden text-secondary hover:text-white">
@@ -98,7 +108,11 @@ export default function Sidebar() {
                   : 'text-secondary hover:text-white hover:bg-surface-hover/50'
                   }`}
               >
-                <Server size={16} />
+                <img
+                  src={getWorldIcon(world)}
+                  alt={`${world} PvP Type`}
+                  className="w-3 h-3 object-contain"
+                />
                 {world}
               </Link>
             ))}
@@ -106,10 +120,33 @@ export default function Sidebar() {
         </div>
 
         <div className="mt-auto p-4 border-t border-border space-y-2">
-          <div className="px-3">
-            <UploadButton />
-          </div>
-          <div className="h-px bg-border/50 my-2 mx-3" />
+          <Link
+            href="/admin"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/admin'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+              }`}
+          >
+            <img
+              src="https://www.tibiawiki.com.br/images/0/01/Chayenne%27s_Magical_Key.gif"
+              alt="Admin"
+              className="w-4 h-4 object-contain"
+            />
+            Admin
+          </Link>
+
+          <Link
+            href="/feedback"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/feedback'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+              }`}
+          >
+            <MessageSquare size={16} />
+            Feedback
+          </Link>
           <Link
             href="/about"
             onClick={() => setIsOpen(false)}
@@ -120,18 +157,6 @@ export default function Sidebar() {
           >
             <Calculator size={16} />
             About
-          </Link>
-
-          <Link
-            href="/backups"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/backups'
-              ? 'bg-surface-hover text-white'
-              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
-              }`}
-          >
-            <History size={16} />
-            Backups
           </Link>
         </div>
       </aside>

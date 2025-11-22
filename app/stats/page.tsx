@@ -94,6 +94,10 @@ export default function GlobalPage() {
 
   return (
     <PageTransition>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white mb-2">Global Stats</h1>
+        <p className="text-secondary">Aggregated statistics across all worlds</p>
+      </div>
       <GlobalStats bosses={data.combined} />
       <SearchBar
         value={search}

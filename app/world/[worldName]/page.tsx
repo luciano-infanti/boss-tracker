@@ -101,6 +101,11 @@ export default function WorldPage() {
 
   return (
     <PageTransition>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white mb-2">{worldName}</h1>
+        <p className="text-secondary">Server specific statistics and history</p>
+      </div>
+
       {/* Overview Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-surface border border-border rounded-lg p-4">
