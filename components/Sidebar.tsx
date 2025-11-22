@@ -67,6 +67,18 @@ export default function Sidebar() {
               Global Stats
             </Link>
 
+            <Link
+              href="/most-wanted"
+              onClick={() => setIsOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/most-wanted'
+                ? 'bg-surface-hover text-white'
+                : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+                }`}
+            >
+              <Skull size={16} />
+              Most Wanted
+            </Link>
+
             <div className="pt-6 pb-2">
               <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider px-3">Worlds</p>
             </div>
@@ -100,17 +112,7 @@ export default function Sidebar() {
             <Calculator size={16} />
             About
           </Link>
-          <Link
-            href="/most-wanted"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/most-wanted'
-              ? 'bg-surface-hover text-white'
-              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
-              }`}
-          >
-            <Skull size={16} />
-            Most Wanted
-          </Link>
+
           <Link
             href="/backups"
             onClick={() => setIsOpen(false)}
