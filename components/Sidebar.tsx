@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe, Server, Calendar, History, Menu, X, Calculator } from 'lucide-react';
+import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull } from 'lucide-react';
 import { useState } from 'react';
 
 import { WORLDS } from '@/utils/constants';
@@ -99,6 +99,17 @@ export default function Sidebar() {
           >
             <Calculator size={16} />
             About
+          </Link>
+          <Link
+            href="/most-wanted"
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/most-wanted'
+              ? 'bg-surface-hover text-white'
+              : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+              }`}
+          >
+            <Skull size={16} />
+            Most Wanted
           </Link>
           <Link
             href="/backups"
