@@ -6,6 +6,7 @@ import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull } from 'lu
 import { useState } from 'react';
 
 import { WORLDS } from '@/utils/constants';
+import UploadButton from './UploadButton';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -32,9 +33,13 @@ export default function Sidebar() {
       `}>
         <div className="p-4 overflow-y-auto flex-1">
           <div className="mb-8 px-3 flex justify-between items-center">
-            <div>
-              <h1 className="text-sm font-medium text-white tracking-wide uppercase opacity-80 mb-1">RubinOT Tracker</h1>
-              <p className="text-xs text-secondary">Boss Analytics</p>
+            <div className="mb-8 px-3 flex items-center gap-3">
+              <img
+                src="https://wiki.rubinot.com/battle-pass/others/daily-mission.gif"
+                alt="RubinOT Boss Tracker"
+                className="h-16 w-auto object-contain"
+              />
+              <h1 className="text-sm font-medium text-white tracking-wide uppercase opacity-80">RubinOT Boss Tracker</h1>
             </div>
             {/* Close button for mobile only */}
             <button onClick={toggleMenu} className="md:hidden text-secondary hover:text-white">
@@ -100,7 +105,11 @@ export default function Sidebar() {
           </nav>
         </div>
 
-        <div className="mt-auto p-4 border-t border-border">
+        <div className="mt-auto p-4 border-t border-border space-y-2">
+          <div className="px-3">
+            <UploadButton />
+          </div>
+          <div className="h-px bg-border/50 my-2 mx-3" />
           <Link
             href="/about"
             onClick={() => setIsOpen(false)}

@@ -14,3 +14,9 @@ export async function verifyBackupPassword(password: string) {
     }
     return { success: false, error: 'Incorrect password' };
 }
+
+export async function checkAuth() {
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('backup_auth');
+    return authCookie?.value === 'true';
+}
