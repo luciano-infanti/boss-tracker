@@ -51,32 +51,52 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
     // Only show tooltip on World pages
     if (type !== 'world') return;
 
-    // console.log('🖱️ Mouse Enter:', boss.name);
     const timer = setTimeout(() => {
-      // console.log('⏰ Tooltip Timer Fired:', boss.name);
       setShowTooltip(true);
-    }, 2500); // 2.5 seconds delay
+    }, 1000); // 1 seconds delay
     setHoverTimer(timer);
   };
 
   const handleMouseLeave = () => {
-    // console.log('👋 Mouse Leave:', boss.name);
     if (hoverTimer) clearTimeout(hoverTimer);
     setShowTooltip(false);
   };
 
   const lastSeenText = useMemo(() => {
-    if (!('lastKillDate' in boss) || !boss.lastKillDate || boss.lastKillDate === 'Never') return null;
+    let latestDate: Date | null = null;
+    let dateStr = 'lastKillDate' in boss ? boss.lastKillDate : undefined;
 
-    // Parse date: DD/MM/YYYY
-    const [day, month, year] = boss.lastKillDate.split('/').map(Number);
-    const lastDate = new Date(year, month - 1, day);
+    // 1. Try to parse from history first (most accurate)
+    if ('history' in boss && boss.history && boss.history !== 'None') {
+      const entries = boss.history.split(',').map(s => s.trim());
+      entries.forEach(entry => {
+        const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+          const [_, day, month, year] = match;
+          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          if (!latestDate || date > latestDate) {
+            latestDate = date;
+            dateStr = `${day}/${month}/${year}`;
+          }
+        }
+      });
+    }
+
+    // 2. Fallback to lastKillDate if history parsing failed or yielded nothing
+    if (!latestDate && dateStr && dateStr !== 'Never') {
+      const [day, month, year] = dateStr.split('/').map(Number);
+      latestDate = new Date(year, month - 1, day);
+    }
+
+    if (!latestDate || !dateStr || dateStr === 'Never') {
+      return 'Last seen: Never';
+    }
+
     const now = new Date();
-
-    const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+    const diffTime = Math.abs(now.getTime() - latestDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return `Last time seen ${boss.lastKillDate} (${diffDays} days ago)`;
+    return `Last time seen ${dateStr} (${diffDays} days ago)`;
   }, [boss]);
 
   return (

@@ -35,6 +35,16 @@ export function parseSingleWorldFile(content: string): Boss[] {
       }
     }
 
+    // Fallback: If lastKillDate is 'Never' but history exists, extract it
+    if (boss.lastKillDate === 'Never' && boss.history && boss.history !== 'None') {
+      const firstDate = boss.history.split(',')[0].trim();
+      // Extract date part: "22/11/2025 (1x)" -> "22/11/2025"
+      const match = firstDate.match(/^(\d{2}\/\d{2}\/\d{4})/);
+      if (match) {
+        boss.lastKillDate = match[1];
+      }
+    }
+
     if (boss.name) {
       bosses.push(boss as Boss);
     }

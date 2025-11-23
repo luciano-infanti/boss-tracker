@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
@@ -220,6 +220,23 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
         );
     };
 
+    // Close on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen, onClose]);
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -281,21 +298,51 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         </div>
                                     </div>
                                     {/* Last Seen - Only for World View */}
-                                    {'history' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && (
+                                    {'history' in boss && (
                                         <div className="col-span-2 bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                             <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Last Seen</div>
                                             <div className="text-lg font-medium text-white">
-                                                {boss.lastKillDate}
-                                                <span className="text-sm text-secondary ml-2 font-normal">
-                                                    ({(() => {
-                                                        const [day, month, year] = boss.lastKillDate.split('/').map(Number);
-                                                        const lastDate = new Date(year, month - 1, day);
-                                                        const now = new Date();
-                                                        const diffTime = Math.abs(now.getTime() - lastDate.getTime());
-                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                                        return `${diffDays} days ago`;
-                                                    })()})
-                                                </span>
+                                                {(() => {
+                                                    let latestDate: Date | null = null;
+                                                    let dateStr = boss.lastKillDate;
+
+                                                    // 1. Try to parse from history first (most accurate)
+                                                    if (boss.history && boss.history !== 'None') {
+                                                        const entries = boss.history.split(',').map(s => s.trim());
+                                                        entries.forEach(entry => {
+                                                            const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+                                                            if (match) {
+                                                                const [_, day, month, year] = match;
+                                                                const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                                                if (!latestDate || date > latestDate) {
+                                                                    latestDate = date;
+                                                                    dateStr = `${day}/${month}/${year}`;
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+
+                                                    // 2. Fallback to lastKillDate
+                                                    if (!latestDate && dateStr && dateStr !== 'Never') {
+                                                        const [day, month, year] = dateStr.split('/').map(Number);
+                                                        latestDate = new Date(year, month - 1, day);
+                                                    }
+
+                                                    if (!latestDate || !dateStr || dateStr === 'Never') return 'Never';
+
+                                                    const now = new Date();
+                                                    const diffTime = Math.abs(now.getTime() - latestDate.getTime());
+                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                                    return (
+                                                        <>
+                                                            {dateStr}
+                                                            <span className="text-sm text-secondary ml-2 font-normal">
+                                                                ({diffDays} days ago)
+                                                            </span>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     )}
@@ -432,11 +479,11 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
-                    </motion.div>
+                            </div >
+                        </div >
+                    </motion.div >
                 </>
             )}
-        </AnimatePresence>
+        </AnimatePresence >
     );
 }
