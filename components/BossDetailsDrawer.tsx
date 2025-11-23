@@ -4,6 +4,8 @@ import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 import { X, Calendar, Server, Clock, ChevronDown, ChevronRight, Check, ChevronLeft } from 'lucide-react';
 import { useData } from '@/context/DataContext';
+import BossMap from './BossMap';
+import { getBossExtraInfo } from '@/utils/bossExtraData';
 
 interface BossDetailsDrawerProps {
     boss: Boss | CombinedBoss;
@@ -352,6 +354,53 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                     )}
                                 </div>
                             </div>
+
+
+                            {/* Extra Info: Loot & Location */}
+                            {(() => {
+                                const extraInfo = getBossExtraInfo(boss.name);
+                                if (!extraInfo) return null;
+
+                                return (
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {/* Valuable Loot */}
+                                        {extraInfo.loot && extraInfo.loot.length > 0 && (
+                                            <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-4">
+                                                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                                    <span className="text-yellow-400">✨</span> Valuable Loot
+                                                </h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {extraInfo.loot.map((item, i) => (
+                                                        <span key={i} className="text-xs font-medium text-secondary bg-surface-hover/50 px-2 py-1 rounded border border-border/30">
+                                                            {item}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Location Map */}
+                                        {extraInfo.location && (
+                                            <div className="space-y-2">
+                                                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                                                    <span className="text-emerald-400">📍</span> Location
+                                                    {extraInfo.location.description && (
+                                                        <span className="text-xs font-normal text-secondary">
+                                                            - {extraInfo.location.description}
+                                                        </span>
+                                                    )}
+                                                </h3>
+                                                <BossMap
+                                                    x={extraInfo.location.x}
+                                                    y={extraInfo.location.y}
+                                                    z={extraInfo.location.z}
+                                                    name={boss.name}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Mini Calendar */}
                             <MiniCalendar />
