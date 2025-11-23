@@ -174,8 +174,8 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                     )}
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                        <div key={d} className="text-[10px] text-secondary font-medium py-1">{d}</div>
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                        <div key={i} className="text-[10px] text-secondary font-medium py-1">{d}</div>
                     ))}
                     {padding.map(p => <div key={`pad-${p}`} />)}
                     {days.map(day => {
@@ -280,6 +280,25 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                                 'typicalSpawnFrequency' in boss ? boss.typicalSpawnFrequency : 'N/A'}
                                         </div>
                                     </div>
+                                    {/* Last Seen - Only for World View */}
+                                    {'history' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && (
+                                        <div className="col-span-2 bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
+                                            <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Last Seen</div>
+                                            <div className="text-lg font-medium text-white">
+                                                {boss.lastKillDate}
+                                                <span className="text-sm text-secondary ml-2 font-normal">
+                                                    ({(() => {
+                                                        const [day, month, year] = boss.lastKillDate.split('/').map(Number);
+                                                        const lastDate = new Date(year, month - 1, day);
+                                                        const now = new Date();
+                                                        const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        return `${diffDays} days ago`;
+                                                    })()})
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -299,8 +318,8 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         <button
                                             onClick={() => setSortMode('server')}
                                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${sortMode === 'server'
-                                                    ? 'bg-primary text-black shadow-sm'
-                                                    : 'text-secondary hover:text-white'
+                                                ? 'bg-primary text-black shadow-sm'
+                                                : 'text-secondary hover:text-white'
                                                 }`}
                                         >
                                             <Server size={12} />
@@ -309,8 +328,8 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         <button
                                             onClick={() => setSortMode('date')}
                                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${sortMode === 'date'
-                                                    ? 'bg-primary text-black shadow-sm'
-                                                    : 'text-secondary hover:text-white'
+                                                ? 'bg-primary text-black shadow-sm'
+                                                : 'text-secondary hover:text-white'
                                                 }`}
                                         >
                                             <Calendar size={12} />

@@ -20,6 +20,7 @@ export interface CombinedBoss {
     kills: number;
     frequency: string;
   }>;
+  lastKillDate?: string;
 }
 
 export interface WorldData {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 import { Clock, Calendar, Trophy } from 'lucide-react';
@@ -22,7 +22,7 @@ import { useData } from '@/context/DataContext';
 
 import BossDetailsDrawer from './BossDetailsDrawer';
 
-export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill, worldName }: BossCardProps) {
+export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill, worldName, showNextSpawn = true }: BossCardProps & { showNextSpawn?: boolean }) {
   const { data } = useData();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
@@ -44,10 +44,47 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
     setIsDrawerOpen(true);
   };
 
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    // Only show tooltip on World pages
+    if (type !== 'world') return;
+
+    // console.log('🖱️ Mouse Enter:', boss.name);
+    const timer = setTimeout(() => {
+      // console.log('⏰ Tooltip Timer Fired:', boss.name);
+      setShowTooltip(true);
+    }, 2500); // 2.5 seconds delay
+    setHoverTimer(timer);
+  };
+
+  const handleMouseLeave = () => {
+    // console.log('👋 Mouse Leave:', boss.name);
+    if (hoverTimer) clearTimeout(hoverTimer);
+    setShowTooltip(false);
+  };
+
+  const lastSeenText = useMemo(() => {
+    if (!('lastKillDate' in boss) || !boss.lastKillDate || boss.lastKillDate === 'Never') return null;
+
+    // Parse date: DD/MM/YYYY
+    const [day, month, year] = boss.lastKillDate.split('/').map(Number);
+    const lastDate = new Date(year, month - 1, day);
+    const now = new Date();
+
+    const diffTime = Math.abs(now.getTime() - lastDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return `Last time seen ${boss.lastKillDate} (${diffDays} days ago)`;
+  }, [boss]);
+
   return (
     <>
       <motion.div
         onClick={handleCardClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className={`
           relative rounded-lg p-5 border transition-all cursor-pointer group hover:bg-surface-hover
           ${isKilledToday
@@ -57,6 +94,22 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
           ${isZeroKills ? 'opacity-80' : ''}
         `}
       >
+        {/* Tooltip */}
+        <AnimatePresence>
+          {showTooltip && lastSeenText && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+              animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+              transition={{ duration: 0.2 }}
+              className="absolute -top-10 left-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
+            >
+              {lastSeenText}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ... (keep existing card content) ... */}
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
           {/* Today Tag - Hide on Today's Kills page (combined view) */}
@@ -74,10 +127,24 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
           )}
         </div>
 
-        <div className="flex items-start gap-4">
-          <div className={`w-16 h-16 bg-surface-hover rounded-md flex items-center justify-center shrink-0 border border-border/50 overflow-hidden ${isZeroKills ? 'grayscale' : ''}`}>
+        <div className="flex items-start gap-6">
+          {/* Image Container with Pop-out effect */}
+          <div className={`
+            w-16 h-16 rounded-lg flex items-center justify-center shrink-0 border relative
+            ${isNew
+              ? 'bg-yellow-500/20 border-yellow-500/30'
+              : isKilledToday
+                ? 'bg-emerald-500/20 border-emerald-500/30'
+                : 'bg-surface-hover border-border/50'
+            }
+            ${isZeroKills ? 'grayscale' : ''}
+          `}>
             {bossImage ? (
-              <img src={bossImage} alt={boss.name} className="w-full h-full object-contain p-1" />
+              <img
+                src={bossImage}
+                alt={boss.name}
+                className="w-[140%] h-[140%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg transition-transform group-hover:scale-110"
+              />
             ) : (
               <span className="text-xs font-bold text-secondary">{boss.name.slice(0, 2)}</span>
             )}
@@ -89,18 +156,20 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
             </div>
 
             <div className="space-y-1">
-              {/* Next Spawn */}
-              <div className="flex items-center gap-1.5 text-xs text-secondary">
-                <Calendar size={12} className="text-secondary/70" />
-                <span>
-                  Next: <span className="text-white/90">
-                    {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
+              {/* Next Spawn - Conditional */}
+              {showNextSpawn && (
+                <div className="flex items-center gap-1.5 text-xs text-secondary">
+                  <Calendar size={12} className="text-secondary/70" />
+                  <span>
+                    Next: <span className="text-white/90">
+                      {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
+                    </span>
                   </span>
-                </span>
-              </div>
+                </div>
+              )}
 
-              {/* Last Kill - Only show if not "Never" */}
-              {'lastKillDate' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && (
+              {/* Last Kill - Only show if not "Never" AND not combined view */}
+              {'lastKillDate' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && type !== 'combined' && (
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
                   <Clock size={12} className="text-secondary/70" />
                   <span>{boss.lastKillDate}</span>

@@ -110,7 +110,7 @@ export default function GlobalPage() {
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((boss) => (
-          <BossCard key={boss.name} boss={boss} type="combined" />
+          <BossCard key={boss.name} boss={boss} type="combined" showNextSpawn={false} />
         ))}
       </div>
     </PageTransition>

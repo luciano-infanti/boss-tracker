@@ -108,10 +108,34 @@ export default function WorldPage() {
 
       {/* Overview Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Most Killed</p>
-          <p className="text-lg font-medium text-white truncate">{mostKilled?.name || 'N/A'}</p>
-        </div>
+        {/* Next Expected Boss Card */}
+        {(() => {
+          // Find the boss with the soonest next expected spawn
+          const expectedBosses = worldData
+            .filter(b => b.nextExpectedSpawn && b.nextExpectedSpawn !== 'N/A')
+            .sort((a, b) => {
+              // Parse dates (DD/MM/YYYY)
+              const parseDate = (dateStr: string) => {
+                const [day, month, year] = dateStr.split('/').map(Number);
+                return new Date(year, month - 1, day).getTime();
+              };
+              return parseDate(a.nextExpectedSpawn) - parseDate(b.nextExpectedSpawn);
+            });
+
+          const nextBoss = expectedBosses[0];
+
+          if (nextBoss) {
+            return (
+              <div className="bg-surface border border-border rounded-lg p-4">
+                <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Next Expected</p>
+                <p className="text-lg font-medium text-white truncate">{nextBoss.name}</p>
+                <p className="text-xs text-emerald-400">{nextBoss.nextExpectedSpawn}</p>
+              </div>
+            );
+          }
+          return null; // Hide if no expected bosses
+        })()}
+
         <div className="bg-surface border border-border rounded-lg p-4">
           <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Killed Today</p>
           <p className="text-lg font-medium text-emerald-400">{counts.killedToday}</p>
