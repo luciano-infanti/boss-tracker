@@ -125,11 +125,24 @@ export default function WorldPage() {
           const nextBoss = expectedBosses[0];
 
           if (nextBoss) {
+            const [day, month, year] = nextBoss.nextExpectedSpawn.split('/').map(Number);
+            const expectedDate = new Date(year, month - 1, day);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const isOverdue = expectedDate < today;
+
+            // Hide card if overdue
+            if (isOverdue) {
+              return null;
+            }
+
             return (
               <div className="bg-surface border border-border rounded-lg p-4">
                 <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Next Expected</p>
                 <p className="text-lg font-medium text-white truncate">{nextBoss.name}</p>
-                <p className="text-xs text-emerald-400">{nextBoss.nextExpectedSpawn}</p>
+                <p className="text-xs text-emerald-400">
+                  {nextBoss.nextExpectedSpawn}
+                </p>
               </div>
             );
           }

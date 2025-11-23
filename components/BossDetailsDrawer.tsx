@@ -331,7 +331,11 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                                     if (!latestDate || !dateStr || dateStr === 'Never') return 'Never';
 
                                                     const now = new Date();
-                                                    const diffTime = Math.abs(now.getTime() - latestDate.getTime());
+                                                    // Normalize to midnight
+                                                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                                                    const lastSeen = new Date(latestDate.getFullYear(), latestDate.getMonth(), latestDate.getDate());
+
+                                                    const diffTime = Math.abs(today.getTime() - lastSeen.getTime());
                                                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                                                     return (
@@ -483,7 +487,8 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                         </div >
                     </motion.div >
                 </>
-            )}
+            )
+            }
         </AnimatePresence >
     );
 }

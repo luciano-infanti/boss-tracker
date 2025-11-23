@@ -92,11 +92,39 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
       return 'Last seen: Never';
     }
 
+    if (!latestDate || !dateStr || dateStr === 'Never') {
+      return 'Last seen: Never';
+    }
+
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - latestDate.getTime());
+    // Normalize to midnight for accurate day difference
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastSeen = new Date(latestDate.getFullYear(), latestDate.getMonth(), latestDate.getDate());
+
+    const diffTime = Math.abs(today.getTime() - lastSeen.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     return `Last time seen ${dateStr} (${diffDays} days ago)`;
+  }, [boss]);
+
+  // Check if next spawn is overdue
+  const nextSpawnInfo = useMemo(() => {
+    if (!('nextExpectedSpawn' in boss) || !boss.nextExpectedSpawn || boss.nextExpectedSpawn === 'N/A') {
+      return null;
+    }
+
+    const [day, month, year] = boss.nextExpectedSpawn.split('/').map(Number);
+    const expectedDate = new Date(year, month - 1, day);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Check if date is strictly before today
+    const isOverdue = expectedDate < today;
+
+    return {
+      date: boss.nextExpectedSpawn,
+      isOverdue
+    };
   }, [boss]);
 
   return (
@@ -163,7 +191,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
               <img
                 src={bossImage}
                 alt={boss.name}
-                className="w-[140%] h-[140%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg transition-transform group-hover:scale-110"
+                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg transition-transform group-hover:scale-110"
               />
             ) : (
               <span className="text-xs font-bold text-secondary">{boss.name.slice(0, 2)}</span>
@@ -177,12 +205,12 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
 
             <div className="space-y-1">
               {/* Next Spawn - Conditional */}
-              {showNextSpawn && (
+              {showNextSpawn && nextSpawnInfo && (
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
                   <Calendar size={12} className="text-secondary/70" />
                   <span>
-                    Next: <span className="text-white/90">
-                      {'nextExpectedSpawn' in boss ? boss.nextExpectedSpawn : 'N/A'}
+                    Next: <span className={`${nextSpawnInfo.isOverdue ? 'text-white/90' : 'text-white/90'}`}>
+                      {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
                     </span>
                   </span>
                 </div>
