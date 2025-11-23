@@ -122,5 +122,16 @@ export const bossImages: Record<string, string> = {
 };
 
 export function getBossImage(bossName: string): string | null {
-  return bossImages[bossName] || null;
+  // Try exact match first
+  if (bossImages[bossName]) {
+    return bossImages[bossName];
+  }
+
+  // Try case-insensitive match
+  const lowercaseName = bossName.toLowerCase();
+  const matchedKey = Object.keys(bossImages).find(
+    key => key.toLowerCase() === lowercaseName
+  );
+
+  return matchedKey ? bossImages[matchedKey] : null;
 }
