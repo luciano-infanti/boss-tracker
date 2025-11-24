@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
 
+import { getAdjustedKillCount } from '@/utils/soulpitUtils';
+
 interface CalendarDay {
     date: Date;
     isCurrentMonth: boolean;
@@ -55,6 +57,10 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                     // Filter by world if worldName is provided
                     if (worldName && kill.world !== worldName) return;
 
+                    // Apply Soulpit filtering
+                    const adjustedCount = getAdjustedKillCount(bossHistory.bossName, kill.count);
+                    if (adjustedCount === 0) return;
+
                     // kill.date is "DD/MM/YYYY"
                     const [dayStr, monthStr, yearStr] = kill.date.split('/');
                     const dayNum = parseInt(dayStr, 10);
@@ -68,7 +74,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                     );
 
                     if (day) {
-                        for (let i = 0; i < kill.count; i++) {
+                        for (let i = 0; i < adjustedCount; i++) {
                             day.kills.push({
                                 bossName: bossHistory.bossName,
                                 world: kill.world,
@@ -96,6 +102,10 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                             const yearNum = parseInt(yearStr, 10);
                             const count = parseInt(countStr, 10);
 
+                            // Apply Soulpit filtering
+                            const adjustedCount = getAdjustedKillCount(boss.name, count);
+                            if (adjustedCount === 0) return;
+
                             const day = days.find(d =>
                                 d.date.getDate() === dayNum &&
                                 d.date.getMonth() === monthNum &&
@@ -103,7 +113,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                             );
 
                             if (day) {
-                                for (let i = 0; i < count; i++) {
+                                for (let i = 0; i < adjustedCount; i++) {
                                     day.kills.push({
                                         bossName: boss.name,
                                         world: wName,
