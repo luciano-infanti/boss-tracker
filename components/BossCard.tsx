@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 import { Clock, Calendar, Trophy } from 'lucide-react';
-import { calculateAdjustedTotalKills } from '@/utils/soulpitUtils';
+import { calculateAdjustedTotalKills, getAdjustedKillCount } from '@/utils/soulpitUtils';
 
 import { DailyKill } from '@/types';
 
@@ -37,11 +37,17 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
   // Calculate today's kills for display
   const todayKills = useMemo(() => {
     if (!dailyKill) return 0;
+    let count = 0;
     if (type === 'world' && worldName) {
-      return dailyKill.worlds.find(w => w.world === worldName)?.count || 0;
+      count = dailyKill.worlds.find(w => w.world === worldName)?.count || 0;
+    } else {
+      count = dailyKill.totalKills;
     }
-    return dailyKill.totalKills;
-  }, [dailyKill, type, worldName]);
+    return getAdjustedKillCount(boss.name, count);
+  }, [dailyKill, type, worldName, boss.name]);
+
+  // Override isKilledToday based on filtered count
+  const showKilledToday = isKilledToday && todayKills > 0;
 
   const handleCardClick = () => {
     setIsDrawerOpen(true);
@@ -138,7 +144,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
         onMouseLeave={handleMouseLeave}
         className={`
           relative rounded-lg p-5 border transition-all cursor-pointer group hover:bg-surface-hover
-          ${isKilledToday
+          ${showKilledToday
             ? 'bg-surface border-border'
             : 'bg-surface border-border'
           }
@@ -164,7 +170,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
         {/* ... (keep existing card content) ... */}
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
           {/* Today Tag - Hide on Today's Kills page (combined view) */}
-          {isKilledToday && type !== 'combined' && (
+          {showKilledToday && type !== 'combined' && (
             <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
               TODAY
             </div>
@@ -184,7 +190,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
             w-16 h-16 rounded-lg flex items-center justify-center shrink-0 border relative
             ${isNew
               ? 'bg-yellow-500/20 border-yellow-500/30'
-              : isKilledToday
+              : showKilledToday
                 ? 'bg-emerald-500/20 border-emerald-500/30'
                 : 'bg-surface-hover border-border/50'
             }
@@ -232,7 +238,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
                   <span className="text-white font-medium">{totalKills} kills</span>
-                  {dailyKill && type === 'combined' && (
+                  {dailyKill && type === 'combined' && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills} today)
                     </span>
@@ -243,15 +249,19 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
               {/* World Badges (only if dailyKill exists AND not on world page) */}
               {dailyKill && type !== 'world' && (
                 <div className="flex flex-wrap gap-1 pt-1">
-                  {dailyKill.worlds.map((w) => (
-                    <span
-                      key={w.world}
-                      className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
-                    >
-                      {w.world}
-                      {w.count > 1 && <span className="ml-1 text-white opacity-70">x{w.count}</span>}
-                    </span>
-                  ))}
+                  {dailyKill.worlds.map((w) => {
+                    const adjustedCount = getAdjustedKillCount(boss.name, w.count);
+                    if (adjustedCount === 0) return null;
+                    return (
+                      <span
+                        key={w.world}
+                        className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
+                      >
+                        {w.world}
+                        {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </div>
