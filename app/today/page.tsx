@@ -7,26 +7,33 @@ import BossCard from '@/components/BossCard';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
 
+import { getAdjustedKillCount } from '@/utils/soulpitUtils';
+
 export default function TodayPage() {
   const { data, isLoading } = useData();
   const daily = data.daily;
 
-  const sortedKills = [...(data.daily?.kills || [])].sort((a, b) => {
-    // Check for "New" (First kill ever globally)
-    const getIsNew = (bossName: string, killsToday: number) => {
-      const globalBoss = data.combined.find(b => b.name === bossName);
-      if (!globalBoss) return false;
-      // If global total kills == kills today, it's new
-      return globalBoss.totalKills === killsToday;
-    };
+  const sortedKills = [...(data.daily?.kills || [])]
+    .filter((kill) => {
+      // Filter out bosses with 0 adjusted kills
+      return getAdjustedKillCount(kill.bossName, kill.totalKills) > 0;
+    })
+    .sort((a, b) => {
+      // Check for "New" (First kill ever globally)
+      const getIsNew = (bossName: string, killsToday: number) => {
+        const globalBoss = data.combined.find(b => b.name === bossName);
+        if (!globalBoss) return false;
+        // If global total kills == kills today, it's new
+        return globalBoss.totalKills === killsToday;
+      };
 
-    const aNew = getIsNew(a.bossName, a.totalKills) ? 1 : 0;
-    const bNew = getIsNew(b.bossName, b.totalKills) ? 1 : 0;
+      const aNew = getIsNew(a.bossName, a.totalKills) ? 1 : 0;
+      const bNew = getIsNew(b.bossName, b.totalKills) ? 1 : 0;
 
-    if (aNew !== bNew) return bNew - aNew;
+      if (aNew !== bNew) return bNew - aNew;
 
-    return b.totalKills - a.totalKills;
-  });
+      return b.totalKills - a.totalKills;
+    });
 
   if (isLoading) {
     return <Loading />;
