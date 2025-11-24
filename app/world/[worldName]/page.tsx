@@ -10,6 +10,7 @@ import { useParams } from 'next/navigation';
 import { Boss } from '@/types';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
+import { getAdjustedKillCount } from '@/utils/soulpitUtils';
 
 export default function WorldPage() {
   const params = useParams();
@@ -23,9 +24,12 @@ export default function WorldPage() {
   const counts = useMemo(() => {
     return {
       killedToday: worldData.filter(b =>
-        data.daily?.kills.some(k =>
-          k.bossName === b.name && k.worlds.some(w => w.world === worldName)
-        )
+        data.daily?.kills.some(k => {
+          if (k.bossName !== b.name) return false;
+          const worldKill = k.worlds.find(w => w.world === worldName);
+          if (!worldKill) return false;
+          return getAdjustedKillCount(b.name, worldKill.count) > 0;
+        })
       ).length,
       neverKilled: worldData.filter(b => (b.totalKills || 0) === 0).length
     };
@@ -39,17 +43,23 @@ export default function WorldPage() {
     if (sortBy === 'killedToday') {
       // FILTER to only show killed today based on daily data
       bosses = bosses.filter(b =>
-        data.daily?.kills.some(k =>
-          k.bossName === b.name && k.worlds.some(w => w.world === worldName)
-        )
+        data.daily?.kills.some(k => {
+          if (k.bossName !== b.name) return false;
+          const worldKill = k.worlds.find(w => w.world === worldName);
+          if (!worldKill) return false;
+          return getAdjustedKillCount(b.name, worldKill.count) > 0;
+        })
       );
       bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
     } else if (sortBy === 'kills') {
       // Sort by kills but show ALL bosses
       bosses.sort((a, b) => {
-        const isKilled = (name: string) => data.daily?.kills.some(k =>
-          k.bossName === name && k.worlds.some(w => w.world === worldName)
-        );
+        const isKilled = (name: string) => data.daily?.kills.some(k => {
+          if (k.bossName !== name) return false;
+          const worldKill = k.worlds.find(w => w.world === worldName);
+          if (!worldKill) return false;
+          return getAdjustedKillCount(name, worldKill.count) > 0;
+        });
 
         const aKilledToday = isKilled(a.name) ? 1 : 0;
         const bKilledToday = isKilled(b.name) ? 1 : 0;
@@ -180,9 +190,12 @@ export default function WorldPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         {filtered.map((boss) => {
-          const isKilledToday = data.daily?.kills.some(k =>
-            k.bossName === boss.name && k.worlds.some(w => w.world === worldName)
-          );
+          const isKilledToday = data.daily?.kills.some(k => {
+            if (k.bossName !== boss.name) return false;
+            const worldKill = k.worlds.find(w => w.world === worldName);
+            if (!worldKill) return false;
+            return getAdjustedKillCount(boss.name, worldKill.count) > 0;
+          });
 
           const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
           const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
