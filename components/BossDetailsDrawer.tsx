@@ -386,13 +386,13 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                 return (
                                     <div className="grid grid-cols-1 gap-6">
                                         {/* Valuable Loot */}
-                                        {extraInfo?.loot?.length > 0 && (
+                                        {(extraInfo?.loot?.length ?? 0) > 0 && (
                                             <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-4">
                                                 <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                                                     <span className="text-yellow-400">✨</span> Valuable Loot
                                                 </h3>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {extraInfo.loot!.map((item, i) => (
+                                                    {extraInfo!.loot!.map((item, i) => (
                                                         <div key={i} className="flex items-center gap-2 bg-surface-hover/50 px-2 py-1 rounded border border-border/30">
                                                             {item.image && (
                                                                 <img src={item.image} alt={item.name} className="w-6 h-6 object-contain" />
@@ -407,14 +407,14 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         )}
 
                                         {/* Location Map */}
-                                        {extraInfo?.locations?.length > 0 && (
+                                        {(extraInfo?.locations?.length ?? 0) > 0 && (
                                             <div className="space-y-6">
                                                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                                                     <span className="text-emerald-400">📍</span> Locations
                                                 </h3>
 
                                                 <div className="grid grid-cols-1 gap-6">
-                                                    {extraInfo.locations!.map((location, index) => (
+                                                    {extraInfo!.locations!.map((location, index) => (
                                                         <div key={index} className="space-y-2">
                                                             {location.description && (
                                                                 <div className="text-xs text-secondary flex items-center gap-1">
