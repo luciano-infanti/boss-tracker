@@ -6,6 +6,7 @@ import { X, Calendar, Server, Clock, ChevronDown, ChevronRight, Check, ChevronLe
 import { useData } from '@/context/DataContext';
 import BossMap from './BossMap';
 import { getBossExtraInfo } from '@/utils/bossExtraData';
+import { getAdjustedKillCount, isSoulpitBoss } from '@/utils/soulpitUtils';
 
 interface BossDetailsDrawerProps {
     boss: Boss | CombinedBoss;
@@ -20,8 +21,6 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
     const [sortMode, setSortMode] = useState<SortMode>('server');
     const [expandedWorlds, setExpandedWorlds] = useState<Record<string, boolean>>({});
     const bossImage = getBossImage(boss.name);
-    const totalKills = boss.totalKills || 0;
-    const isZeroKills = totalKills === 0;
 
     const toggleWorld = (worldName: string) => {
         setExpandedWorlds(prev => ({
@@ -33,7 +32,19 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
     // Helper to parse history string for World view
     const parseHistoryString = (historyStr: string) => {
         if (!historyStr || historyStr === 'None') return [];
-        return historyStr.split(',').map(s => s.trim());
+        const entries = historyStr.split(',').map(s => s.trim());
+
+        if (!isSoulpitBoss(boss.name)) return entries;
+
+        return entries.map(entry => {
+            const match = entry.match(/^(\d{2}\/\d{2}\/\d{4})(?:\s*\((\d+)x\))?$/);
+            if (!match) return entry;
+            const [_, date, countStr] = match;
+            const count = countStr ? parseInt(countStr) : 1;
+            const adjusted = getAdjustedKillCount(boss.name, count);
+            if (adjusted === 0) return null;
+            return adjusted > 1 ? `${date} (${adjusted}x)` : date;
+        }).filter(Boolean) as string[];
     };
 
     // Helper to get dates for Combined view
@@ -49,9 +60,11 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
             return acc;
         }, {} as Record<string, number>);
 
-        return Object.entries(grouped).map(([date, count]) =>
-            `${date}${count > 1 ? ` (${count}x)` : ''}`
-        );
+        return Object.entries(grouped).map(([date, count]) => {
+            const adjusted = getAdjustedKillCount(boss.name, count);
+            if (adjusted === 0) return null;
+            return `${date}${adjusted > 1 ? ` (${adjusted}x)` : ''}`;
+        }).filter(Boolean) as string[];
     };
 
     // Aggregate all kills for Date sort
@@ -83,12 +96,15 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                 if (bossHistory) {
                     Object.entries(bossHistory.killsByWorld).forEach(([world, entries]) => {
                         entries.forEach(entry => {
+                            const adjustedCount = getAdjustedKillCount(boss.name, entry.count);
+                            if (adjustedCount === 0) return;
+
                             const [day, month, year] = entry.date.split('/');
                             const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                             kills.push({
                                 date: entry.date,
                                 world,
-                                count: entry.count,
+                                count: adjustedCount,
                                 timestamp: dateObj.getTime()
                             });
                         });
@@ -100,6 +116,13 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
         // Sort by date descending
         return kills.sort((a, b) => b.timestamp - a.timestamp);
     }, [boss, data.killDates]);
+
+    const adjustedTotalKills = useMemo(() => {
+        if (!isSoulpitBoss(boss.name)) return boss.totalKills || 0;
+        return allKillsByDate.reduce((acc, kill) => acc + kill.count, 0);
+    }, [boss.name, boss.totalKills, allKillsByDate]);
+
+    const isZeroKills = adjustedTotalKills === 0;
 
     // Mini Calendar Component
     const MiniCalendar = () => {
@@ -141,7 +164,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
         });
 
         return (
-            <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-4 mb-6">
+            <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-3 mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <button
@@ -290,7 +313,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                 <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                         <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Total Kills</div>
-                                        <div className="text-2xl font-bold text-white">{totalKills}</div>
+                                        <div className="text-2xl font-bold text-white">{adjustedTotalKills}</div>
                                     </div>
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                         <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Frequency</div>
@@ -355,9 +378,8 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                 </div>
                             </div>
 
-
-                            {/* Extra Info: Loot & Location */}
-                            {(() => {
+                            {/* Extra Info: Loot & Location (Hidden for now) */}
+                            {false && (() => {
                                 const extraInfo = getBossExtraInfo(boss.name);
                                 if (!extraInfo) return null;
 
@@ -371,31 +393,44 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                                 </h3>
                                                 <div className="flex flex-wrap gap-2">
                                                     {extraInfo.loot.map((item, i) => (
-                                                        <span key={i} className="text-xs font-medium text-secondary bg-surface-hover/50 px-2 py-1 rounded border border-border/30">
-                                                            {item}
-                                                        </span>
+                                                        <div key={i} className="flex items-center gap-2 bg-surface-hover/50 px-2 py-1 rounded border border-border/30">
+                                                            {item.image && (
+                                                                <img src={item.image} alt={item.name} className="w-6 h-6 object-contain" />
+                                                            )}
+                                                            <span className="text-xs font-medium text-secondary">
+                                                                {item.name}
+                                                            </span>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>
                                         )}
 
                                         {/* Location Map */}
-                                        {extraInfo.location && (
-                                            <div className="space-y-2">
+                                        {extraInfo.locations && extraInfo.locations.length > 0 && (
+                                            <div className="space-y-6">
                                                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                                                    <span className="text-emerald-400">📍</span> Location
-                                                    {extraInfo.location.description && (
-                                                        <span className="text-xs font-normal text-secondary">
-                                                            - {extraInfo.location.description}
-                                                        </span>
-                                                    )}
+                                                    <span className="text-emerald-400">📍</span> Locations
                                                 </h3>
-                                                <BossMap
-                                                    x={extraInfo.location.x}
-                                                    y={extraInfo.location.y}
-                                                    z={extraInfo.location.z}
-                                                    name={boss.name}
-                                                />
+
+                                                <div className="grid grid-cols-1 gap-6">
+                                                    {extraInfo.locations.map((location, index) => (
+                                                        <div key={index} className="space-y-2">
+                                                            {location.description && (
+                                                                <div className="text-xs text-secondary flex items-center gap-1">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                                    {location.description}
+                                                                </div>
+                                                            )}
+                                                            <BossMap
+                                                                x={location.x}
+                                                                y={location.y}
+                                                                z={location.z}
+                                                                name={`${boss.name} - ${location.description || `Location ${index + 1}`}`}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -403,7 +438,9 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                             })()}
 
                             {/* Mini Calendar */}
-                            <MiniCalendar />
+                            <div>
+                                <MiniCalendar />
+                            </div>
 
                             {/* History Section */}
                             <div className="flex-1 flex flex-col min-h-0">
@@ -473,7 +510,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                                                         <span className="font-medium text-white">{stat.world}</span>
                                                                     </div>
                                                                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 font-medium">
-                                                                        {stat.kills} kills
+                                                                        {getAdjustedKillCount(boss.name, stat.kills)} kills
                                                                     </span>
                                                                 </button>
 
@@ -532,12 +569,11 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         </div>
                                     )}
                                 </div>
-                            </div >
-                        </div >
-                    </motion.div >
+                            </div>
+                        </div>
+                    </motion.div>
                 </>
-            )
-            }
-        </AnimatePresence >
+            )}
+        </AnimatePresence>
     );
 }

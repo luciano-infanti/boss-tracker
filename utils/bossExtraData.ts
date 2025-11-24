@@ -5,23 +5,49 @@ export interface BossLocation {
     description?: string;
 }
 
+export interface BossLootItem {
+    name: string;
+    image?: string;
+}
+
 export interface BossExtraInfo {
-    loot?: string[];
-    location?: BossLocation;
+    loot?: BossLootItem[];
+    locations?: BossLocation[];
 }
 
 export const bossExtraData: Record<string, BossExtraInfo> = {
     "Ghazbaran": {
-        loot: ["Golden Boots", "Twin Axe", "Ravenpoise", "Teddy Bear"],
-        location: { x: 32369, y: 32241, z: 7, description: "Formorgar Mines" }
+        loot: [
+            { name: "Golden Boots", image: "https://tibia.fandom.com/wiki/Special:FilePath/Golden_Boots.gif" },
+            { name: "Twin Axe", image: "https://tibia.fandom.com/wiki/Special:FilePath/Twin_Axe.gif" },
+            { name: "Ravenpoise", image: "https://tibia.fandom.com/wiki/Special:FilePath/Ravenpoise.gif" },
+            { name: "Teddy Bear", image: "https://tibia.fandom.com/wiki/Special:FilePath/Teddy_Bear.gif" }
+        ],
+        locations: [
+            { x: 32369, y: 32241, z: 7, description: "Formorgar Mines" }
+        ]
     },
     "Morgaroth": {
-        loot: ["Thunder Hammer", "Chain Bolter", "Great Shield", "Molten Plate"],
-        location: { x: 32865, y: 32285, z: 15, description: "Goroma Volcano" }
+        loot: [
+            { name: "Thunder Hammer", image: "https://tibia.fandom.com/wiki/Special:FilePath/Thunder_Hammer.gif" },
+            { name: "Chain Bolter", image: "https://tibia.fandom.com/wiki/Special:FilePath/Chain_Bolter.gif" },
+            { name: "Great Shield", image: "https://tibia.fandom.com/wiki/Special:FilePath/Great_Shield.gif" },
+            { name: "Molten Plate", image: "https://tibia.fandom.com/wiki/Special:FilePath/Molten_Plate.gif" }
+        ],
+        locations: [
+            { x: 32865, y: 32285, z: 15, description: "Goroma Volcano" }
+        ]
     },
     "Ferumbras": {
-        loot: ["Ferumbras' Hat", "Great Shield", "Golden Boots"],
-        location: { x: 33269, y: 31533, z: 13, description: "Ferumbras' Citadel" }
+        loot: [
+            { name: "Ferumbras' Hat", image: "https://tibia.fandom.com/wiki/Special:FilePath/Ferumbras'_Hat.gif" },
+            { name: "Great Shield", image: "https://tibia.fandom.com/wiki/Special:FilePath/Great_Shield.gif" },
+            { name: "Golden Boots", image: "https://tibia.fandom.com/wiki/Special:FilePath/Golden_Boots.gif" }
+        ],
+        locations: [
+            { x: 33595, y: 31899, z: 6, description: "Ferumbras' Citadel" },
+
+        ]
     }
 };
 

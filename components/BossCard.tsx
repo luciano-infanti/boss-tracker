@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 import { Clock, Calendar, Trophy } from 'lucide-react';
+import { calculateAdjustedTotalKills } from '@/utils/soulpitUtils';
 
 import { DailyKill } from '@/types';
 
@@ -27,8 +28,10 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
 
+
+
   // Determine if boss has 0 kills (grayscale)
-  const totalKills = boss.totalKills || 0;
+  const totalKills = calculateAdjustedTotalKills(boss);
   const isZeroKills = totalKills === 0;
 
   // Calculate today's kills for display
