@@ -43,5 +43,5 @@ export const calculateAdjustedTotalKills = (boss: Boss | CombinedBoss): number =
         }, 0);
     }
 
-    return boss.totalKills || 0;
+    return (boss as any).totalKills || 0;
 };
