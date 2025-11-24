@@ -386,7 +386,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                 return (
                                     <div className="grid grid-cols-1 gap-6">
                                         {/* Valuable Loot */}
-                                        {extraInfo.loot && extraInfo.loot.length > 0 && (
+                                        {extraInfo?.loot && extraInfo.loot.length > 0 && (
                                             <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-4">
                                                 <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                                                     <span className="text-yellow-400">✨</span> Valuable Loot
@@ -407,7 +407,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                         )}
 
                                         {/* Location Map */}
-                                        {extraInfo.locations && extraInfo.locations.length > 0 && (
+                                        {extraInfo?.locations && extraInfo.locations.length > 0 && (
                                             <div className="space-y-6">
                                                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                                                     <span className="text-emerald-400">📍</span> Locations
