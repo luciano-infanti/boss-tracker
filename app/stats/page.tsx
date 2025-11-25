@@ -8,11 +8,14 @@ import EmptyState from '@/components/EmptyState';
 import GlobalStats from '@/components/GlobalStats';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
+import { getBossCategory } from '@/utils/bossCategories';
+import NoResults from '@/components/NoResults';
 
 export default function GlobalPage() {
   const { data, isLoading } = useData();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('kills');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Debug logs
   console.log('📊 Global Page - data.combined:', data.combined);
@@ -70,6 +73,11 @@ export default function GlobalPage() {
       );
     }
 
+    // Filter by Category
+    if (selectedCategory !== 'All') {
+      bosses = bosses.filter(b => getBossCategory(b.name) === selectedCategory);
+    }
+
     if (sortBy === 'kills') {
       bosses.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
     } else if (sortBy === 'neverKilled') {
@@ -82,7 +90,7 @@ export default function GlobalPage() {
     }
 
     return bosses;
-  }, [data.combined, search, sortBy, aggregatedStats]);
+  }, [data.combined, search, sortBy, selectedCategory, aggregatedStats]);
 
   if (isLoading) {
     return <Loading />;
@@ -104,15 +112,25 @@ export default function GlobalPage() {
         onChange={setSearch}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
         counts={counts}
         showMostKills={false}
         showNeverKilled={false}
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filtered.map((boss) => (
-          <BossCard key={boss.name} boss={boss} type="combined" showNextSpawn={false} />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <NoResults message={
+          search ? `No bosses found matching "${search}"` :
+            selectedCategory !== 'All' ? `No bosses found in ${selectedCategory}` :
+              "No bosses found"
+        } />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((boss) => (
+            <BossCard key={boss.name} boss={boss} type="combined" showNextSpawn={false} />
+          ))}
+        </div>
+      )}
     </PageTransition>
   );
 }

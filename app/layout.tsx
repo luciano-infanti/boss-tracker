@@ -38,11 +38,23 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} bg-gray-950 text-white`}>
+      <body className={`${inter.className} text-white relative min-h-screen`}>
+        {/* Global Background Image */}
+        <div
+          className="fixed inset-0 z-[-1]"
+          style={{
+            backgroundImage: 'url("/background.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.3
+          }}
+        />
+
         <DataProvider>
-          <div className="flex flex-col md:flex-row h-screen bg-background">
+          <div className="relative flex flex-col md:flex-row h-screen">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto bg-transparent">
               <div className="p-4 md:p-6">
 
                 {children}

@@ -8,14 +8,34 @@ import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
 
 import { getAdjustedKillCount } from '@/utils/soulpitUtils';
+import { useState } from 'react';
+import SearchBar from '@/components/SearchBar';
+import { getBossCategory } from '@/utils/bossCategories';
+import NoResults from '@/components/NoResults';
 
 export default function TodayPage() {
   const { data, isLoading } = useData();
   const daily = data.daily;
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  // We don't really sort here (it's fixed logic), but SearchBar needs these props
+  const [sortBy, setSortBy] = useState('kills');
 
   const sortedKills = [...(data.daily?.kills || [])]
     .filter((kill) => {
-      // Filter out bosses with 0 adjusted kills
+      // 1. Search Filter
+      if (search && !kill.bossName.toLowerCase().includes(search.toLowerCase())) {
+        return false;
+      }
+
+      // 2. Category Filter
+      if (selectedCategory !== 'All') {
+        if (getBossCategory(kill.bossName) !== selectedCategory) {
+          return false;
+        }
+      }
+
+      // 3. Soulpit Filter
       return getAdjustedKillCount(kill.bossName, kill.totalKills) > 0;
     })
     .sort((a, b) => {
@@ -54,6 +74,17 @@ export default function TodayPage() {
         </div>
       ) : (
         <div className="space-y-8">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            showMostKills={false}
+            showNeverKilled={false}
+          />
+
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-surface border border-border rounded-lg p-6">
@@ -83,31 +114,39 @@ export default function TodayPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {sortedKills.map((kill) => {
-              const boss = data.combined.find(b => b.name === kill.bossName) || {
-                name: kill.bossName,
-                totalKills: kill.totalKills,
-                totalSpawnDays: 0,
-                appearsInWorlds: 0,
-                typicalSpawnFrequency: 'N/A',
-                perWorldStats: []
-              };
+          {sortedKills.length === 0 ? (
+            <NoResults message={
+              search ? `No bosses found matching "${search}"` :
+                selectedCategory !== 'All' ? `No bosses found in ${selectedCategory}` :
+                  "No bosses killed today matching your criteria"
+            } />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {sortedKills.map((kill) => {
+                const boss = data.combined.find(b => b.name === kill.bossName) || {
+                  name: kill.bossName,
+                  totalKills: kill.totalKills,
+                  totalSpawnDays: 0,
+                  appearsInWorlds: 0,
+                  typicalSpawnFrequency: 'N/A',
+                  perWorldStats: []
+                };
 
-              const isNew = boss.totalKills === kill.totalKills;
+                const isNew = boss.totalKills === kill.totalKills;
 
-              return (
-                <BossCard
-                  key={kill.bossName}
-                  boss={boss}
-                  type="combined"
-                  isKilledToday={true}
-                  isNew={isNew}
-                  dailyKill={kill}
-                />
-              );
-            })}
-          </div>
+                return (
+                  <BossCard
+                    key={kill.bossName}
+                    boss={boss}
+                    type="combined"
+                    isKilledToday={true}
+                    isNew={isNew}
+                    dailyKill={kill}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </PageTransition>

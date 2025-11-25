@@ -11,6 +11,8 @@ import { Boss } from '@/types';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
 import { getAdjustedKillCount } from '@/utils/soulpitUtils';
+import { getBossCategory } from '@/utils/bossCategories';
+import NoResults from '@/components/NoResults';
 
 export default function WorldPage() {
   const params = useParams();
@@ -18,6 +20,7 @@ export default function WorldPage() {
   const { data, isLoading } = useData();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('kills');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const worldData = data.worlds[worldName] || [];
 
@@ -39,6 +42,11 @@ export default function WorldPage() {
     let bosses = worldData.filter(b =>
       b.name.toLowerCase().includes(search.toLowerCase())
     );
+
+    // Filter by Category
+    if (selectedCategory !== 'All') {
+      bosses = bosses.filter(b => getBossCategory(b.name) === selectedCategory);
+    }
 
     if (sortBy === 'killedToday') {
       // FILTER to only show killed today based on daily data
@@ -96,7 +104,7 @@ export default function WorldPage() {
     }
 
     return bosses;
-  }, [worldData, search, sortBy, data.daily, worldName]);
+  }, [worldData, search, sortBy, selectedCategory, data.daily, worldName]);
 
   if (isLoading) {
     return <Loading />;
@@ -178,42 +186,47 @@ export default function WorldPage() {
         onChange={setSearch}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
         showKilledTodayFilter={true}
         counts={counts}
       />
 
-      {sortBy === 'killedToday' && filtered.length === 0 && (
-        <div className="text-center py-12 text-gray-400">
-          <p>No bosses killed today</p>
+      {filtered.length === 0 ? (
+        <NoResults message={
+          search ? `No bosses found matching "${search}"` :
+            sortBy === 'killedToday' ? "No bosses killed today" :
+              selectedCategory !== 'All' ? `No bosses found in ${selectedCategory}` :
+                "No bosses found"
+        } />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+          {filtered.map((boss) => {
+            const isKilledToday = data.daily?.kills.some(k => {
+              if (k.bossName !== boss.name) return false;
+              const worldKill = k.worlds.find(w => w.world === worldName);
+              if (!worldKill) return false;
+              return getAdjustedKillCount(boss.name, worldKill.count) > 0;
+            });
+
+            const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
+            const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
+            const isNew = isKilledToday && worldKill ? boss.totalKills === worldKill.count : false;
+
+            return (
+              <BossCard
+                key={boss.name}
+                boss={boss}
+                type="world"
+                isKilledToday={isKilledToday}
+                isNew={isNew}
+                dailyKill={isKilledToday ? dailyKill : undefined}
+                worldName={worldName}
+              />
+            );
+          })}
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-        {filtered.map((boss) => {
-          const isKilledToday = data.daily?.kills.some(k => {
-            if (k.bossName !== boss.name) return false;
-            const worldKill = k.worlds.find(w => w.world === worldName);
-            if (!worldKill) return false;
-            return getAdjustedKillCount(boss.name, worldKill.count) > 0;
-          });
-
-          const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
-          const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
-          const isNew = isKilledToday && worldKill ? boss.totalKills === worldKill.count : false;
-
-          return (
-            <BossCard
-              key={boss.name}
-              boss={boss}
-              type="world"
-              isKilledToday={isKilledToday}
-              isNew={isNew}
-              dailyKill={isKilledToday ? dailyKill : undefined}
-              worldName={worldName}
-            />
-          );
-        })}
-      </div>
 
       <BossCalendar worldName={worldName} />
     </PageTransition>

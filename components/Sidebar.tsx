@@ -45,9 +45,9 @@ export default function Sidebar() {
           <div className="mb-8 flex justify-between items-center">
             <div className="mb-8  flex items-center gap-3">
               <img
-                src="https://wiki.rubinot.com/battle-pass/others/daily-mission.gif"
+                src="/rubinot-logo.png"
                 alt="RubinOT Boss Tracker"
-                className="h-12 w-auto"
+                className="h-9 w-auto rounded-full"
               />
               <h1 className="text-xs font-medium text-white tracking-wide opacity-80">RubinOT Boss Tracker</h1>
             </div>
