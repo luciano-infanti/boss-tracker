@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
-import { X, Calendar, Server, Clock, ChevronDown, ChevronRight, Check, ChevronLeft } from 'lucide-react';
+import { X, Calendar, Server, Clock, ChevronDown, ChevronRight, Check, ChevronLeft, ExternalLink } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import BossMap from './BossMap';
 import { getBossExtraInfo } from '@/utils/bossExtraData';
@@ -286,9 +286,28 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-6 border-b border-border bg-surface-hover/30 shrink-0">
-                            <div>
-                                <h2 className="text-xl font-bold text-white">{boss.name}</h2>
-                                <p className="text-sm text-secondary">Boss Details</p>
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">{boss.name}</h2>
+                                    <p className="text-sm text-secondary">Boss Details</p>
+                                </div>
+                                {(() => {
+                                    const extraInfo = getBossExtraInfo(boss.name);
+                                    if (extraInfo?.wiki) {
+                                        return (
+                                            <a
+                                                href={extraInfo.wiki}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 rounded-full bg-surface-hover/50 text-secondary hover:text-primary hover:bg-surface-hover transition-colors border border-border/50"
+                                                title="Open TibiaWiki"
+                                            >
+                                                <ExternalLink size={18} />
+                                            </a>
+                                        );
+                                    }
+                                    return null;
+                                })()}
                             </div>
                             <button
                                 onClick={onClose}
