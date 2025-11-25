@@ -226,11 +226,36 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
               )}
 
               {/* Last Kill - Only show if not "Never" AND not combined view */}
-              {'lastKillDate' in boss && boss.lastKillDate && boss.lastKillDate !== 'Never' && type !== 'combined' && (
-                <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Clock size={12} className="text-secondary/70" />
-                  <span>{boss.lastKillDate}</span>
-                </div>
+              {type !== 'world' ? null : (
+                (() => {
+                  // Reuse the logic from lastSeenText but just get the date string
+                  let dateStr = 'lastKillDate' in boss ? boss.lastKillDate : undefined;
+
+                  if ('history' in boss && boss.history && boss.history !== 'None') {
+                    let latestDate: Date | null = null;
+                    const entries = boss.history.split(',').map(s => s.trim());
+                    entries.forEach(entry => {
+                      const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+                      if (match) {
+                        const [_, day, month, year] = match;
+                        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        if (!latestDate || date > latestDate) {
+                          latestDate = date;
+                          dateStr = `${day}/${month}/${year}`;
+                        }
+                      }
+                    });
+                  }
+
+                  if (!dateStr || dateStr === 'Never') return null;
+
+                  return (
+                    <div className="flex items-center gap-1.5 text-xs text-secondary">
+                      <Clock size={12} className="text-secondary/70" />
+                      <span>{dateStr}</span>
+                    </div>
+                  );
+                })()
               )}
 
               {/* Total Kills */}
