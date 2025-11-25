@@ -8,18 +8,53 @@ import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
 
 import { getAdjustedKillCount } from '@/utils/soulpitUtils';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import SearchBar from '@/components/SearchBar';
 import { getBossCategory } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { getWorldIcon } from '@/utils/worldIcons';
 
 export default function TodayPage() {
   const { data, isLoading } = useData();
   const daily = data.daily;
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   // We don't really sort here (it's fixed logic), but SearchBar needs these props
   const [sortBy, setSortBy] = useState('kills');
+
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Calculate Most Active Boss (purely by kill count, ignoring "New" status)
+  const mostActiveBoss = useMemo(() => {
+    if (!data.daily?.kills || data.daily.kills.length === 0) return null;
+    // Sort purely by totalKills descending
+    return [...data.daily.kills].sort((a, b) => b.totalKills - a.totalKills)[0];
+  }, [data.daily]);
+
+  // Calculate Most Active Server
+  const mostActiveServer = useMemo(() => {
+    if (!data.daily?.kills) return null;
+
+    const serverKills: Record<string, number> = {};
+
+    data.daily.kills.forEach(kill => {
+      kill.worlds.forEach(w => {
+        serverKills[w.world] = (serverKills[w.world] || 0) + w.count;
+      });
+    });
+
+    const sortedServers = Object.entries(serverKills)
+      .sort(([, a], [, b]) => b - a);
+
+    if (sortedServers.length === 0) return null;
+
+    return {
+      name: sortedServers[0][0],
+      count: sortedServers[0][1]
+    };
+  }, [data.daily]);
 
   const sortedKills = [...(data.daily?.kills || [])]
     .filter((kill) => {
@@ -29,8 +64,9 @@ export default function TodayPage() {
       }
 
       // 2. Category Filter
-      if (selectedCategory !== 'All') {
-        if (getBossCategory(kill.bossName) !== selectedCategory) {
+      if (selectedCategories.length > 0) {
+        const category = getBossCategory(kill.bossName);
+        if (!selectedCategories.includes(category)) {
           return false;
         }
       }
@@ -74,19 +110,8 @@ export default function TodayPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            showMostKills={false}
-            showNeverKilled={false}
-          />
-
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-surface border border-border rounded-lg p-6">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="text-yellow-400/80" size={18} />
@@ -106,47 +131,93 @@ export default function TodayPage() {
             <div className="bg-surface border border-border rounded-lg p-6">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="text-primary" size={18} />
-                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Most Active</p>
+                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Most Active Boss</p>
               </div>
               <p className="text-xl font-medium text-white truncate">
-                {sortedKills[0]?.bossName || '-'}
+                {mostActiveBoss?.bossName || '-'}
               </p>
+            </div>
+
+            <div className="bg-surface border border-border rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <img
+                  src={mostActiveServer ? getWorldIcon(mostActiveServer.name) : ''}
+                  alt="World"
+                  className="w-4 h-4 object-contain opacity-80"
+                />
+                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Top Server</p>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-xl font-medium text-white truncate">
+                  {mostActiveServer?.name || '-'}
+                </p>
+                {mostActiveServer && (
+                  <span className="text-xs text-emerald-400">
+                    {mostActiveServer.count} kills
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {sortedKills.length === 0 ? (
-            <NoResults message={
-              search ? `No bosses found matching "${search}"` :
-                selectedCategory !== 'All' ? `No bosses found in ${selectedCategory}` :
-                  "No bosses killed today matching your criteria"
-            } />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {sortedKills.map((kill) => {
-                const boss = data.combined.find(b => b.name === kill.bossName) || {
-                  name: kill.bossName,
-                  totalKills: kill.totalKills,
-                  totalSpawnDays: 0,
-                  appearsInWorlds: 0,
-                  typicalSpawnFrequency: 'N/A',
-                  perWorldStats: []
-                };
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            selectedCategories={selectedCategories}
+            onCategoryChange={setSelectedCategories}
+            showMostKills={false}
+            showNeverKilled={false}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
 
-                const isNew = boss.totalKills === kill.totalKills;
+          <div className="min-h-screen">
+            {sortedKills.length === 0 ? (
+              <NoResults message={
+                search ? `No bosses found matching "${search}"` :
+                  selectedCategories.length > 0 ? `No bosses found in selected categories` :
+                    "No bosses killed today matching your criteria"
+              } />
+            ) : (
+              <div className={viewMode === 'grid'
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                : "flex flex-col gap-3"
+              }>
+                {sortedKills.map((kill) => {
+                  const boss = data.combined.find(b => b.name === kill.bossName) || {
+                    name: kill.bossName,
+                    totalKills: kill.totalKills,
+                    totalSpawnDays: 0,
+                    appearsInWorlds: 0,
+                    typicalSpawnFrequency: 'N/A',
+                    perWorldStats: []
+                  };
 
-                return (
-                  <BossCard
-                    key={kill.bossName}
-                    boss={boss}
-                    type="combined"
-                    isKilledToday={true}
-                    isNew={isNew}
-                    dailyKill={kill}
-                  />
-                );
-              })}
-            </div>
-          )}
+                  const isNew = boss.totalKills === kill.totalKills;
+
+                  return (
+                    <motion.div
+                      key={kill.bossName}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <BossCard
+                        boss={boss}
+                        type="combined"
+                        isKilledToday={true}
+                        isNew={isNew}
+                        dailyKill={kill}
+                        viewMode={viewMode}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </PageTransition>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { WORLDS } from '@/utils/constants';
 import UploadButton from './UploadButton';
@@ -11,6 +11,11 @@ import UploadButton from './UploadButton';
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [activePath, setActivePath] = useState('');
+
+  useEffect(() => {
+    setActivePath(pathname);
+  }, [pathname]);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -61,7 +66,7 @@ export default function Sidebar() {
             <Link
               href="/today"
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/today'
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/today'
                 ? 'bg-surface-hover text-white'
                 : 'text-secondary hover:text-white hover:bg-surface-hover/50'
                 }`}
@@ -73,7 +78,7 @@ export default function Sidebar() {
             <Link
               href="/stats"
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/stats'
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/stats'
                 ? 'bg-surface-hover text-white'
                 : 'text-secondary hover:text-white hover:bg-surface-hover/50'
                 }`}
@@ -85,7 +90,7 @@ export default function Sidebar() {
             <Link
               href="/most-wanted"
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/most-wanted'
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/most-wanted'
                 ? 'bg-surface-hover text-white'
                 : 'text-secondary hover:text-white hover:bg-surface-hover/50'
                 }`}
@@ -103,7 +108,7 @@ export default function Sidebar() {
                 key={world}
                 href={`/world/${world}`}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === `/world/${world}`
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === `/world/${world}`
                   ? 'bg-surface-hover text-white'
                   : 'text-secondary hover:text-white hover:bg-surface-hover/50'
                   }`}
@@ -123,7 +128,7 @@ export default function Sidebar() {
           <Link
             href="/admin"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/admin'
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/admin'
               ? 'bg-surface-hover text-white'
               : 'text-secondary hover:text-white hover:bg-surface-hover/50'
               }`}
@@ -139,7 +144,7 @@ export default function Sidebar() {
           <Link
             href="/feedback"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/feedback'
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/feedback'
               ? 'bg-surface-hover text-white'
               : 'text-secondary hover:text-white hover:bg-surface-hover/50'
               }`}
@@ -150,7 +155,7 @@ export default function Sidebar() {
           <Link
             href="/about"
             onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${pathname === '/about'
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/about'
               ? 'bg-surface-hover text-white'
               : 'text-secondary hover:text-white hover:bg-surface-hover/50'
               }`}

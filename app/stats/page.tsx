@@ -10,20 +10,15 @@ import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
 import { getBossCategory } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function GlobalPage() {
   const { data, isLoading } = useData();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('kills');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Debug logs
-  console.log('📊 Global Page - data.combined:', data.combined);
-  console.log('📊 Number of bosses:', data.combined?.length);
-  if (data.combined?.length > 0) {
-    console.log('📊 First boss:', data.combined[0]);
-    console.log('📊 First boss totalKills:', data.combined[0]?.totalKills);
-  }
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Calculate aggregated stats from all worlds
   const aggregatedStats = useMemo(() => {
@@ -47,6 +42,9 @@ export default function GlobalPage() {
 
     return { stats, allBosses };
   }, [data.worlds, data.combined]);
+
+
+
 
   const counts = useMemo(() => {
     if (!data.combined) return {};
@@ -74,8 +72,11 @@ export default function GlobalPage() {
     }
 
     // Filter by Category
-    if (selectedCategory !== 'All') {
-      bosses = bosses.filter(b => getBossCategory(b.name) === selectedCategory);
+    if (selectedCategories.length > 0) {
+      bosses = bosses.filter(b => {
+        const category = getBossCategory(b.name);
+        return selectedCategories.includes(category);
+      });
     }
 
     if (sortBy === 'kills') {
@@ -90,7 +91,7 @@ export default function GlobalPage() {
     }
 
     return bosses;
-  }, [data.combined, search, sortBy, selectedCategory, aggregatedStats]);
+  }, [data.combined, search, sortBy, selectedCategories, aggregatedStats]);
 
   if (isLoading) {
     return <Loading />;
@@ -106,31 +107,51 @@ export default function GlobalPage() {
         <h1 className="text-2xl font-bold text-white mb-2">Global Stats</h1>
         <p className="text-secondary">Aggregated statistics across all worlds</p>
       </div>
-      <GlobalStats bosses={data.combined} />
+      <GlobalStats
+        bosses={data.combined.map(b => ({
+          ...b,
+          totalKills: aggregatedStats.stats.get(b.name) || 0
+        }))}
+        worlds={data.worlds}
+      />
       <SearchBar
         value={search}
         onChange={setSearch}
         sortBy={sortBy}
         onSortChange={setSortBy}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        selectedCategories={selectedCategories}
+        onCategoryChange={setSelectedCategories}
         counts={counts}
         showMostKills={false}
         showNeverKilled={false}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
-      {filtered.length === 0 ? (
-        <NoResults message={
-          search ? `No bosses found matching "${search}"` :
-            selectedCategory !== 'All' ? `No bosses found in ${selectedCategory}` :
-              "No bosses found"
-        } />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((boss) => (
-            <BossCard key={boss.name} boss={boss} type="combined" showNextSpawn={false} />
-          ))}
-        </div>
-      )}
+      <div className="min-h-screen">
+        {filtered.length === 0 ? (
+          <NoResults message={
+            search ? `No bosses found matching "${search}"` :
+              selectedCategories.length > 0 ? `No bosses found in selected categories` :
+                "No bosses found"
+          } />
+        ) : (
+          <div className={viewMode === 'grid'
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            : "flex flex-col gap-3"
+          }>
+            {filtered.map((boss) => (
+              <motion.div
+                key={boss.name}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+              >
+                <BossCard boss={boss} type="combined" showNextSpawn={false} viewMode={viewMode} />
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
     </PageTransition>
   );
 }

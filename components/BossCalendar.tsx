@@ -4,8 +4,9 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
-
 import { getAdjustedKillCount } from '@/utils/soulpitUtils';
+import { BossCategory, BOSS_CATEGORY_ICONS, getBossCategory } from '@/utils/bossCategories';
+import FilterPill from './FilterPill';
 
 interface CalendarDay {
     date: Date;
@@ -20,6 +21,9 @@ interface CalendarDay {
 export default function BossCalendar({ worldName }: { worldName?: string }) {
     const { data } = useData();
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+    const categories: BossCategory[] = ['Archdemons', 'Rookgaard', 'Pits of Inferno', 'Creatures'];
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {
@@ -53,6 +57,12 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
         // Populate kills
         if (data.killDates) {
             data.killDates.forEach(bossHistory => {
+                // Filter by category
+                if (selectedCategories.length > 0) {
+                    const category = getBossCategory(bossHistory.bossName);
+                    if (!selectedCategories.includes(category)) return;
+                }
+
                 bossHistory.chronologicalHistory.forEach(kill => {
                     // Filter by world if worldName is provided
                     if (worldName && kill.world !== worldName) return;
@@ -91,6 +101,12 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                 if (worldName && wName !== worldName) return;
 
                 bosses.forEach(boss => {
+                    // Filter by category
+                    if (selectedCategories.length > 0) {
+                        const category = getBossCategory(boss.name);
+                        if (!selectedCategories.includes(category)) return;
+                    }
+
                     if (!boss.history || boss.history === 'None') return;
                     const historyEntries = boss.history.split(',').map(s => s.trim());
                     historyEntries.forEach(entry => {
@@ -128,7 +144,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
         }
 
         return days;
-    }, [currentDate, data, worldName]);
+    }, [currentDate, data, worldName, selectedCategories]);
 
     const nextMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
@@ -138,6 +154,14 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
     };
 
+    const handleCategoryClick = (category: string) => {
+        if (selectedCategories.includes(category)) {
+            setSelectedCategories(selectedCategories.filter(c => c !== category));
+        } else {
+            setSelectedCategories([...selectedCategories, category]);
+        }
+    };
+
     const monthNames = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
@@ -145,18 +169,35 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
 
     return (
         <div className="bg-surface border border-border rounded-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-sm font-medium text-white">Boss Kill Calendar {worldName ? `(${worldName})` : ''}</h2>
-                <div className="flex items-center gap-4">
-                    <button onClick={prevMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
-                        <ChevronLeft size={16} />
-                    </button>
-                    <span className="text-sm font-medium text-white min-w-[120px] text-center">
-                        {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                    </span>
-                    <button onClick={nextMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
-                        <ChevronRight size={16} />
-                    </button>
+            <div className="flex flex-col gap-6 mb-6">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-medium text-white">Boss Kill Calendar {worldName ? `(${worldName})` : ''}</h2>
+                    <div className="flex items-center gap-4">
+                        <button onClick={prevMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
+                            <ChevronLeft size={16} />
+                        </button>
+                        <span className="text-sm font-medium text-white min-w-[120px] text-center">
+                            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                        </span>
+                        <button onClick={nextMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Category Filters */}
+                <div className="flex flex-wrap gap-2">
+                    {categories.map((cat) => (
+                        <FilterPill
+                            key={cat}
+                            label={cat}
+                            active={selectedCategories.includes(cat)}
+                            onClick={() => handleCategoryClick(cat)}
+                            variant="secondary"
+                            // @ts-ignore
+                            icon={BOSS_CATEGORY_ICONS[cat]}
+                        />
+                    ))}
                 </div>
             </div>
 

@@ -121,7 +121,11 @@ export const bossImages: Record<string, string> = {
   "Rotspit": "https://www.tibiawiki.com.br/images/5/59/Rotspit.gif",
   "Chopper": "https://www.tibiawiki.com.br/images/8/8a/Chopper.gif",
   "Fernfang": "https://www.tibiawiki.com.br/images/6/64/Fernfang.gif",
-  "Shadowstalker": "https://www.tibiawiki.com.br/images/2/2f/Shadowstalker.gif"
+  "Shadowstalker": "https://www.tibiawiki.com.br/images/2/2f/Shadowstalker.gif",
+  "Teleskor": "https://www.tibiawiki.com.br/images/6/6c/Teleskor.gif",
+  "Undead Cavebear": "https://www.tibiawiki.com.br/images/4/4b/Undead_Cavebear.gif",
+  "Rottie the Rotworm": "https://www.tibiawiki.com.br/images/9/9a/Rottie_the_Rotworm.gif",
+  "Apprentice Sheng": "https://www.tibiawiki.com.br/images/d/d5/Apprentice_Sheng.gif",
 };
 
 export function getBossImage(bossName: string): string | null {

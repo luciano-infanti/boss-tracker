@@ -23,7 +23,16 @@ import { useData } from '@/context/DataContext';
 
 import BossDetailsDrawer from './BossDetailsDrawer';
 
-export default function BossCard({ boss, type = 'world', isKilledToday, isNew, dailyKill, worldName, showNextSpawn = true }: BossCardProps & { showNextSpawn?: boolean }) {
+export default function BossCard({
+  boss,
+  type = 'world',
+  isKilledToday,
+  isNew,
+  dailyKill,
+  worldName,
+  showNextSpawn = true,
+  viewMode = 'grid'
+}: BossCardProps & { showNextSpawn?: boolean; viewMode?: 'grid' | 'list' }) {
   const { data } = useData();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
@@ -136,6 +145,166 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
     };
   }, [boss]);
 
+  if (viewMode === 'list') {
+    return (
+      <>
+        <motion.div
+          onClick={handleCardClick}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          className={`
+            relative rounded-lg p-4 border transition-all cursor-pointer group hover:bg-surface-hover flex items-center gap-6
+            ${showKilledToday ? 'bg-surface border-border' : 'bg-surface border-border'}
+            ${isZeroKills ? 'opacity-80' : ''}
+          `}
+        >
+          {/* Tooltip */}
+          <AnimatePresence>
+            {showTooltip && lastSeenText && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+                animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+                exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+                transition={{ duration: 0.2 }}
+                className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
+              >
+                {lastSeenText}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Image Container - Smaller for List View */}
+          <div className={`
+            w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border relative
+            ${isNew
+              ? 'bg-yellow-500/20 border-yellow-500/30'
+              : showKilledToday
+                ? 'bg-emerald-500/20 border-emerald-500/30'
+                : 'bg-surface-hover border-border/50'
+            }
+            ${isZeroKills ? 'grayscale' : ''}
+          `}>
+            {bossImage ? (
+              <img
+                src={bossImage}
+                alt={boss.name}
+                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg transition-transform group-hover:scale-110"
+              />
+            ) : (
+              <span className="text-[10px] font-bold text-secondary">{boss.name.slice(0, 2)}</span>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0 flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium text-white text-sm truncate group-hover:text-primary transition-colors">{boss.name}</h3>
+                {/* Tags Inline */}
+                {showKilledToday && type !== 'combined' && (
+                  <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
+                    TODAY
+                  </div>
+                )}
+                {isNew && (
+                  <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30">
+                    NEW
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-4 text-xs text-secondary">
+                {/* Next Spawn */}
+                {showNextSpawn && nextSpawnInfo && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar size={12} className="text-secondary/70" />
+                    <span>
+                      Next: <span className="text-white/90">
+                        {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
+                      </span>
+                    </span>
+                  </div>
+                )}
+
+                {/* Last Kill */}
+                {type === 'world' && (
+                  (() => {
+                    let dateStr = 'lastKillDate' in boss ? boss.lastKillDate : undefined;
+
+                    if ('history' in boss && boss.history && boss.history !== 'None') {
+                      let latestDate: Date | null = null;
+                      const entries = boss.history.split(',').map(s => s.trim());
+                      entries.forEach(entry => {
+                        const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+                        if (match) {
+                          const [_, day, month, year] = match;
+                          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                          if (!latestDate || date > latestDate) {
+                            latestDate = date;
+                            dateStr = `${day}/${month}/${year}`;
+                          }
+                        }
+                      });
+                    }
+
+                    if (!dateStr || dateStr === 'Never') return null;
+                    return (
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={12} className="text-secondary/70" />
+                        <span>{dateStr}</span>
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
+            </div>
+
+            {/* Right Side Stats */}
+            <div className="flex items-center gap-4">
+              {/* World Badges for Combined View */}
+              {dailyKill && type !== 'world' && (
+                <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
+                  {dailyKill.worlds.map((w) => {
+                    const adjustedCount = getAdjustedKillCount(boss.name, w.count);
+                    if (adjustedCount === 0) return null;
+                    return (
+                      <span
+                        key={w.world}
+                        className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
+                      >
+                        {w.world}
+                        {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
+                <Trophy size={12} className="text-secondary/70" />
+                <span>
+                  <span className="text-white font-medium">{totalKills} kills</span>
+                  {dailyKill && type === 'combined' && todayKills > 0 && (
+                    <span className="text-emerald-400 ml-1">
+                      ({todayKills})
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <BossDetailsDrawer
+          boss={boss}
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <motion.div
@@ -143,7 +312,7 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={`
-          relative rounded-lg p-5 border transition-all cursor-pointer group hover:bg-surface-hover
+          relative rounded-lg p-5 border transition-all cursor-pointer group hover:bg-surface-hover h-full flex flex-col
           ${showKilledToday
             ? 'bg-surface border-border'
             : 'bg-surface border-border'
@@ -214,11 +383,12 @@ export default function BossCard({ boss, type = 'world', isKilledToday, isNew, d
 
             <div className="space-y-1">
               {/* Next Spawn - Conditional */}
+              {/* Next Spawn - Conditional */}
               {showNextSpawn && nextSpawnInfo && (
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
                   <Calendar size={12} className="text-secondary/70" />
                   <span>
-                    Next: <span className={`${nextSpawnInfo.isOverdue ? 'text-white/90' : 'text-white/90'}`}>
+                    Next: <span className="text-white/90">
                       {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
                     </span>
                   </span>
