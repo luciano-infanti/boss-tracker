@@ -220,7 +220,7 @@ export default function BossCard({
                   <div className="flex items-center gap-1.5">
                     <Calendar size={12} className="text-secondary/70" />
                     <span>
-                      Next: <span className="text-white/90">
+                      Next: <span className="text-secondary">
                         {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
                       </span>
                     </span>
@@ -284,7 +284,7 @@ export default function BossCard({
               <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
-                  <span className="text-white font-medium">{totalKills} kills</span>
+                  <span className="text-secondary font-medium">{totalKills} kills</span>
                   {dailyKill && type === 'combined' && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills})
@@ -388,7 +388,7 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
                   <Calendar size={12} className="text-secondary/70" />
                   <span>
-                    Next: <span className="text-white/90">
+                    Next: <span className="text-secondary">
                       {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
                     </span>
                   </span>
@@ -432,7 +432,7 @@ export default function BossCard({
               <div className="flex items-center gap-1.5 text-xs text-secondary">
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
-                  <span className="text-white font-medium">{totalKills} kills</span>
+                  <span className="text-secondary font-medium">{totalKills} kills</span>
                   {dailyKill && type === 'combined' && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills} today)
