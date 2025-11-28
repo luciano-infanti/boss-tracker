@@ -36,7 +36,7 @@ export async function GET() {
         // Handle different structures: { data: ... } or raw data
         const data = (json.data || json) as ParsedData;
 
-        if (!data || (!data.combined && !data.bosses)) {
+        if (!data || !data.combined) {
             return NextResponse.json({ error: 'Invalid data format in blob' }, { status: 500 });
         }
 
