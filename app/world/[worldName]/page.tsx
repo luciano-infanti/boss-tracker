@@ -25,7 +25,25 @@ export default function WorldPage() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const worldData = data.worlds[worldName] || [];
+  const worldData = useMemo(() => {
+    const currentWorldData = data.worlds[worldName] || [];
+    if (!data.combined || data.combined.length === 0) return currentWorldData;
+
+    const existingNames = new Set(currentWorldData.map(b => b.name));
+    const missingBosses = data.combined
+      .filter(cb => !existingNames.has(cb.name))
+      .map(cb => ({
+        name: cb.name,
+        totalDaysSpawned: 0,
+        totalKills: 0,
+        spawnFrequency: 'N/A',
+        nextExpectedSpawn: 'N/A',
+        lastKillDate: 'Never',
+        history: 'None'
+      } as Boss));
+
+    return [...currentWorldData, ...missingBosses];
+  }, [data.worlds, data.combined, worldName]);
 
   const counts = useMemo(() => {
     return {

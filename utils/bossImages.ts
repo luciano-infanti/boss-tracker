@@ -113,9 +113,7 @@ export const bossImages: Record<string, string> = {
   "Midnight Panther": "https://www.tibiawiki.com.br/images/1/15/Midnight_Panther.gif",
   "Albino Dragon": "https://www.tibiawiki.com.br/images/0/06/Albino_Dragon.gif",
   "Zushuka": "https://www.tibiawiki.com.br/images/b/b5/Zushuka.gif",
-
   "Feroxa": "https://www.tibiawiki.com.br/images/2/2a/Feroxa_%28Imune%29.gif",
-
   "Maw": "https://www.tibiawiki.com.br/images/c/cb/Maw.gif",
   "Mindmasher": "https://www.tibiawiki.com.br/images/c/c6/Mindmasher.gif",
   "Rotspit": "https://www.tibiawiki.com.br/images/5/59/Rotspit.gif",
