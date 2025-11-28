@@ -10,30 +10,12 @@ export default function MostWantedPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const neverKilledBosses = useMemo(() => {
-        if (!data.worlds || Object.keys(data.worlds).length === 0) return [];
+        if (!data.combined || data.combined.length === 0) return [];
 
-        const bossKills = new Map<string, number>();
-        const bossDetails = new Map<string, any>();
-
-        // Iterate through all worlds to sum up kills
-        Object.values(data.worlds).forEach(worldBosses => {
-            worldBosses.forEach(boss => {
-                const currentKills = bossKills.get(boss.name) || 0;
-                bossKills.set(boss.name, currentKills + boss.totalKills);
-
-                // Store boss details if not already stored (for display)
-                if (!bossDetails.has(boss.name)) {
-                    bossDetails.set(boss.name, boss);
-                }
-            });
-        });
-
-        // Filter for bosses with 0 total kills
-        return Array.from(bossKills.entries())
-            .filter(([_, totalKills]) => totalKills === 0)
-            .map(([name, _]) => bossDetails.get(name))
+        return data.combined
+            .filter(boss => boss.totalKills === 0)
             .sort((a, b) => a.name.localeCompare(b.name));
-    }, [data.worlds]);
+    }, [data.combined]);
 
     const filteredBosses = useMemo(() => {
         return neverKilledBosses.filter(boss =>
