@@ -67,7 +67,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         newData.killDates = aggregateKillHistory(newData.worlds);
       }
 
-      console.log('💾 Saving to blob storage...');
+      console.log('💾 Saving to Supabase...');
       const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,8 +75,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
-        console.log('✅ Upload successful, updating state');
-        setData(newData);
+        console.log('✅ Upload successful, refreshing data...');
+        // Re-fetch data to ensure we have the complete picture (including 0-kill bosses)
+        const freshData = await (await fetch('/api/data')).json();
+        setData(freshData);
       } else {
         const error = await response.json();
         console.error('❌ Upload failed:', error);
