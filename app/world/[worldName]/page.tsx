@@ -60,9 +60,7 @@ export default function WorldPage() {
   }, [worldData, data.daily, worldName]);
 
   const filtered = useMemo(() => {
-    if (!data.worlds || !data.worlds[worldName]) return [];
-
-    let result = data.worlds[worldName].filter(boss => {
+    let result = worldData.filter(boss => {
       // Search filter
       if (search) {
         const searchLower = search.toLowerCase();
@@ -134,7 +132,7 @@ export default function WorldPage() {
     }
 
     return result;
-  }, [data.worlds, worldName, search, sortBy, selectedCategories, data.daily]);
+  }, [worldData, worldName, search, sortBy, selectedCategories, data.daily]);
 
   if (isLoading) {
     return <Loading />;
