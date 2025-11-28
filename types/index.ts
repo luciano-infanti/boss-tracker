@@ -65,4 +65,34 @@ export interface ParsedData {
   combined: CombinedBoss[];
   daily?: DailyUpdate;
   killDates?: BossKillHistory[];
+  characters?: Character[];
+  dailyUpdate?: DailyUpdate; // Alias for daily if needed, or just use daily
+}
+
+export interface CharacterStats {
+  rank: number;
+  value: number;
+  display: string;
+}
+
+export interface CharacterSnapshot {
+  date: string; // YYYY-MM-DD
+  level: number;
+  experience: number;
+  daily_raw: number; // from stats.daily_raw.value
+  stats: {
+    magic_level?: number;
+    fishing?: number;
+    // Add other skills as needed
+  };
+}
+
+export interface Character {
+  name: string;
+  world: string;
+  vocation: string;
+  level: number;
+  link: string;
+  last_updated: string;
+  history: CharacterSnapshot[];
 }

@@ -54,7 +54,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <DataProvider>
           <div className="relative flex flex-col md:flex-row h-screen">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-transparent">
+            <main className="flex-1 overflow-y-auto bg-transparent relative">
+              <div className="absolute top-4 right-4 z-50">
+                <UnifiedUploadButton />
+              </div>
               <div className="p-8 md:p-12">
 
                 {children}
