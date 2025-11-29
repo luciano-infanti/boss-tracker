@@ -41,7 +41,6 @@ export default function BossCard({
 
   // Determine if boss has 0 kills (grayscale)
   const totalKills = calculateAdjustedTotalKills(boss);
-  const isZeroKills = totalKills === 0;
 
   // Calculate today's kills for display
   const todayKills = useMemo(() => {
@@ -54,6 +53,8 @@ export default function BossCard({
     }
     return getAdjustedKillCount(boss.name, count);
   }, [dailyKill, type, worldName, boss.name]);
+
+  const isZeroKills = totalKills === 0 && todayKills === 0;
 
   // Override isKilledToday based on filtered count
   const showKilledToday = isKilledToday && todayKills > 0;
