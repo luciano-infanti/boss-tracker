@@ -41,15 +41,10 @@ export const calculateAdjustedTotalKills = (boss: Boss | CombinedBoss): number =
             return acc + getAdjustedKillCount(boss.name, count);
         }, 0);
         return adjustedKills;
-    }
-
-    // Combined View (CombinedBoss type)
-    if ('perWorldStats' in boss) {
+    } else {
+        // Combined View (CombinedBoss type) - this else handles 'perWorldStats' in boss
         return boss.perWorldStats.reduce((acc, stat) => {
             return acc + getAdjustedKillCount(boss.name, stat.kills);
         }, 0);
     }
-
-    // Fallback for Boss type without history
-    return getAdjustedKillCount(boss.name, boss.totalKills || 0);
 };
