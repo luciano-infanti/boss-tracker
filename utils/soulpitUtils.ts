@@ -28,7 +28,7 @@ export const calculateAdjustedTotalKills = (boss: Boss | CombinedBoss): number =
     }
 
     if ('history' in boss) {
-        // World View
+        // World View (Boss type)
         if (!boss.history || boss.history === 'None') {
             // Fallback to totalKills if history is missing or None
             return getAdjustedKillCount(boss.name, boss.totalKills || 0);
@@ -41,12 +41,15 @@ export const calculateAdjustedTotalKills = (boss: Boss | CombinedBoss): number =
             return acc + getAdjustedKillCount(boss.name, count);
         }, 0);
         return adjustedKills;
-    } else if ('perWorldStats' in boss) {
-        // Combined View
+    }
+
+    // Combined View (CombinedBoss type)
+    if ('perWorldStats' in boss) {
         return boss.perWorldStats.reduce((acc, stat) => {
             return acc + getAdjustedKillCount(boss.name, stat.kills);
         }, 0);
     }
 
+    // Fallback for Boss type without history
     return getAdjustedKillCount(boss.name, boss.totalKills || 0);
 };
