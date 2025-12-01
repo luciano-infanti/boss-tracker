@@ -137,7 +137,7 @@ export async function GET() {
             spawnFrequency: stat.frequency,
             nextExpectedSpawn: 'N/A', // Logic for next spawn per world is complex, usually global
             lastKillDate: lastKill,
-            history: worldKills.map(k => `${k.date} (${k.count}x)`).join(', ')
+            history: worldKills.map(k => k.count === 1 ? k.date : `${k.date} (${k.count}x)`).join(', ')
           });
         });
       }

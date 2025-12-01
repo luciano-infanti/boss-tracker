@@ -10,7 +10,7 @@ import { useParams } from 'next/navigation';
 import { Boss } from '@/types';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
-import { getAdjustedKillCount } from '@/utils/soulpitUtils';
+import { getAdjustedKillCount, calculateAdjustedTotalKills } from '@/utils/soulpitUtils';
 import { getBossCategory } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -109,8 +109,10 @@ export default function WorldPage() {
 
         if (aNew !== bNew) return bNew - aNew;
 
-        // Then by total kills
-        return (b.totalKills || 0) - (a.totalKills || 0);
+        // Then by total kills (adjusted for Soulpit bosses)
+        const aTotalKills = calculateAdjustedTotalKills(a);
+        const bTotalKills = calculateAdjustedTotalKills(b);
+        return bTotalKills - aTotalKills;
       });
     } else if (sortBy === 'killedToday') {
       result = result.filter(boss => {
@@ -122,7 +124,11 @@ export default function WorldPage() {
         });
         return isKilledToday;
       });
-      result.sort((a, b) => (b.totalKills || 0) - (a.totalKills || 0));
+      result.sort((a, b) => {
+        const aTotalKills = calculateAdjustedTotalKills(a);
+        const bTotalKills = calculateAdjustedTotalKills(b);
+        return bTotalKills - aTotalKills;
+      });
     } else if (sortBy === 'neverKilled') {
       result = result.filter(boss => (boss.totalKills || 0) === 0);
       result.sort((a, b) => a.name.localeCompare(b.name));

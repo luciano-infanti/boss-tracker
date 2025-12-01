@@ -29,13 +29,18 @@ export const calculateAdjustedTotalKills = (boss: Boss | CombinedBoss): number =
 
     if ('history' in boss) {
         // World View
-        if (!boss.history || boss.history === 'None') return 0;
-        return boss.history.split(',').reduce((acc, entry) => {
+        if (!boss.history || boss.history === 'None') {
+            // Fallback to totalKills if history is missing or None
+            return getAdjustedKillCount(boss.name, boss.totalKills || 0);
+        }
+        // Parse history string to calculate adjusted kills
+        const adjustedKills = boss.history.split(',').reduce((acc, entry) => {
             const match = entry.trim().match(/^(\d{2}\/\d{2}\/\d{4})(?:\s*\((\d+)x\))?$/);
             if (!match) return acc;
             const count = match[2] ? parseInt(match[2]) : 1;
             return acc + getAdjustedKillCount(boss.name, count);
         }, 0);
+        return adjustedKills;
     } else if ('perWorldStats' in boss) {
         // Combined View
         return boss.perWorldStats.reduce((acc, stat) => {
@@ -43,5 +48,5 @@ export const calculateAdjustedTotalKills = (boss: Boss | CombinedBoss): number =
         }, 0);
     }
 
-    return (boss as any).totalKills || 0;
+    return getAdjustedKillCount(boss.name, boss.totalKills || 0);
 };

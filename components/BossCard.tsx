@@ -42,6 +42,18 @@ export default function BossCard({
   // Determine if boss has 0 kills (grayscale)
   const totalKills = calculateAdjustedTotalKills(boss);
 
+  // Debug logging for Soulpit bosses
+  if (boss.name === 'Yeti' || boss.name === 'Draptor') {
+    console.log(`🔍 DEBUG ${boss.name}:`, {
+      name: boss.name,
+      totalKills,
+      rawTotalKills: boss.totalKills,
+      history: 'history' in boss ? boss.history : 'N/A',
+      historyExists: 'history' in boss,
+      historyValue: 'history' in boss ? boss.history : undefined
+    });
+  }
+
   // Calculate today's kills for display
   const todayKills = useMemo(() => {
     if (!dailyKill) return 0;
@@ -286,7 +298,7 @@ export default function BossCard({
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
                   <span className="text-secondary font-medium">{totalKills} kills</span>
-                  {dailyKill && type === 'combined' && todayKills > 0 && (
+                  {dailyKill && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills})
                     </span>
@@ -434,7 +446,7 @@ export default function BossCard({
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
                   <span className="text-secondary font-medium">{totalKills} kills</span>
-                  {dailyKill && type === 'combined' && todayKills > 0 && (
+                  {dailyKill && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills} today)
                     </span>
