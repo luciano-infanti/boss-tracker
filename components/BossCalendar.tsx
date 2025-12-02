@@ -143,6 +143,60 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
             });
         }
 
+        // Merge Daily Data (if available)
+        if (data.daily) {
+            // Parse daily date: "DD/MM/YYYY" or similar format from dailyParser
+            // dailyParser returns date as string, let's assume it matches the format we need or we parse it
+            // Actually dailyParser extracts it from "RUBINOT DAILY UPDATE - 02/12/2025, 10:00" -> "02/12/2025"
+            const [dayStr, monthStr, yearStr] = data.daily.date.split('/');
+            const dayNum = parseInt(dayStr, 10);
+            const monthNum = parseInt(monthStr, 10) - 1;
+            const yearNum = parseInt(yearStr, 10);
+
+            const day = days.find(d =>
+                d.date.getDate() === dayNum &&
+                d.date.getMonth() === monthNum &&
+                d.date.getFullYear() === yearNum
+            );
+
+            if (day) {
+                data.daily.kills.forEach(kill => {
+                    // Filter by category
+                    if (selectedCategories.length > 0) {
+                        const category = getBossCategory(kill.bossName);
+                        if (!selectedCategories.includes(category)) return;
+                    }
+
+                    kill.worlds.forEach(w => {
+                        // Filter by world if worldName is provided
+                        if (worldName && w.world !== worldName) return;
+
+                        // Apply Soulpit filtering
+                        const adjustedCount = getAdjustedKillCount(kill.bossName, w.count);
+                        if (adjustedCount === 0) return;
+
+                        // Check how many we already have for this boss/world in this day
+                        const existingCount = day.kills.filter(k =>
+                            k.bossName === kill.bossName &&
+                            k.world === w.world
+                        ).length;
+
+                        // Add the difference if daily has more
+                        if (adjustedCount > existingCount) {
+                            const diff = adjustedCount - existingCount;
+                            for (let i = 0; i < diff; i++) {
+                                day.kills.push({
+                                    bossName: kill.bossName,
+                                    world: w.world,
+                                    timestamp: data.daily!.date
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+        }
+
         return days;
     }, [currentDate, data, worldName, selectedCategories]);
 
