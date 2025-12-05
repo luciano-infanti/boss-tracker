@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-    const { uploadFiles, isLoading: isUploading } = useData();
+    const { stageFiles, isLoading: isUploading } = useData();
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -24,7 +24,7 @@ export default function AdminPage() {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
-            await uploadFiles(Array.from(files));
+            await stageFiles(Array.from(files));
             if (inputRef.current) inputRef.current.value = '';
         }
     };

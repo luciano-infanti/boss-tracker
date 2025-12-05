@@ -1,6 +1,11 @@
+// import { put } from '@vercel/blob'; // Removed in favor of Supabase Storage
 import { NextResponse } from 'next/server';
-import { supabase } from '@/utils/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { ParsedData, CombinedBoss, Character, BossKillHistory, Boss } from '@/types';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export const dynamic = 'force-dynamic';
 
@@ -252,6 +257,34 @@ export async function POST(request: Request) {
           }
         }
       }
+    }
+
+    // 4. Create Backup (Supabase Storage)
+    try {
+      console.log('Creating backup in Supabase Storage...');
+      let dateStr = new Date().toISOString().split('T')[0]; // Default to today YYYY-MM-DD
+
+      if (data.daily?.date) {
+        dateStr = data.daily.date.replace(/\//g, '-');
+      }
+
+      const filename = `backup-${dateStr}.json`; // No folder prefix needed for bucket root, or use 'backups/' if preferred structure
+
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('backups')
+        .upload(filename, JSON.stringify(data), {
+          contentType: 'application/json',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('❌ Error creating backup:', uploadError);
+      } else {
+        console.log(`✅ Backup created: ${filename}`);
+      }
+    } catch (backupError) {
+      console.error('❌ Error creating backup:', backupError);
     }
 
     return NextResponse.json({ success: true });

@@ -5,12 +5,12 @@ import { useData } from '@/context/DataContext';
 import { useRef } from 'react';
 
 export default function UnifiedUploadButton() {
-    const { uploadFiles, isLoading } = useData();
+    const { stageFiles, isLoading } = useData();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            await uploadFiles(e.target.files);
+            await stageFiles(e.target.files);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }

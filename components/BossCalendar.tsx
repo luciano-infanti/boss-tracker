@@ -110,13 +110,13 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                     if (!boss.history || boss.history === 'None') return;
                     const historyEntries = boss.history.split(',').map(s => s.trim());
                     historyEntries.forEach(entry => {
-                        const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})\s*\((\d+)x\)$/);
+                        const match = entry.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s*\((\d+)x\))?$/);
                         if (match) {
                             const [_, dayStr, monthStr, yearStr, countStr] = match;
                             const dayNum = parseInt(dayStr, 10);
                             const monthNum = parseInt(monthStr, 10) - 1;
                             const yearNum = parseInt(yearStr, 10);
-                            const count = parseInt(countStr, 10);
+                            const count = countStr ? parseInt(countStr, 10) : 1;
 
                             // Apply Soulpit filtering
                             const adjustedCount = getAdjustedKillCount(boss.name, count);

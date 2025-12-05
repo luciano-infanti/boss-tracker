@@ -96,3 +96,9 @@ export interface Character {
   last_updated: string;
   history: CharacterSnapshot[];
 }
+
+export interface UploadLog {
+  fileName: string;
+  status: 'success' | 'warning' | 'error';
+  message: string;
+}

@@ -5,7 +5,7 @@ export function detectFileType(filename: string, content: string): FileType {
   if (filename.includes('ALL_WORLDS_COMBINED')) {
     return 'combined';
   }
-  
+
   if (filename.match(/RubinOT_Kills_[A-Z][a-z]+\.txt/)) {
     return 'world';
   }

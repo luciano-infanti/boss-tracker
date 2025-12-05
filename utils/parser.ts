@@ -118,12 +118,23 @@ export function detectFileType(filename: string, content?: string): 'world' | 'c
   if (filename.includes('ALL_WORLDS_COMBINED')) return 'combined';
   if (filename.includes('RubinOT_Kills_')) return 'world';
   if (content && content.includes('RUBINOT DAILY UPDATE')) return 'daily';
+  // Fallback: Check content for world file signature if filename doesn't match
+  if (content && content.includes('RubinOT Boss Kill Tracker -') && content.includes('Last Updated:')) return 'world';
   return null;
 }
 
-export function extractWorldName(filename: string): string | null {
+export function extractWorldName(filename: string, content?: string): string | null {
+  // Try filename first
   const match = filename.match(/RubinOT_Kills_([^.]+)\.txt/);
-  return match ? match[1] : null;
+  if (match) return match[1];
+
+  // Try content header
+  if (content) {
+    const headerMatch = content.match(/RubinOT Boss Kill Tracker - (.+)/);
+    if (headerMatch) return headerMatch[1].trim();
+  }
+
+  return null;
 }
 
 export function aggregateKillHistory(worlds: Record<string, Boss[]>): BossKillHistory[] {
@@ -147,15 +158,16 @@ export function aggregateKillHistory(worlds: Record<string, Boss[]>): BossKillHi
       entry.totalSpawnDays += boss.totalDaysSpawned;
       entry.totalKills += boss.totalKills;
 
-      // Parse history: "11/11/2025 (1x)"
+      // Parse history: "11/11/2025 (1x)" or "11/11/2025"
       const historyEntries = boss.history.split(',').map(s => s.trim());
       const killDates: any[] = [];
 
       historyEntries.forEach(h => {
-        const match = h.match(/^(\d{2})\/(\d{2})\/(\d{4})\s*\((\d+)x\)$/);
+        // Relaxed regex: Optional count, optional spaces
+        const match = h.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s*\((\d+)x\))?$/);
         if (match) {
           const [_, day, month, year, countStr] = match;
-          const count = parseInt(countStr);
+          const count = countStr ? parseInt(countStr) : 1;
           const dateStr = `${day}/${month}/${year}`;
 
           for (let i = 0; i < count; i++) {
