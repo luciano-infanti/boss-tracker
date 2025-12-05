@@ -5,13 +5,13 @@ import { Upload } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 
 export default function UploadButton() {
-  const { uploadFiles, isLoading } = useData();
+  const { stageFiles, isLoading } = useData();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      await uploadFiles(Array.from(files));
+      await stageFiles(Array.from(files));
       if (inputRef.current) inputRef.current.value = '';
     }
   };
