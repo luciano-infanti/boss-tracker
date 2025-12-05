@@ -170,10 +170,10 @@ export function aggregateKillHistory(worlds: Record<string, Boss[]>): BossKillHi
           const count = countStr ? parseInt(countStr) : 1;
           const dateStr = `${day}/${month}/${year}`;
 
-          for (let i = 0; i < count; i++) {
-            killDates.push({ date: dateStr, world: worldName, count: 1 });
-            entry.chronologicalHistory.push({ date: dateStr, world: worldName, count: 1 });
-          }
+          // Keep as single entry with actual count
+          const killEntry = { date: dateStr, world: worldName, count };
+          killDates.push(killEntry);
+          entry.chronologicalHistory.push(killEntry);
         }
       });
 

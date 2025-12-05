@@ -111,6 +111,57 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Merge daily kills into killDates so they persist
+      if (newData.daily && newData.daily.kills.length > 0) {
+        console.log('🔄 Merging daily kills into killDates...');
+        if (!newData.killDates) newData.killDates = [];
+
+        for (const dailyKill of newData.daily.kills) {
+          // Find or create the boss entry
+          let bossHistory = newData.killDates.find(kd => kd.bossName === dailyKill.bossName);
+          if (!bossHistory) {
+            bossHistory = {
+              bossName: dailyKill.bossName,
+              totalSpawnDays: 0,
+              totalKills: 0,
+              killsByWorld: {},
+              chronologicalHistory: []
+            };
+            newData.killDates.push(bossHistory);
+          }
+
+          for (const worldKill of dailyKill.worlds) {
+            const dateStr = newData.daily.date; // DD/MM/YYYY format
+
+            // Add to killsByWorld
+            if (!bossHistory.killsByWorld[worldKill.world]) {
+              bossHistory.killsByWorld[worldKill.world] = [];
+            }
+
+            // Check if entry for this date/world already exists
+            const existingEntry = bossHistory.killsByWorld[worldKill.world].find(
+              e => e.date === dateStr && e.world === worldKill.world
+            );
+
+            if (!existingEntry) {
+              bossHistory.killsByWorld[worldKill.world].push({
+                date: dateStr,
+                world: worldKill.world,
+                count: worldKill.count
+              });
+
+              // Also add to chronological history
+              bossHistory.chronologicalHistory.push({
+                date: dateStr,
+                world: worldKill.world,
+                count: worldKill.count
+              });
+            }
+          }
+        }
+        logs.push({ fileName: 'Daily', status: 'success', message: `Merged ${newData.daily.kills.length} daily kills into history` });
+      }
+
       setPendingData(newData);
       setUploadLogs(logs);
       setIsReviewModalOpen(true);

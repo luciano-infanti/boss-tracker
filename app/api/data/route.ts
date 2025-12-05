@@ -34,12 +34,32 @@ export async function GET() {
 
     if (charHistError) throw charHistError;
 
-    // 4. Fetch Kill History
-    const { data: killHistoryData, error: killHistError } = await supabase
-      .from('kill_history')
-      .select('*');
+    // 4. Fetch Kill History (Paginated to bypass limits)
+    let allKillHistory: any[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    if (killHistError) throw killHistError;
+    while (hasMore) {
+      const { data: batch, error: batchError } = await supabase
+        .from('kill_history')
+        .select('*')
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (batchError) throw batchError;
+
+      if (batch && batch.length > 0) {
+        allKillHistory = [...allKillHistory, ...batch];
+        if (batch.length < pageSize) hasMore = false;
+        page++;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    const killHistoryData = allKillHistory;
+
+    // --- Reconstruct Data Structure ---
 
     // --- Reconstruct Data Structure ---
 
@@ -82,6 +102,10 @@ export async function GET() {
     const killDatesMap = new Map<string, BossKillHistory>();
 
     (killHistoryData || []).forEach((kill: any) => {
+      // Normalize boss name key (e.g. "Yeti" vs "yeti")
+      // We'll use the name from the kill record, but when looking up, we'll scan values or use a normalized map.
+      // Better: Use the name from the kill record as the display name, but be consistent.
+
       if (!killDatesMap.has(kill.boss_name)) {
         killDatesMap.set(kill.boss_name, {
           bossName: kill.boss_name,
@@ -112,6 +136,14 @@ export async function GET() {
 
     const killDates = Array.from(killDatesMap.values());
 
+    // DEBUG: Check if Yeti is in killDatesMap
+    const yetiInMap = killDates.find(k => k.bossName?.toLowerCase() === 'yeti');
+    if (yetiInMap) {
+      console.log('🔍 [API] Yeti in killDatesMap:', JSON.stringify(yetiInMap, null, 2));
+    } else {
+      console.log('⚠️ [API] Yeti NOT in killDatesMap');
+    }
+
     // Reconstruct Worlds (Record<string, Boss[]>)
     // This is derived from perWorldStats or kill history.
     // Ideally, we iterate combined bosses and split them into worlds.
@@ -126,7 +158,10 @@ export async function GET() {
           // For now, we use the combined data or generic defaults
           // To be accurate, we should look at kill_history for this world
 
-          const worldKills = killDatesMap.get(cb.name)?.killsByWorld[stat.world] || [];
+          // Case-insensitive lookup for kill history
+          const bossNameLower = cb.name.toLowerCase();
+          const historyEntry = Array.from(killDatesMap.values()).find(k => k.bossName.toLowerCase() === bossNameLower);
+          const worldKills = historyEntry?.killsByWorld[stat.world] || [];
           // Sort by date desc
           worldKills.sort((a, b) => { // Parse DD/MM/YYYY
             const [d1, m1, y1] = a.date.split('/').map(Number);
@@ -144,6 +179,16 @@ export async function GET() {
             lastKillDate: lastKill,
             history: worldKills.map(k => k.count === 1 ? k.date : `${k.date} (${k.count}x)`).join(', ')
           });
+
+          // DEBUG: Log Yeti specifically
+          if (cb.name?.toLowerCase() === 'yeti') {
+            console.log(`🔍 [API] Constructing Yeti for world ${stat.world}:`, {
+              historyEntry: historyEntry ? 'FOUND' : 'NOT FOUND',
+              worldKills: worldKills.length,
+              worldKillsData: worldKills,
+              historyString: worldKills.map(k => k.count === 1 ? k.date : `${k.date} (${k.count}x)`).join(', ')
+            });
+          }
         });
       }
     });
@@ -241,6 +286,7 @@ export async function POST(request: Request) {
 
     // 3. Upsert Kill History
     if (data.killDates) {
+      console.log(`📝 Upserting kill history for ${data.killDates.length} bosses...`);
       for (const record of data.killDates) {
         for (const [world, kills] of Object.entries(record.killsByWorld)) {
           const killRecords = kills.map(k => ({
@@ -250,13 +296,37 @@ export async function POST(request: Request) {
             count: k.count
           }));
           if (killRecords.length > 0) {
+            // Debug log for Yeti
+            if (record.bossName === 'Yeti') {
+              console.log(`🔍 [UPSERT] Yeti kill records for ${world}:`, killRecords);
+            }
+
             const { error } = await supabase
               .from('kill_history')
               .upsert(killRecords, { onConflict: 'boss_name, world, date' });
-            if (error) console.error('Error upserting kills:', error);
+
+            if (error) {
+              console.error(`❌ ERROR upserting kills for ${record.bossName} in ${world}:`, error);
+            } else if (record.bossName === 'Yeti') {
+              console.log(`✅ Successfully upserted ${killRecords.length} Yeti records for ${world}`);
+
+              // VERIFY: Immediately query back to confirm it saved
+              const { data: verifyData, error: verifyError } = await supabase
+                .from('kill_history')
+                .select('*')
+                .eq('boss_name', 'Yeti')
+                .eq('world', world);
+
+              if (verifyError) {
+                console.error(`❌ VERIFY ERROR for Yeti in ${world}:`, verifyError);
+              } else {
+                console.log(`🔍 VERIFY: Found ${verifyData?.length || 0} Yeti records in ${world} after upsert`);
+              }
+            }
           }
         }
       }
+      console.log('✅ Kill history upsert complete');
     }
 
     // 4. Create Backup (Supabase Storage)

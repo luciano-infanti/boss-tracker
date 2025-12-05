@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Boss, CombinedBoss } from '@/types';
+import { Boss, CombinedBoss, DailyKill } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
 import { X, Calendar, Server, Clock, ChevronDown, ChevronRight, Check, ChevronLeft, ExternalLink } from 'lucide-react';
 import { useData } from '@/context/DataContext';
@@ -12,11 +12,13 @@ interface BossDetailsDrawerProps {
     boss: Boss | CombinedBoss;
     isOpen: boolean;
     onClose: () => void;
+    dailyKill?: DailyKill;
+    worldName?: string;
 }
 
 type SortMode = 'server' | 'date';
 
-export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetailsDrawerProps) {
+export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, worldName }: BossDetailsDrawerProps) {
     const { data } = useData();
     const [sortMode, setSortMode] = useState<SortMode>('server');
     const [expandedWorlds, setExpandedWorlds] = useState<Record<string, boolean>>({});
@@ -67,67 +69,130 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
         }).filter(Boolean) as string[];
     };
 
-    // Aggregate all kills for Date sort
+    // Aggregate all kills for Date sort AND Server sort (now unified)
     const allKillsByDate = useMemo(() => {
         const kills: { date: string; world: string; count: number; timestamp: number }[] = [];
+        const seen = new Set<string>(); // key: date-world
 
-        if ('history' in boss) {
-            // World View (Single World)
+        // DEBUG: Trace Yeti
+        const isDebug = boss.name === 'Yeti' || boss.name === 'Mahatheb';
+        if (isDebug) {
+            console.log(`🔍 [Drawer] Calculating kills for ${boss.name}`, {
+                hasDailyKill: !!dailyKill,
+                dailyKillData: dailyKill,
+                hasKillDates: !!data.killDates,
+                killDatesEntry: data.killDates?.find(h => h.bossName === boss.name),
+                historyString: 'history' in boss ? boss.history : 'N/A'
+            });
+        }
+
+        const addKill = (date: string, world: string, count: number) => {
+            const key = `${date}-${world}`;
+            if (seen.has(key)) return; // Avoid duplicates from multiple sources
+
+            // Filter by world if provided
+            if (worldName && world !== worldName) return;
+
+            const [day, month, year] = date.split('/');
+            const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+            if (isDebug) console.log(`   -> Adding kill: ${date} in ${world} (${count})`);
+
+            kills.push({
+                date,
+                world,
+                count,
+                timestamp: dateObj.getTime()
+            });
+            seen.add(key);
+        };
+
+        // 1. Daily Kills (Highest Priority for today)
+        if (dailyKill) {
+            dailyKill.worlds.forEach(w => {
+                const date = data.daily?.date || new Date().toLocaleDateString('en-GB');
+                const adjusted = getAdjustedKillCount(boss.name, w.count);
+                if (adjusted > 0) {
+                    addKill(date, w.world, adjusted);
+                }
+            });
+        }
+
+        // 2. Complete Kill Dates (Primary History Source)
+        if (data.killDates) {
+            const bossHistory = data.killDates.find(h => h.bossName === boss.name);
+            if (bossHistory) {
+                Object.entries(bossHistory.killsByWorld).forEach(([world, entries]) => {
+                    // Group by date for this world to handle multiple entries per day if any
+                    const byDate: Record<string, number> = {};
+                    entries.forEach(e => {
+                        byDate[e.date] = (byDate[e.date] || 0) + e.count;
+                    });
+
+                    Object.entries(byDate).forEach(([date, count]) => {
+                        const adjusted = getAdjustedKillCount(boss.name, count);
+                        if (adjusted > 0) addKill(date, world, adjusted);
+                    });
+                });
+            }
+        }
+
+        // 3. Boss History (Fallback for single world files not in killDates yet)
+        if ('history' in boss && boss.history && boss.history !== 'None') {
+            const targetWorld = worldName || 'Current World';
             const dates = parseHistoryString(boss.history);
             dates.forEach(dateStr => {
-                // Format: DD/MM/YYYY (Nx) or DD/MM/YYYY
                 const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s*\((\d+)x\))?$/);
                 if (match) {
                     const [_, day, month, year, countStr] = match;
                     const count = countStr ? parseInt(countStr) : 1;
-                    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                    kills.push({
-                        date: `${day}/${month}/${year}`,
-                        world: 'Current World',
-                        count,
-                        timestamp: dateObj.getTime()
-                    });
+                    const date = `${day}/${month}/${year}`;
+                    // parseHistoryString already adjusts the count, so we pass it directly
+                    addKill(date, targetWorld, count);
                 }
             });
-        } else if ('perWorldStats' in boss) {
-            // Combined View
-            if (data.killDates) {
-                const bossHistory = data.killDates.find(h => h.bossName === boss.name);
-                if (bossHistory) {
-                    Object.entries(bossHistory.killsByWorld).forEach(([world, entries]) => {
-                        entries.forEach(entry => {
-                            const adjustedCount = getAdjustedKillCount(boss.name, entry.count);
-                            if (adjustedCount === 0) return;
-
-                            const [day, month, year] = entry.date.split('/');
-                            const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                            kills.push({
-                                date: entry.date,
-                                world,
-                                count: adjustedCount,
-                                timestamp: dateObj.getTime()
-                            });
-                        });
-                    });
-                }
-            }
         }
 
         // Sort by date descending
         return kills.sort((a, b) => b.timestamp - a.timestamp);
-    }, [boss, data.killDates]);
+    }, [boss, data.killDates, data.daily, worldName, dailyKill]);
 
     const adjustedTotalKills = useMemo(() => {
-        if (!isSoulpitBoss(boss.name)) return boss.totalKills || 0;
-        return allKillsByDate.reduce((acc, kill) => acc + kill.count, 0);
-    }, [boss.name, boss.totalKills, allKillsByDate]);
+        const aggregatedTotal = allKillsByDate.reduce((acc, kill) => acc + kill.count, 0);
+
+        // Debug logging for Yeti/Mahatheb
+        if (boss.name === 'Yeti' || boss.name === 'Mahatheb') {
+            console.log(`🔍 Drawer Total Calc (${boss.name}):`, {
+                bossTotal: boss.totalKills,
+                aggregatedTotal,
+                dailyKill: dailyKill,
+                historyCount: allKillsByDate.length
+            });
+        }
+
+        // If aggregated total (which includes daily + history) is greater than boss.totalKills,
+        // it means we have more recent data (like today's kill) that isn't in the combined file yet.
+        // In this case, use the aggregated total.
+        if (aggregatedTotal > (boss.totalKills || 0)) {
+            return aggregatedTotal;
+        }
+
+        // Otherwise, fallback to boss.totalKills as it might contain historical data 
+        // that isn't fully represented in the parsed history strings.
+        return boss.totalKills || 0;
+    }, [boss.name, boss.totalKills, allKillsByDate, dailyKill]);
 
     const isZeroKills = adjustedTotalKills === 0;
 
     // Mini Calendar Component
     const MiniCalendar = () => {
         const [currentDate, setCurrentDate] = useState(new Date());
-        const [selectedServer, setSelectedServer] = useState<string>('all');
+        const [selectedServer, setSelectedServer] = useState<string>(worldName || 'all');
+
+        // Update selected server if worldName changes
+        useEffect(() => {
+            if (worldName) setSelectedServer(worldName);
+        }, [worldName]);
 
         const currentMonth = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();
@@ -147,7 +212,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                 return boss.perWorldStats.map(s => s.world).sort();
             }
             return [];
-        }, []);
+        }, [boss]);
 
         // Map kills to days
         const killsOnDay: Record<number, { world: string, count: number }[]> = {};
@@ -184,8 +249,8 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                         </button>
                     </div>
 
-                    {/* Server Filter (only for combined view) */}
-                    {availableServers.length > 0 && (
+                    {/* Server Filter (only for combined view and if no world forced) */}
+                    {availableServers.length > 0 && !worldName && (
                         <select
                             value={selectedServer}
                             onChange={(e) => setSelectedServer(e.target.value)}
@@ -200,9 +265,9 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                        <div key={i} className="text-[10px] text-secondary font-medium py-1">{d}</div>
+                        <div key={i} className="text-[10px] text-secondary font-medium aspect-square flex items-center justify-center">{d}</div>
                     ))}
-                    {padding.map(p => <div key={`pad-${p}`} />)}
+                    {padding.map(p => <div key={`pad-${p}`} className="aspect-square" />)}
                     {days.map(day => {
                         const kills = killsOnDay[day];
                         const hasKill = kills && kills.length > 0;
@@ -261,6 +326,54 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [isOpen, onClose]);
+
+    // Merge perWorldStats with daily kills for Server view
+    const serverStats = useMemo(() => {
+        const stats = new Map<string, { spawns: number; kills: number; frequency: string }>();
+
+        // 1. Add existing perWorldStats
+        if ('perWorldStats' in boss) {
+            boss.perWorldStats.forEach(s => {
+                if (worldName && s.world !== worldName) return;
+                stats.set(s.world, { ...s });
+            });
+        }
+
+        // 2. Merge daily kills
+        if (dailyKill) {
+            dailyKill.worlds.forEach(w => {
+                // If filtering by world, skip others
+                if (worldName && w.world !== worldName) return;
+
+                const existing = stats.get(w.world) || { spawns: 0, kills: 0, frequency: 'N/A' };
+                // If this daily kill isn't already accounted for in the total (rough check)
+                // Actually, for display purposes in the list, we just want to ensure the world exists
+                // and maybe update the count if it looks stale? 
+                // For now, let's just ensure the world is in the list.
+                // If it's a placeholder boss, stats is empty, so this populates it.
+                if (!stats.has(w.world)) {
+                    stats.set(w.world, {
+                        spawns: 0, // We don't know total spawns for new boss
+                        kills: w.count,
+                        frequency: 'N/A'
+                    });
+                } else {
+                    // If we have stats, we assume they might include today's kill if the combined file was updated.
+                    // But if the combined file is old, the count might be lower.
+                    // Let's just trust the combined file for totals if it exists, 
+                    // but if it's a placeholder (0 kills), use daily.
+                    if (existing.kills === 0) {
+                        existing.kills = w.count;
+                    }
+                }
+            });
+        }
+
+        return Array.from(stats.entries()).map(([world, stat]) => ({
+            world,
+            ...stat
+        })).sort((a, b) => b.kills - a.kills);
+    }, [boss, dailyKill]);
 
     return (
         <AnimatePresence>
@@ -497,16 +610,19 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                 <div className="bg-surface-hover/20 rounded-xl border border-border/50 overflow-hidden flex-1">
                                     {sortMode === 'server' ? (
                                         <div className="p-4 space-y-2">
-                                            {'history' in boss ? (
-                                                // World View (Single World)
-                                                boss.history && boss.history !== 'None' ? (
+                                            {'history' in boss || worldName ? (
+                                                // World View (Single World or Filtered)
+                                                allKillsByDate.length > 0 ? (
                                                     <div>
-                                                        <div className="text-sm font-medium text-white mb-2">Current World</div>
+                                                        <div className="text-sm font-medium text-white mb-2">
+                                                            {worldName || 'Current World'}
+                                                        </div>
                                                         <ul className="space-y-2">
-                                                            {parseHistoryString(boss.history).map((date, i) => (
+                                                            {allKillsByDate.map((kill, i) => (
                                                                 <li key={i} className="flex items-center gap-3 text-sm text-secondary bg-surface-hover/30 p-2 rounded border border-border/30">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                                                                    {date}
+                                                                    {kill.date}
+                                                                    {kill.count > 1 && <span className="text-emerald-400 font-bold">({kill.count}x)</span>}
                                                                 </li>
                                                             ))}
                                                         </ul>
@@ -515,10 +631,10 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                                     <div className="text-center text-secondary py-8">No history available</div>
                                                 )
                                             ) : (
-                                                // Combined View
-                                                'perWorldStats' in boss ? (
+                                                // Combined View - Use serverStats
+                                                serverStats.length > 0 ? (
                                                     <div className="space-y-2">
-                                                        {boss.perWorldStats.map(stat => (
+                                                        {serverStats.map(stat => (
                                                             <div key={stat.world} className="border border-border/30 rounded-lg overflow-hidden bg-surface-hover/10">
                                                                 <button
                                                                     onClick={() => toggleWorld(stat.world)}
@@ -542,12 +658,18 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose }: BossDetails
                                                                             className="overflow-hidden"
                                                                         >
                                                                             <div className="p-3 pt-0 border-t border-border/30 space-y-1.5 bg-black/20">
-                                                                                {getDatesForWorld(stat.world).map((date, i) => (
-                                                                                    <div key={i} className="text-sm text-secondary/80 flex items-center gap-2 pl-6">
-                                                                                        <div className="w-1 h-1 rounded-full bg-secondary/50"></div>
-                                                                                        {date}
+                                                                                {getDatesForWorld(stat.world).length > 0 ? (
+                                                                                    getDatesForWorld(stat.world).map((date, i) => (
+                                                                                        <div key={i} className="text-sm text-secondary/80 flex items-center gap-2 pl-6">
+                                                                                            <div className="w-1 h-1 rounded-full bg-secondary/50"></div>
+                                                                                            {date}
+                                                                                        </div>
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <div className="text-xs text-secondary/50 pl-6 py-1 italic">
+                                                                                        Detailed dates not available
                                                                                     </div>
-                                                                                ))}
+                                                                                )}
                                                                             </div>
                                                                         </motion.div>
                                                                     )}

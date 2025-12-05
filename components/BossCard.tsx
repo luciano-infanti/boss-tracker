@@ -297,7 +297,7 @@ export default function BossCard({
               <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
-                  <span className="text-secondary font-medium">{totalKills} kills</span>
+                  <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
                   {dailyKill && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills})
@@ -313,6 +313,8 @@ export default function BossCard({
           boss={boss}
           isOpen={isDrawerOpen}
           onClose={() => setIsDrawerOpen(false)}
+          dailyKill={dailyKill}
+          worldName={type === 'world' ? worldName : undefined}
         />
       </>
     );
@@ -445,7 +447,7 @@ export default function BossCard({
               <div className="flex items-center gap-1.5 text-xs text-secondary">
                 <Trophy size={12} className="text-secondary/70" />
                 <span>
-                  <span className="text-secondary font-medium">{totalKills} kills</span>
+                  <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
                   {dailyKill && todayKills > 0 && (
                     <span className="text-emerald-400 ml-1">
                       ({todayKills} today)
@@ -481,6 +483,8 @@ export default function BossCard({
         boss={boss}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        dailyKill={dailyKill}
+        worldName={type === 'world' ? worldName : undefined}
       />
     </>
   );
