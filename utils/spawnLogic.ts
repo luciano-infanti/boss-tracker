@@ -20,6 +20,9 @@ export type BossStats = {
     stdDev: number;     // Standard Deviation for consistency
     sampleSize: number; // Number of intervals observed
     confidence: number; // 0 to 100
+    rawGaps?: number[]; // All gaps collected (sorted)
+    filteredGaps?: number[]; // After 80th percentile filter
+    worldGaps?: Record<string, number[]>; // Gaps per world for breakdown
 };
 
 export type Prediction = {
@@ -87,22 +90,38 @@ export class SpawnPredictor {
         Object.keys(killsByBossAndWorld).forEach(boss => {
             let allGaps: number[] = [];
             let serverCount = 0;
+            const worldGapsMap: Record<string, number[]> = {};
 
             // Collect ALL gaps from ALL servers (Intra-server calculation)
             Object.keys(killsByBossAndWorld[boss]).forEach(world => {
                 const dates = killsByBossAndWorld[boss][world];
                 if (dates.length > 1) {
                     serverCount++;
+                    const worldGaps: number[] = [];
                     for (let i = 1; i < dates.length; i++) {
                         const gap = differenceInDays(dates[i], dates[i - 1]);
-                        if (gap >= 1) allGaps.push(gap);
+                        if (gap >= 1) {
+                            allGaps.push(gap);
+                            worldGaps.push(gap);
+                        }
                     }
+                    worldGapsMap[world] = worldGaps;
                 }
             });
 
             if (allGaps.length === 0) {
                 // Not enough data, fallback defaults
-                this.statsCache[boss] = { minGap: 1, maxGap: 1, avgGap: 1, stdDev: 0, sampleSize: 0, confidence: 0 };
+                this.statsCache[boss] = {
+                    minGap: 1,
+                    maxGap: 1,
+                    avgGap: 1,
+                    stdDev: 0,
+                    sampleSize: 0,
+                    confidence: 0,
+                    rawGaps: [],
+                    filteredGaps: [],
+                    worldGaps: {}
+                };
                 return;
             }
 
@@ -142,7 +161,10 @@ export class SpawnPredictor {
                 avgGap,
                 stdDev,
                 sampleSize: allGaps.length,
-                confidence: finalConfidence
+                confidence: finalConfidence,
+                rawGaps: [...allGaps],
+                filteredGaps: [...filteredGaps],
+                worldGaps: worldGapsMap
             };
         });
     }
