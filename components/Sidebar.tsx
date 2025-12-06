@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull, MessageSquare } from 'lucide-react';
+import { Globe, Server, Calendar, History, Menu, X, Calculator, Skull, MessageSquare, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { WORLDS } from '@/utils/constants';
@@ -73,6 +73,18 @@ export default function Sidebar() {
             >
               <Calendar size={16} />
               Today's Kills
+            </Link>
+
+            <Link
+              href="/upcoming"
+              onClick={() => setIsOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${activePath === '/upcoming'
+                ? 'bg-surface-hover text-white'
+                : 'text-secondary hover:text-white hover:bg-surface-hover/50'
+                }`}
+            >
+              <Clock size={16} />
+              Upcoming Bosses
             </Link>
 
             <Link

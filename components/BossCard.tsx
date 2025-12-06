@@ -4,7 +4,65 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
-import { Clock, Calendar, Trophy } from 'lucide-react';
+import {
+  Clock,
+  Calendar,
+  Trophy,
+  CheckCircle,
+  HelpCircle,
+  AlertTriangle
+} from 'lucide-react';
+// ... existing imports
+
+// ... inside BossCard ...
+
+// Helper to get confidence badge
+const getConfidenceBadge = () => {
+  // @ts-ignore - accessing dynamic property from prediction
+  const label = boss.confidenceLabel;
+  if (!label) return null;
+
+  if (label === 'High') {
+    return (
+      <div className="group relative ml-2 inline-flex items-center">
+        <CheckCircle size={14} className="text-emerald-500" />
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
+          <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+            Verified by 10+ kills across servers.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (label === 'Medium') {
+    return (
+      <div className="group relative ml-2 inline-flex items-center">
+        <HelpCircle size={14} className="text-yellow-500" />
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
+          <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+            Likely accurate, but limited data.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative ml-2 inline-flex items-center">
+      <AlertTriangle size={14} className="text-red-500" />
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
+        <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+          Very few data points. Estimate may be wrong.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ... inside render ...
+
+
 import { calculateAdjustedTotalKills, getAdjustedKillCount } from '@/utils/soulpitUtils';
 
 import { DailyKill } from '@/types';
@@ -16,6 +74,7 @@ interface BossCardProps {
   isNew?: boolean;
   dailyKill?: DailyKill;
   worldName?: string;
+  onClick?: (boss: Boss | CombinedBoss) => void;
 }
 
 import { useData } from '@/context/DataContext';
@@ -31,8 +90,11 @@ export default function BossCard({
   dailyKill,
   worldName,
   showNextSpawn = true,
-  viewMode = 'grid'
-}: BossCardProps & { showNextSpawn?: boolean; viewMode?: 'grid' | 'list' }) {
+  viewMode = 'grid',
+  hideStats = false,
+  showLastKill = true,
+  onClick
+}: BossCardProps & { showNextSpawn?: boolean; viewMode?: 'grid' | 'list'; hideStats?: boolean; showLastKill?: boolean }) {
   const { data } = useData();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
@@ -42,17 +104,7 @@ export default function BossCard({
   // Determine if boss has 0 kills (grayscale)
   const totalKills = calculateAdjustedTotalKills(boss);
 
-  // Debug logging for Soulpit bosses
-  if (boss.name === 'Yeti' || boss.name === 'Draptor') {
-    console.log(`🔍 DEBUG ${boss.name}:`, {
-      name: boss.name,
-      totalKills,
-      rawTotalKills: boss.totalKills,
-      history: 'history' in boss ? boss.history : 'N/A',
-      historyExists: 'history' in boss,
-      historyValue: 'history' in boss ? boss.history : undefined
-    });
-  }
+
 
   // Calculate today's kills for display
   const todayKills = useMemo(() => {
@@ -72,19 +124,23 @@ export default function BossCard({
   const showKilledToday = isKilledToday && todayKills > 0;
 
   const handleCardClick = () => {
-    setIsDrawerOpen(true);
+    if (onClick) {
+      onClick(boss);
+    } else {
+      setIsDrawerOpen(true);
+    }
   };
 
   const [showTooltip, setShowTooltip] = useState(false);
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
-    // Only show tooltip on World pages
-    if (type !== 'world') return;
+    // Show tooltip if confidence info is available
+    if ((boss as any).confidence === undefined) return;
 
     const timer = setTimeout(() => {
       setShowTooltip(true);
-    }, 1000); // 1 seconds delay
+    }, 500); // 0.5 seconds delay
     setHoverTimer(timer);
   };
 
@@ -173,18 +229,21 @@ export default function BossCard({
         >
           {/* Tooltip */}
           <AnimatePresence>
-            {showTooltip && lastSeenText && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-                animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
-                exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-                transition={{ duration: 0.2 }}
-                className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
-              >
-                {lastSeenText}
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
-              </motion.div>
-            )}
+            {/* Tooltip */}
+            <AnimatePresence>
+              {showTooltip && (boss as any).confidence !== undefined && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+                  animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+                  exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
+                >
+                  {(boss as any).confidence}% Confidence
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </AnimatePresence>
 
           {/* Image Container - Smaller for List View */}
@@ -213,7 +272,15 @@ export default function BossCard({
           <div className="flex-1 min-w-0 flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium text-white text-sm truncate group-hover:text-primary transition-colors">{boss.name}</h3>
+                <h3 className="font-medium text-white text-sm truncate group-hover:text-primary transition-colors flex items-center gap-2">
+                  {boss.name}
+                  {(boss as any).confidence !== undefined && (
+                    <div className={`w-2 h-2 rounded-full ${(boss as any).confidenceLabel === 'High' ? 'bg-emerald-500' :
+                      (boss as any).confidenceLabel === 'Medium' ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`} />
+                  )}
+                </h3>
                 {/* Tags Inline */}
                 {showKilledToday && type !== 'combined' && (
                   <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
@@ -227,21 +294,24 @@ export default function BossCard({
                 )}
               </div>
 
+
+
               <div className="flex items-center gap-4 text-xs text-secondary">
                 {/* Next Spawn */}
                 {showNextSpawn && nextSpawnInfo && (
                   <div className="flex items-center gap-1.5">
                     <Calendar size={12} className="text-secondary/70" />
                     <span>
-                      Next: <span className="text-secondary">
-                        {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
+                      Next: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                        {nextSpawnInfo.date}
+                        {nextSpawnInfo.isOverdue && ' (Overdue)'}
                       </span>
                     </span>
                   </div>
                 )}
 
                 {/* Last Kill */}
-                {type === 'world' && (
+                {type === 'world' && showLastKill && (
                   (() => {
                     let dateStr = 'lastKillDate' in boss ? boss.lastKillDate : undefined;
 
@@ -274,38 +344,40 @@ export default function BossCard({
             </div>
 
             {/* Right Side Stats */}
-            <div className="flex items-center gap-4">
-              {/* World Badges for Combined View */}
-              {dailyKill && type !== 'world' && (
-                <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
-                  {dailyKill.worlds.map((w) => {
-                    const adjustedCount = getAdjustedKillCount(boss.name, w.count);
-                    if (adjustedCount === 0) return null;
-                    return (
-                      <span
-                        key={w.world}
-                        className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
-                      >
-                        {w.world}
-                        {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
+            {!hideStats && (
+              <div className="flex items-center gap-4">
+                {/* World Badges for Combined View */}
+                {dailyKill && type !== 'world' && (
+                  <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
+                    {dailyKill.worlds.map((w) => {
+                      const adjustedCount = getAdjustedKillCount(boss.name, w.count);
+                      if (adjustedCount === 0) return null;
+                      return (
+                        <span
+                          key={w.world}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
+                        >
+                          {w.world}
+                          {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
 
-              <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
-                <Trophy size={12} className="text-secondary/70" />
-                <span>
-                  <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
-                  {dailyKill && todayKills > 0 && (
-                    <span className="text-emerald-400 ml-1">
-                      ({todayKills})
-                    </span>
-                  )}
-                </span>
+                <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
+                  <Trophy size={12} className="text-secondary/70" />
+                  <span>
+                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
+                    {dailyKill && todayKills > 0 && (
+                      <span className="text-emerald-400 ml-1">
+                        ({todayKills})
+                      </span>
+                    )}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </motion.div>
 
@@ -319,6 +391,52 @@ export default function BossCard({
       </>
     );
   }
+
+
+
+  // Helper to get confidence badge
+  const getConfidenceBadge = () => {
+    // @ts-ignore - accessing dynamic property from prediction
+    const label = (boss as any).confidenceLabel;
+    if (!label) return null;
+
+    if (label === 'High') {
+      return (
+        <div className="group relative ml-2 inline-flex items-center">
+          <CheckCircle size={14} className="text-emerald-500" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
+            <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+              Verified by 10+ kills across servers.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (label === 'Medium') {
+      return (
+        <div className="group relative ml-2 inline-flex items-center">
+          <HelpCircle size={14} className="text-yellow-500" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
+            <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+              Likely accurate, but limited data.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="group relative ml-2 inline-flex items-center">
+        <AlertTriangle size={14} className="text-red-500" />
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
+          <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
+            Very few data points. Estimate may be wrong.
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -336,8 +454,9 @@ export default function BossCard({
         `}
       >
         {/* Tooltip */}
+        {/* Tooltip */}
         <AnimatePresence>
-          {showTooltip && lastSeenText && (
+          {showTooltip && (boss as any).confidence !== undefined && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
               animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
@@ -345,7 +464,7 @@ export default function BossCard({
               transition={{ duration: 0.2 }}
               className="absolute -top-10 left-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
             >
-              {lastSeenText}
+              {(boss as any).confidence}% Confidence
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
             </motion.div>
           )}
@@ -393,25 +512,44 @@ export default function BossCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors">{boss.name}</h3>
+              <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors flex items-center gap-2">
+                {boss.name}
+                {(boss as any).confidence !== undefined && (
+                  <div className={`w-2 h-2 rounded-full ${(boss as any).confidenceLabel === 'High' ? 'bg-emerald-500' :
+                    (boss as any).confidenceLabel === 'Medium' ? 'bg-yellow-500' :
+                      'bg-red-500'
+                    }`} />
+                )}
+              </h3>
             </div>
 
+
+
             <div className="space-y-1">
-              {/* Next Spawn - Conditional */}
               {/* Next Spawn - Conditional */}
               {showNextSpawn && nextSpawnInfo && (
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
                   <Calendar size={12} className="text-secondary/70" />
-                  <span>
-                    Next: <span className="text-secondary">
-                      {nextSpawnInfo.isOverdue ? '-' : nextSpawnInfo.date}
+                  <div className="flex items-center">
+                    <span>
+                      Next: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                        {(() => {
+                          if (nextSpawnInfo.isOverdue) {
+                            // @ts-ignore
+                            if (boss.confidenceLabel === 'Low') return 'Insufficient Data';
+                            return 'Overdue';
+                          }
+                          return nextSpawnInfo.date;
+                        })()}
+                      </span>
                     </span>
-                  </span>
+                    {getConfidenceBadge()}
+                  </div>
                 </div>
               )}
 
               {/* Last Kill - Only show if not "Never" AND not combined view */}
-              {type !== 'world' ? null : (
+              {type !== 'world' || !showLastKill ? null : (
                 (() => {
                   // Reuse the logic from lastSeenText but just get the date string
                   let dateStr = 'lastKillDate' in boss ? boss.lastKillDate : undefined;
@@ -444,17 +582,19 @@ export default function BossCard({
               )}
 
               {/* Total Kills */}
-              <div className="flex items-center gap-1.5 text-xs text-secondary">
-                <Trophy size={12} className="text-secondary/70" />
-                <span>
-                  <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
-                  {dailyKill && todayKills > 0 && (
-                    <span className="text-emerald-400 ml-1">
-                      ({todayKills} today)
-                    </span>
-                  )}
-                </span>
-              </div>
+              {!hideStats && (
+                <div className="flex items-center gap-1.5 text-xs text-secondary">
+                  <Trophy size={12} className="text-secondary/70" />
+                  <span>
+                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
+                    {dailyKill && todayKills > 0 && (
+                      <span className="text-emerald-400 ml-1">
+                        ({todayKills} today)
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
 
               {/* World Badges (only if dailyKill exists AND not on world page) */}
               {dailyKill && type !== 'world' && (

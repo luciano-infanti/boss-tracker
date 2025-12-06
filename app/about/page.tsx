@@ -52,92 +52,149 @@ export default function AboutPage() {
                 <section className="bg-surface border border-border rounded-lg p-8">
                     <div className="flex items-center gap-3 mb-6">
                         <Activity className="text-emerald-400" size={24} />
-                        <h2 className="text-xl font-semibold text-white">The Prediction Model</h2>
+                        <h2 className="text-xl font-semibold text-white">Advanced IAT Prediction Model</h2>
                     </div>
                     <p className="text-secondary leading-relaxed mb-6">
-                        The core of our prediction engine relies on <strong>Time Series Analysis</strong> of historical kill data.
-                        We model the spawn behavior as a stochastic process with a periodic component.
+                        We have evolved from simple averages to a robust <strong>Inter-Arrival Time (IAT) Analysis</strong>.
+                        This statistical approach models boss spawns not as a single point in time, but as a probability window, accounting for variance and "ghost spawns" (missed kills).
                     </p>
 
                     <div className="bg-surface-hover/30 p-8 rounded-lg border border-border/50 overflow-x-auto">
-                        <h3 className="text-white font-bold mb-6 border-b border-border/50 pb-2">Mathematical Formulation</h3>
+                        <h3 className="text-white font-bold mb-6 border-b border-border/50 pb-2">Core Algorithms</h3>
 
-                        <div className="space-y-8 font-mono text-sm">
-                            {/* Set Definition */}
+                        <div className="space-y-10 font-mono text-sm">
+                            {/* 1. IAT Calculation */}
                             <div>
-                                <p className="text-secondary mb-2 font-sans">Let <em>K</em> be the ordered set of kill timestamps:</p>
-                                <div className="flex justify-center my-4">
-                                    <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
-                                        K = &#123; t1, t2, ..., tn &#125; where ti &lt; t(i+1)
-                                    </span>
+                                <h4 className="text-primary font-bold mb-2 font-sans">1. Inter-Arrival Time (IAT)</h4>
+                                <p className="text-secondary mb-3 font-sans">
+                                    We first calculate the set of all time gaps (Δt) between consecutive confirmed kills.
+                                </p>
+                                <div className="flex justify-center mb-4 bg-black/20 py-4 rounded border border-white/10">
+                                    <img src="/images/formulas/iat.png" alt="IAT Formula" className="w-auto h-auto max-w-full opacity-90" />
                                 </div>
                             </div>
 
-                            {/* Interval Calculation */}
+                            {/* 2. Outlier Filtering */}
                             <div>
-                                <p className="text-secondary mb-2 font-sans">We define the spawn interval <em>Δt</em> as the time difference between consecutive events:</p>
-                                <div className="flex justify-center my-4">
-                                    <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
-                                        Δti = ti - t(i-1)
-                                    </span>
+                                <h4 className="text-primary font-bold mb-2 font-sans">2. Ghost Spawn Filtering (Percentile Cutoff)</h4>
+                                <p className="text-secondary mb-3 font-sans">
+                                    To filter out "Ghost Spawns" (where a boss spawned but wasn't killed/recorded, leading to a double-length gap), we apply an <strong>80th Percentile Filter</strong>.
+                                    Any gap larger than P80 is treated as an anomaly and excluded from the "Likely Ceiling" calculation.
+                                </p>
+                                <div className="flex justify-center mb-4 bg-black/20 py-4 rounded border border-white/10">
+                                    <img src="/images/formulas/ghost_filter.png" alt="Ghost Filter Formula" className="w-auto h-auto max-w-full opacity-90" />
                                 </div>
                             </div>
 
-                            {/* Mean Interval */}
+                            {/* 3. Window Definition */}
                             <div>
-                                <p className="text-secondary mb-2 font-sans">The predicted mean interval <em>μ</em> is the arithmetic mean of observed intervals:</p>
-                                <div className="flex justify-center my-4">
-                                    <span className="text-lg text-white bg-black/20 px-6 py-3 rounded border border-white/10">
-                                        μ = (1 / (n-1)) × Σ Δti
-                                    </span>
+                                <h4 className="text-primary font-bold mb-2 font-sans">3. The Spawn Window</h4>
+                                <p className="text-secondary mb-3 font-sans">
+                                    Instead of a single date, we define a <strong>Spawn Window</strong> bounded by a Safety Floor and a Likely Ceiling.
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-black/20 p-4 rounded border border-white/10 flex flex-col items-center">
+                                        <div className="text-blue-400 font-bold mb-1">Safety Floor (Min)</div>
+                                        <div className="text-xs text-secondary mb-3">The earliest observed respawn.</div>
+                                        <img src="/images/formulas/min_gap.png" alt="Min Gap Formula" className="w-auto h-auto max-w-full opacity-90" />
+                                    </div>
+                                    <div className="bg-black/20 p-4 rounded border border-white/10 flex flex-col items-center">
+                                        <div className="text-orange-400 font-bold mb-1">Likely Ceiling (Max)</div>
+                                        <div className="text-xs text-secondary mb-3">The 80th percentile gap.</div>
+                                        <img src="/images/formulas/max_gap.png" alt="Max Gap Formula" className="w-auto h-auto max-w-full opacity-90" />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Prediction */}
+                            {/* 4. Progress Calculation */}
                             <div>
-                                <p className="text-secondary mb-2 font-sans">The next expected spawn date <em>D_next</em> is projected as:</p>
-                                <div className="flex justify-center my-4">
-                                    <span className="text-xl text-emerald-400 bg-emerald-500/10 px-6 py-3 rounded border border-emerald-500/20">
-                                        D_next = tn + μ
-                                    </span>
+                                <h4 className="text-primary font-bold mb-2 font-sans">4. Window Progress</h4>
+                                <p className="text-secondary mb-3 font-sans">
+                                    We calculate how deep we are into the spawn window to assign a probability score.
+                                </p>
+                                <div className="flex justify-center mb-4 bg-black/20 py-4 rounded border border-white/10">
+                                    <img src="/images/formulas/progress.png" alt="Progress Formula" className="w-auto h-auto max-w-full opacity-90" />
+                                </div>
+                            </div>
+
+                            {/* 5. Confidence Heuristic */}
+                            <div>
+                                <h4 className="text-primary font-bold mb-2 font-sans">5. Confidence Score</h4>
+                                <p className="text-secondary mb-3 font-sans">
+                                    Not all predictions are equal. We calculate a <strong>Confidence Score (0-100%)</strong> based on three factors:
+                                </p>
+                                <ul className="list-disc list-inside text-secondary space-y-1 ml-2 mb-4">
+                                    <li><strong>Sample Size:</strong> More kills = higher confidence (Logarithmic scale).</li>
+                                    <li><strong>Consistency:</strong> Low Standard Deviation (StdDev) = higher confidence.</li>
+                                    <li><strong>Cross-Server Verification:</strong> Consistent intervals across multiple worlds boost the score.</li>
+                                </ul>
+                                <div className="bg-black/20 p-4 rounded border border-white/10 text-xs font-mono text-secondary">
+                                    Score = Base(Samples) × Consistency(StdDev) × ServerBonus
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Precision & Constraints */}
+                {/* Visual Representation */}
                 <section className="bg-surface border border-border rounded-lg p-8">
                     <div className="flex items-center gap-3 mb-6">
-                        <AlertCircle className="text-yellow-400" size={24} />
-                        <h2 className="text-xl font-semibold text-white">Precision & Confidence</h2>
+                        <Target className="text-blue-400" size={24} />
+                        <h2 className="text-xl font-semibold text-white">Visualizing the Window</h2>
                     </div>
 
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="text-white font-medium mb-2">Minimum Data Requirements</h3>
-                            <p className="text-secondary">
-                                To generate a valid prediction, the algorithm requires a minimum of <strong>2 confirmed kills</strong> (n ≥ 2).
-                                With only 1 kill, it is mathematically impossible to calculate an interval (Δt), and thus the prediction returns "N/A".
-                            </p>
-                        </div>
+                    <div className="relative pt-8 pb-12 px-4">
+                        {/* Timeline Line */}
+                        <div className="h-1 bg-border w-full absolute top-1/2 -translate-y-1/2"></div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                            <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
-                                <div className="text-red-400 font-bold mb-1">Low Confidence</div>
-                                <div className="text-xs text-secondary">n = 2 kills</div>
-                                <div className="text-xs text-secondary mt-1">Single interval observed. High variance risk.</div>
+                        {/* Points */}
+                        <div className="relative flex justify-between items-center h-20">
+                            {/* Last Kill */}
+                            <div className="absolute left-0 flex flex-col items-center -translate-x-1/2">
+                                <div className="w-4 h-4 rounded-full bg-secondary border-4 border-surface"></div>
+                                <div className="mt-4 text-xs text-secondary font-mono">Last Kill</div>
+                                <div className="text-xs text-secondary/50">t=0</div>
                             </div>
-                            <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
-                                <div className="text-yellow-400 font-bold mb-1">Medium Confidence</div>
-                                <div className="text-xs text-secondary">n = 3-5 kills</div>
-                                <div className="text-xs text-secondary mt-1">Pattern begins to emerge. Outliers may skew results.</div>
+
+                            {/* Min Gap (Start of Window) */}
+                            <div className="absolute left-[40%] flex flex-col items-center -translate-x-1/2">
+                                <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-surface z-10"></div>
+                                <div className="absolute -top-8 text-blue-400 font-bold text-xs">Window Opens</div>
+                                <div className="mt-4 text-xs text-blue-400 font-mono">Min Gap</div>
                             </div>
-                            <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
-                                <div className="text-emerald-400 font-bold mb-1">High Confidence</div>
-                                <div className="text-xs text-secondary">n &gt; 5 kills</div>
-                                <div className="text-xs text-secondary mt-1">Robust average. Anomalies are smoothed out.</div>
+
+                            {/* Max Gap (End of Window) */}
+                            <div className="absolute left-[80%] flex flex-col items-center -translate-x-1/2">
+                                <div className="w-4 h-4 rounded-full bg-orange-500 border-4 border-surface z-10"></div>
+                                <div className="absolute -top-8 text-orange-400 font-bold text-xs">Window Closes</div>
+                                <div className="mt-4 text-xs text-orange-400 font-mono">Max Gap</div>
                             </div>
+
+                            {/* Window Bar */}
+                            <div className="absolute left-[40%] right-[20%] h-2 bg-gradient-to-r from-blue-500/20 via-yellow-500/20 to-orange-500/20 border-x border-white/10 top-1/2 -translate-y-1/2 rounded-full"></div>
+
+                            {/* Labels */}
+                            <div className="absolute left-[60%] -translate-x-1/2 top-[60%] text-[10px] text-white/50 uppercase tracking-widest">
+                                High Probability Zone
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                        <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
+                            <div className="text-blue-400 font-bold mb-1">Cooldown Phase</div>
+                            <div className="text-xs text-secondary">Before Min Gap</div>
+                            <div className="text-xs text-secondary mt-1">Probability: 0%</div>
+                        </div>
+                        <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
+                            <div className="text-yellow-400 font-bold mb-1">Active Window</div>
+                            <div className="text-xs text-secondary">Min Gap to Max Gap</div>
+                            <div className="text-xs text-secondary mt-1">Probability: Increases with time</div>
+                        </div>
+                        <div className="bg-surface-hover/20 p-4 rounded border border-border/50">
+                            <div className="text-red-400 font-bold mb-1">Overdue</div>
+                            <div className="text-xs text-secondary">After Max Gap</div>
+                            <div className="text-xs text-secondary mt-1">Boss is likely already spawned or missed.</div>
                         </div>
                     </div>
                 </section>
