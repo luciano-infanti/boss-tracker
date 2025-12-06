@@ -35,7 +35,15 @@ export default function UpcomingPage() {
     }, [worlds, selectedWorld]);
 
     const predictions = useBossPredictions(data.killDates, selectedWorld)
-        .filter(pred => !['Mahatheb', 'Yakchal', 'Undead Cavebear'].includes(pred.bossName));
+        .filter(pred => !['Mahatheb', 'Yakchal', 'Undead Cavebear', 'Crustacea Gigantica', 'Oodok', 'Arthem', 'Ghazbaran', "Gaz'haragoth"].includes(pred.bossName));
+
+    // Calculate Priority Checks (High/Medium confidence + Window Open/Overdue)
+    const priorityPredictions = useMemo(() => {
+        return predictions.filter(pred =>
+            (pred.status === 'WINDOW_OPEN' || pred.status === 'OVERDUE') &&
+            (pred.confidenceLabel === 'High' || pred.confidenceLabel === 'Medium')
+        );
+    }, [predictions]);
 
     // Group predictions by time bucket
     const groupedPredictions = useMemo(() => {
@@ -60,8 +68,15 @@ export default function UpcomingPage() {
         predictions.forEach(pred => {
             const predDate = new Date(pred.nextMinSpawn.getFullYear(), pred.nextMinSpawn.getMonth(), pred.nextMinSpawn.getDate());
 
+            // Check if this prediction is already in priority list
+            const isPriority = (pred.status === 'WINDOW_OPEN' || pred.status === 'OVERDUE') &&
+                (pred.confidenceLabel === 'High' || pred.confidenceLabel === 'Medium');
+
             if (pred.status === 'WINDOW_OPEN' || pred.status === 'OVERDUE') {
-                groups['Open Window'].push(pred);
+                // Only add to 'Open Window' if NOT a priority check (to avoid duplication)
+                if (!isPriority) {
+                    groups['Open Window'].push(pred);
+                }
             } else if (predDate.getTime() === today.getTime()) {
                 groups['Expected Today'].push(pred);
             } else if (predDate.getTime() === tomorrow.getTime()) {
@@ -77,6 +92,8 @@ export default function UpcomingPage() {
 
         return groups;
     }, [predictions]);
+
+
 
     if (isLoading) {
         return <Loading />;
@@ -123,6 +140,73 @@ export default function UpcomingPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Priority Checks Section */}
+            {priorityPredictions.length > 0 && viewMode === 'list' && (
+                <div className="bg-surface border border-emerald-500/30 rounded-lg overflow-hidden mb-8">
+                    <div className="bg-emerald-500/10 px-6 py-4 border-b border-emerald-500/20 flex items-center gap-3">
+                        <div className="relative flex h-4 w-4">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white">Priority Checks</h2>
+                            <p className="text-xs text-emerald-400">High confidence bosses currently in spawn window</p>
+                        </div>
+                    </div>
+                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {priorityPredictions.map((pred, idx) => {
+                            const nextSpawnDate = pred.nextMinSpawn;
+                            const day = nextSpawnDate.getDate().toString().padStart(2, '0');
+                            const month = (nextSpawnDate.getMonth() + 1).toString().padStart(2, '0');
+                            const year = nextSpawnDate.getFullYear();
+                            const nextSpawnStr = `${day}/${month}/${year}`;
+
+                            const bossData: any = {
+                                name: pred.bossName,
+                                totalDaysSpawned: 0,
+                                totalKills: 0,
+                                spawnFrequency: `${pred.stats?.avgGap || '?'} days`,
+                                nextExpectedSpawn: nextSpawnStr,
+                                lastKillDate: 'See Details',
+                                history: '',
+                                confidence: pred.confidence,
+                                confidenceLabel: pred.confidenceLabel
+                            };
+
+                            return (
+                                <div key={`priority-${pred.bossName}-${pred.world}-${idx}`} className="relative">
+                                    <BossCard
+                                        boss={bossData}
+                                        type="world"
+                                        isKilledToday={false}
+                                        isNew={false}
+                                        showNextSpawn={false}
+                                        hideStats={true}
+                                        showLastKill={false}
+                                        onClick={() => setSelectedPrediction(pred)}
+                                    />
+                                    <div className="absolute bottom-3 left-4 right-4">
+                                        <div className="flex justify-end items-center text-[10px] text-secondary mb-1">
+                                            <span className="opacity-70">{Math.round(pred.windowProgress)}%</span>
+                                        </div>
+                                        <div className="h-1 bg-surface-hover rounded-full overflow-hidden border border-border/50">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${pred.status === 'OVERDUE' ? 'bg-red-500' :
+                                                    pred.windowProgress > 80 ? 'bg-orange-500' :
+                                                        pred.windowProgress > 40 ? 'bg-yellow-500' :
+                                                            'bg-blue-500'
+                                                    }`}
+                                                style={{ width: `${Math.min(pred.windowProgress, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {predictions.length === 0 ? (
                 <div className="text-center py-12 text-secondary bg-surface rounded-lg border border-border">

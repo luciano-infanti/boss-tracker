@@ -1,6 +1,5 @@
-'use client';
-
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, TrendingUp, AlertCircle, Info } from 'lucide-react';
 import { getBossImage } from '@/utils/bossImages';
@@ -14,6 +13,12 @@ interface PredictionBossDrawerProps {
 
 export default function PredictionBossDrawer({ prediction, isOpen, onClose }: PredictionBossDrawerProps) {
     const drawerRef = useRef<HTMLDivElement>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
 
     // Close on escape key
     useEffect(() => {
@@ -24,12 +29,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
         return () => window.removeEventListener('keydown', handleEscape);
     }, [onClose]);
 
-    // Close on click outside
-    const handleBackdropClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) onClose();
-    };
-
-    if (!prediction) return null;
+    if (!mounted || !prediction) return null;
 
     const formatDate = (date: Date) => {
         return date.toLocaleDateString('en-GB', {
@@ -47,7 +47,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
 
     const stats = prediction.stats;
 
-    return (
+    return createPortal(
         <AnimatePresence>
             {isOpen && (
                 <>
@@ -57,7 +57,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999]"
                     />
 
                     {/* Drawer */}
@@ -67,7 +67,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 h-full w-full max-w-md bg-surface border-l border-border shadow-2xl z-[100] overflow-y-auto"
+                        className="fixed right-0 top-0 h-full w-full max-w-md bg-surface border-l border-border shadow-2xl z-[9999] overflow-y-auto"
                     >
                         <div className="p-6 pb-24 space-y-8">
                             {/* Header */}
@@ -91,6 +91,31 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                 >
                                     <X size={20} />
                                 </button>
+                            </div>
+
+                            {/* Confidence Section (Moved here) */}
+                            <div className="p-3 rounded bg-surface-hover/30 border border-border/50">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm text-secondary">Confidence Score</span>
+                                    <span className={`text-sm font-bold ${prediction.confidenceLabel === 'High' ? 'text-emerald-400' :
+                                        prediction.confidenceLabel === 'Medium' ? 'text-yellow-400' :
+                                            'text-red-400'
+                                        }`}>
+                                        {prediction.confidence}% ({prediction.confidenceLabel})
+                                    </span>
+                                </div>
+                                <div className="h-1.5 bg-black/40 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full ${prediction.confidenceLabel === 'High' ? 'bg-emerald-500' :
+                                            prediction.confidenceLabel === 'Medium' ? 'bg-yellow-500' :
+                                                'bg-red-500'
+                                            }`}
+                                        style={{ width: `${prediction.confidence}%` }}
+                                    />
+                                </div>
+                                <p className="text-[10px] text-secondary mt-2">
+                                    Based on sample size ({stats?.sampleSize ?? 0}), consistency (stdDev: {stats?.stdDev?.toFixed(2) ?? '?'}), and cross-server verification.
+                                </p>
                             </div>
 
                             {/* Status Banner */}
@@ -136,21 +161,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                 </div>
                             </div>
 
-                            {/* Last Seen */}
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-hover/50 border border-border/50">
-                                <div className="flex items-center gap-2 text-secondary">
-                                    <Clock size={16} />
-                                    <span className="text-sm">Last Seen</span>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-white font-medium">{lastSeenStr}</div>
-                                    <div className="text-xs text-secondary">{daysSinceLast} days ago</div>
-                                </div>
-                            </div>
-
-
-
-                            {/* Key Dates */}
+                            {/* Key Dates (Moved up) */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-surface-hover/50 p-3 rounded-lg border border-border/50">
                                     <div className="text-xs text-secondary mb-1">Window Opens</div>
@@ -159,6 +170,18 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                 <div className="bg-surface-hover/50 p-3 rounded-lg border border-border/50">
                                     <div className="text-xs text-secondary mb-1">Window Closes</div>
                                     <div className="font-medium text-white">{formatDate(prediction.nextMaxSpawn)}</div>
+                                </div>
+                            </div>
+
+                            {/* Last Seen (Moved down) */}
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-hover/50 border border-border/50">
+                                <div className="flex items-center gap-2 text-secondary">
+                                    <Clock size={16} />
+                                    <span className="text-sm">Last Seen</span>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-white font-medium">{lastSeenStr}</div>
+                                    <div className="text-xs text-secondary">{daysSinceLast} days ago</div>
                                 </div>
                             </div>
 
@@ -186,37 +209,13 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                         <span className="text-white font-mono">{stats?.sampleSize ?? 0}</span>
                                     </div>
                                 </div>
-
-                                {/* Confidence Section */}
-                                <div className="mt-4 p-3 rounded bg-surface-hover/30 border border-border/50">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm text-secondary">Confidence Score</span>
-                                        <span className={`text-sm font-bold ${prediction.confidenceLabel === 'High' ? 'text-emerald-400' :
-                                            prediction.confidenceLabel === 'Medium' ? 'text-yellow-400' :
-                                                'text-red-400'
-                                            }`}>
-                                            {prediction.confidence}% ({prediction.confidenceLabel})
-                                        </span>
-                                    </div>
-                                    <div className="h-1.5 bg-black/40 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${prediction.confidenceLabel === 'High' ? 'bg-emerald-500' :
-                                                prediction.confidenceLabel === 'Medium' ? 'bg-yellow-500' :
-                                                    'bg-red-500'
-                                                }`}
-                                            style={{ width: `${prediction.confidence}%` }}
-                                        />
-                                    </div>
-                                    <p className="text-[10px] text-secondary mt-2">
-                                        Based on sample size ({stats?.sampleSize ?? 0}), consistency (stdDev: {stats?.stdDev?.toFixed(2) ?? '?'}), and cross-server verification.
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </motion.div>
                 </>
             )}
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body
     );
 }
 
