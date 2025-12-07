@@ -3,8 +3,9 @@ import { Inter } from 'next/font/google';
 import { Analytics } from "@vercel/analytics/next";
 import './globals.css';
 import { DataProvider } from '@/context/DataContext';
-import Sidebar from '@/components/Sidebar';
-import UnifiedUploadButton from '@/components/UnifiedUploadButton';
+import { WorldProvider } from '@/context/WorldContext';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -14,11 +15,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'RubinOT Boss Tracker',
     description: 'Track boss spawns and kills across all worlds',
-    url: 'https://rubinot-boss-tracker.vercel.app', // Assuming this is the URL, can be updated
+    url: 'https://rubinot-boss-tracker.vercel.app',
     siteName: 'RubinOT Boss Tracker',
     images: [
       {
-        url: '/icon.png', // Using the existing icon
+        url: '/icon.png',
         width: 800,
         height: 600,
         alt: 'RubinOT Boss Tracker Logo',
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} text-white relative min-h-screen`}>
+      <body className={`${inter.className} text-white relative min-h-screen flex flex-col`}>
         {/* Global Background Image */}
         <div
           className="fixed inset-0 z-[-1]"
@@ -52,15 +53,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
 
         <DataProvider>
-          <div className="relative flex flex-col md:flex-row h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-transparent relative">
-              <div className="p-8 md:p-12">
+          <WorldProvider>
+            <div className="relative flex flex-col min-h-screen">
+              {/* Top Navigation */}
+              <Header />
 
-                {children}
-              </div>
-            </main>
-          </div>
+              {/* Main Content Area - Centered */}
+              <main className="flex-1 overflow-y-auto bg-transparent relative">
+                <div className="max-w-7xl mx-auto px-4 py-8 md:px-8 md:py-12">
+                  {children}
+                </div>
+              </main>
+
+              {/* Footer */}
+              <Footer />
+            </div>
+          </WorldProvider>
         </DataProvider>
         <Analytics />
       </body>

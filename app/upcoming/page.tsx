@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useData } from '@/context/DataContext';
+import { useWorld } from '@/context/WorldContext';
 import { useBossPredictions } from '@/hooks/useBossPredictions';
 import { Prediction } from '@/utils/spawnLogic';
 import UpcomingBossCalendar from '@/components/UpcomingBossCalendar';
@@ -13,26 +14,9 @@ import Loading from '@/components/Loading';
 
 export default function UpcomingPage() {
     const { data, isLoading } = useData();
-    const [selectedWorld, setSelectedWorld] = useState<string>('');
+    const { selectedWorld, setSelectedWorld } = useWorld();
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-    // Note: We need to cast Prediction to any for now to pass to drawer until we update drawer types
     const [selectedPrediction, setSelectedPrediction] = useState<any | null>(null);
-
-    const worlds = useMemo(() => {
-        if (!data.worlds) return [];
-        return Object.keys(data.worlds).sort();
-    }, [data.worlds]);
-
-    // Set default world to Auroria or first available
-    useEffect(() => {
-        if (worlds.length > 0 && !selectedWorld) {
-            if (worlds.includes('Auroria')) {
-                setSelectedWorld('Auroria');
-            } else {
-                setSelectedWorld(worlds[0]);
-            }
-        }
-    }, [worlds, selectedWorld]);
 
     const predictions = useBossPredictions(data.killDates, selectedWorld)
         .filter(pred => !['Mahatheb', 'Yakchal', 'Undead Cavebear', 'Crustacea Gigantica', 'Oodok', 'Arthem', 'Ghazbaran', "Gaz'haragoth"].includes(pred.bossName));
@@ -100,7 +84,7 @@ export default function UpcomingPage() {
     }
 
     return (
-        <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+        <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white mb-2">Upcoming Bosses</h1>
@@ -109,14 +93,15 @@ export default function UpcomingPage() {
                     </p>
                 </div>
 
+
                 <div className="flex items-center gap-4">
-                    {/* Server Filter */}
+                    {/* World Filter */}
                     <select
                         value={selectedWorld}
                         onChange={(e) => setSelectedWorld(e.target.value)}
-                        className="bg-surface border border-border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-primary/50"
+                        className="bg-surface border border-border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors"
                     >
-                        {worlds.map(world => (
+                        {data.worlds && Object.keys(data.worlds).sort().map(world => (
                             <option key={world} value={world}>{world}</option>
                         ))}
                     </select>
