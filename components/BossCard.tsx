@@ -75,6 +75,8 @@ interface BossCardProps {
   dailyKill?: DailyKill;
   worldName?: string;
   onClick?: (boss: Boss | CombinedBoss) => void;
+  children?: React.ReactNode;
+  hideConfidence?: boolean;
 }
 
 import { useData } from '@/context/DataContext';
@@ -93,7 +95,9 @@ export default function BossCard({
   viewMode = 'grid',
   hideStats = false,
   showLastKill = true,
-  onClick
+  onClick,
+  children,
+  hideConfidence = false
 }: BossCardProps & { showNextSpawn?: boolean; viewMode?: 'grid' | 'list'; hideStats?: boolean; showLastKill?: boolean }) {
   const { data } = useData();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -274,7 +278,7 @@ export default function BossCard({
               <div className="flex items-center gap-2">
                 <h3 className="font-medium text-white text-sm truncate group-hover:text-primary transition-colors flex items-center gap-2">
                   {boss.name}
-                  {(boss as any).confidence !== undefined && (
+                  {!hideConfidence && (boss as any).confidence !== undefined && (
                     <div className={`w-2 h-2 rounded-full ${(boss as any).confidenceLabel === 'High' ? 'bg-emerald-500' :
                       (boss as any).confidenceLabel === 'Medium' ? 'bg-yellow-500' :
                         'bg-red-500'
@@ -294,7 +298,7 @@ export default function BossCard({
                 )}
               </div>
 
-
+              {children && <div className="mb-1">{children}</div>}
 
               <div className="flex items-center gap-4 text-xs text-secondary">
                 {/* Next Spawn */}
@@ -514,7 +518,7 @@ export default function BossCard({
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors flex items-center gap-2">
                 {boss.name}
-                {(boss as any).confidence !== undefined && (
+                {!hideConfidence && (boss as any).confidence !== undefined && (
                   <div className={`w-2 h-2 rounded-full ${(boss as any).confidenceLabel === 'High' ? 'bg-emerald-500' :
                     (boss as any).confidenceLabel === 'Medium' ? 'bg-yellow-500' :
                       'bg-red-500'
@@ -523,7 +527,7 @@ export default function BossCard({
               </h3>
             </div>
 
-
+            {children && <div className="mb-2">{children}</div>}
 
             <div className="space-y-1">
               {/* Next Spawn - Conditional */}
@@ -543,7 +547,7 @@ export default function BossCard({
                         })()}
                       </span>
                     </span>
-                    {getConfidenceBadge()}
+                    {!hideConfidence && getConfidenceBadge()}
                   </div>
                 </div>
               )}

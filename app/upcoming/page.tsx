@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { useWorld } from '@/context/WorldContext';
 import { useBossPredictions } from '@/hooks/useBossPredictions';
@@ -9,16 +9,24 @@ import UpcomingBossCalendar from '@/components/UpcomingBossCalendar';
 import BossCard from '@/components/BossCard';
 import PredictionBossDrawer from '@/components/PredictionBossDrawer';
 import { Boss } from '@/types';
-import { Calendar as CalendarIcon, List as ListIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, List as ListIcon, ChevronDown, Globe } from 'lucide-react';
 import Loading from '@/components/Loading';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UpcomingPage() {
     const { data, isLoading } = useData();
-    const { selectedWorld, setSelectedWorld } = useWorld();
+    const { selectedWorld, worlds } = useWorld();
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
     const [selectedPrediction, setSelectedPrediction] = useState<any | null>(null);
+    const [localWorld, setLocalWorld] = useState<string>(selectedWorld);
+    const [isWorldDropdownOpen, setIsWorldDropdownOpen] = useState(false);
 
-    const predictions = useBossPredictions(data.killDates, selectedWorld)
+    // Sync local world with global world when it changes
+    useEffect(() => {
+        setLocalWorld(selectedWorld);
+    }, [selectedWorld]);
+
+    const predictions = useBossPredictions(data.killDates, localWorld)
         .filter(pred => !['Mahatheb', 'Yakchal', 'Undead Cavebear', 'Crustacea Gigantica', 'Oodok', 'Arthem', 'Ghazbaran', "Gaz'haragoth"].includes(pred.bossName));
 
     // Calculate Priority Checks (High/Medium confidence + Window Open/Overdue)
@@ -32,8 +40,8 @@ export default function UpcomingPage() {
     // Group predictions by time bucket
     const groupedPredictions = useMemo(() => {
         const groups = {
-            'Open Window': [] as Prediction[],
-            'Expected Today': [] as Prediction[],
+            'Active Spawn Window': [] as Prediction[],
+            'Window Opens Today': [] as Prediction[],
             'Tomorrow': [] as Prediction[],
             'Next 3 Days': [] as Prediction[],
             'This Week': [] as Prediction[],
@@ -57,12 +65,12 @@ export default function UpcomingPage() {
                 (pred.confidenceLabel === 'High' || pred.confidenceLabel === 'Medium');
 
             if (pred.status === 'WINDOW_OPEN' || pred.status === 'OVERDUE') {
-                // Only add to 'Open Window' if NOT a priority check (to avoid duplication)
+                // Only add to 'Active Spawn Window' if NOT a priority check (to avoid duplication)
                 if (!isPriority) {
-                    groups['Open Window'].push(pred);
+                    groups['Active Spawn Window'].push(pred);
                 }
             } else if (predDate.getTime() === today.getTime()) {
-                groups['Expected Today'].push(pred);
+                groups['Window Opens Today'].push(pred);
             } else if (predDate.getTime() === tomorrow.getTime()) {
                 groups['Tomorrow'].push(pred);
             } else if (predDate <= threeDays) {
@@ -95,16 +103,66 @@ export default function UpcomingPage() {
 
 
                 <div className="flex items-center gap-4">
-                    {/* World Filter */}
-                    <select
-                        value={selectedWorld}
-                        onChange={(e) => setSelectedWorld(e.target.value)}
-                        className="bg-surface border border-border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-colors"
-                    >
-                        {data.worlds && Object.keys(data.worlds).sort().map(world => (
-                            <option key={world} value={world}>{world}</option>
-                        ))}
-                    </select>
+                    {/* World Filter Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsWorldDropdownOpen(!isWorldDropdownOpen)}
+                            className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white hover:bg-surface-hover transition-colors min-w-[140px] justify-between"
+                        >
+                            <span className="truncate">{localWorld || 'All Servers'}</span>
+                            <ChevronDown size={16} className={`text-secondary transition-transform ${isWorldDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {isWorldDropdownOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setIsWorldDropdownOpen(false)}
+                                    />
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-lg shadow-xl z-50 overflow-hidden"
+                                    >
+                                        <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                            <button
+                                                onClick={() => {
+                                                    setLocalWorld('');
+                                                    setIsWorldDropdownOpen(false);
+                                                }}
+                                                className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-hover transition-colors flex items-center gap-2
+                                                    ${localWorld === '' ? 'bg-primary/10 text-primary' : 'text-secondary'}
+                                                `}
+                                            >
+                                                <Globe size={14} />
+                                                All Servers
+                                            </button>
+                                            {worlds.map((world) => (
+                                                <button
+                                                    key={world}
+                                                    onClick={() => {
+                                                        setLocalWorld(world);
+                                                        setIsWorldDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-hover transition-colors flex items-center gap-2
+                                                        ${localWorld === world ? 'bg-primary/10 text-primary' : 'text-secondary'}
+                                                    `}
+                                                >
+                                                    <span className={`w-2 h-2 rounded-full ${['Auroria', 'Belaria'].includes(world) ? 'bg-emerald-500' :
+                                                        ['Bellum', 'Tenebrium', 'Spectrum'].includes(world) ? 'bg-red-500' :
+                                                            'bg-yellow-500'
+                                                        }`} />
+                                                    {world}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
                     {/* View Toggle */}
                     <div className="flex items-center bg-surface border border-border rounded-lg p-1">
@@ -169,13 +227,10 @@ export default function UpcomingPage() {
                                         showNextSpawn={false}
                                         hideStats={true}
                                         showLastKill={false}
+                                        hideConfidence={true}
                                         onClick={() => setSelectedPrediction(pred)}
-                                    />
-                                    <div className="absolute bottom-3 left-4 right-4">
-                                        <div className="flex justify-end items-center text-[10px] text-secondary mb-1">
-                                            <span className="opacity-70">{Math.round(pred.windowProgress)}%</span>
-                                        </div>
-                                        <div className="h-1 bg-surface-hover rounded-full overflow-hidden border border-border/50">
+                                    >
+                                        <div className="w-[64px] h-1.5 bg-surface-hover rounded-full overflow-hidden border border-border/50 mt-1">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-500 ${pred.status === 'OVERDUE' ? 'bg-red-500' :
                                                     pred.windowProgress > 80 ? 'bg-orange-500' :
@@ -185,7 +240,7 @@ export default function UpcomingPage() {
                                                 style={{ width: `${Math.min(pred.windowProgress, 100)}%` }}
                                             />
                                         </div>
-                                    </div>
+                                    </BossCard>
                                 </div>
                             );
                         })}
@@ -208,19 +263,27 @@ export default function UpcomingPage() {
 
                                 return (
                                     <div key={group} className="space-y-4">
-                                        <h2 className={`text-lg font-semibold flex items-center gap-2 ${group === 'Open Window' ? 'text-emerald-400' :
-                                            group === 'Expected Today' ? 'text-blue-400' :
-                                                'text-secondary'
-                                            }`}>
-                                            {group === 'Open Window' && <span className="relative flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                                            </span>}
-                                            {group}
-                                            <span className="text-xs font-normal text-secondary bg-surface-hover px-2 py-0.5 rounded-full">
-                                                {preds.length}
-                                            </span>
-                                        </h2>
+                                        <div className="flex flex-col gap-1">
+                                            <h2 className={`text-lg font-semibold flex items-center gap-2 ${group === 'Active Spawn Window' ? 'text-emerald-400' :
+                                                group === 'Window Opens Today' ? 'text-blue-400' :
+                                                    'text-secondary'
+                                                }`}>
+                                                {group === 'Active Spawn Window' && <span className="relative flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                                </span>}
+                                                {group}
+                                                <span className="text-xs font-normal text-secondary bg-surface-hover px-2 py-0.5 rounded-full">
+                                                    {preds.length}
+                                                </span>
+                                            </h2>
+                                            {group === 'Active Spawn Window' && (
+                                                <p className="text-xs text-secondary/70">Spawn window is currently open or overdue</p>
+                                            )}
+                                            {group === 'Window Opens Today' && (
+                                                <p className="text-xs text-secondary/70">Scheduled to enter spawn window later today</p>
+                                            )}
+                                        </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                             {preds.map((pred, idx) => {
@@ -253,14 +316,10 @@ export default function UpcomingPage() {
                                                             showNextSpawn={false}
                                                             hideStats={true}
                                                             showLastKill={false}
+                                                            hideConfidence={true}
                                                             onClick={() => setSelectedPrediction(pred)}
-                                                        />
-                                                        {/* Progress Bar Overlay */}
-                                                        <div className="absolute bottom-3 left-4 right-4">
-                                                            <div className="flex justify-end items-center text-[10px] text-secondary mb-1">
-                                                                <span className="opacity-70">{Math.round(pred.windowProgress)}%</span>
-                                                            </div>
-                                                            <div className="h-1 bg-surface-hover rounded-full overflow-hidden border border-border/50">
+                                                        >
+                                                            <div className="w-[64px] h-1.5 bg-surface-hover rounded-full overflow-hidden border border-border/50 mt-1">
                                                                 <div
                                                                     className={`h-full rounded-full transition-all duration-500 ${pred.status === 'OVERDUE' ? 'bg-red-500' :
                                                                         pred.windowProgress > 80 ? 'bg-orange-500' :
@@ -270,7 +329,7 @@ export default function UpcomingPage() {
                                                                     style={{ width: `${Math.min(pred.windowProgress, 100)}%` }}
                                                                 />
                                                             </div>
-                                                        </div>
+                                                        </BossCard>
                                                     </div>
                                                 );
                                             })}

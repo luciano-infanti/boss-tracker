@@ -23,7 +23,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const categories: BossCategory[] = ['Archdemons', 'Rookgaard', 'Pits of Inferno', 'Creatures'];
+    const categories: BossCategory[] = ['Archdemons', 'POI', 'Creatures'];
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {

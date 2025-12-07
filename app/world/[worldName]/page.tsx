@@ -23,8 +23,6 @@ export default function WorldPage() {
   const [sortBy, setSortBy] = useState('kills');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
   const worldData = useMemo(() => {
     const currentWorldData = data.worlds[worldName] || [];
     if (!data.combined || data.combined.length === 0) return currentWorldData;
@@ -150,69 +148,28 @@ export default function WorldPage() {
 
   const totalKills = worldData.reduce((sum, boss) => sum + (boss.totalKills || 0), 0);
 
+  const getWorldIcon = (worldName: string) => {
+    if (['Auroria', 'Belaria'].includes(worldName)) {
+      return 'https://wiki.rubinot.com/icons/open-pvp.gif';
+    }
+    if (['Bellum', 'Tenebrium', 'Spectrum'].includes(worldName)) {
+      return 'https://wiki.rubinot.com/icons/retro-open-pvp.gif';
+    }
+    return 'https://wiki.rubinot.com/icons/optional-pvp.gif';
+  };
+
   return (
     <PageTransition>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">{worldName}</h1>
-        <p className="text-secondary">Server specific statistics and history</p>
+      <div className="mb-8 flex items-center gap-3">
+        <img
+          src={getWorldIcon(worldName)}
+          alt={worldName}
+          className="w-8 h-8"
+        />
+        <h1 className="text-2xl font-bold text-white">{worldName}</h1>
       </div>
 
-      {/* Overview Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Next Expected Boss Card */}
-        {(() => {
-          // Find the boss with the soonest next expected spawn
-          const expectedBosses = worldData
-            .filter(b => b.nextExpectedSpawn && b.nextExpectedSpawn !== 'N/A')
-            .sort((a, b) => {
-              // Parse dates (DD/MM/YYYY)
-              const parseDate = (dateStr: string) => {
-                const [day, month, year] = dateStr.split('/').map(Number);
-                return new Date(year, month - 1, day).getTime();
-              };
-              return parseDate(a.nextExpectedSpawn) - parseDate(b.nextExpectedSpawn);
-            });
 
-          const nextBoss = expectedBosses[0];
-
-          if (nextBoss) {
-            const [day, month, year] = nextBoss.nextExpectedSpawn.split('/').map(Number);
-            const expectedDate = new Date(year, month - 1, day);
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const isOverdue = expectedDate < today;
-
-            // Hide card if overdue
-            if (isOverdue) {
-              return null;
-            }
-
-            return (
-              <div className="bg-surface border border-border rounded-lg p-4">
-                <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Next Expected</p>
-                <p className="text-lg font-medium text-white truncate">{nextBoss.name}</p>
-                <p className="text-xs text-emerald-400">
-                  {nextBoss.nextExpectedSpawn}
-                </p>
-              </div>
-            );
-          }
-          return null; // Hide if no expected bosses
-        })()}
-
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Killed Today</p>
-          <p className="text-lg font-medium text-emerald-400">{counts.killedToday}</p>
-        </div>
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Never Killed</p>
-          <p className="text-lg font-medium text-red-400">{counts.neverKilled}</p>
-        </div>
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <p className="text-secondary text-xs mb-1 uppercase tracking-wide">Total Kills</p>
-          <p className="text-lg font-medium text-white">{totalKills}</p>
-        </div>
-      </div>
 
       <SearchBar
         value={search}
@@ -223,8 +180,6 @@ export default function WorldPage() {
         onCategoryChange={setSelectedCategories}
         showKilledTodayFilter={true}
         counts={counts}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
       />
 
       <div className="min-h-screen flex flex-col gap-8">
@@ -236,10 +191,7 @@ export default function WorldPage() {
                   "No bosses found"
           } />
         ) : (
-          <div className={viewMode === 'grid'
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-            : "flex flex-col gap-3"
-          }>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((boss) => {
               const isKilledToday = data.daily?.kills.some(k => {
                 if (k.bossName !== boss.name) return false;
@@ -266,7 +218,7 @@ export default function WorldPage() {
                     isNew={isNew}
                     dailyKill={isKilledToday ? dailyKill : undefined}
                     worldName={worldName}
-                    viewMode={viewMode}
+                    viewMode="grid"
                   />
                 </motion.div>
               );

@@ -18,7 +18,7 @@ export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
   const [topBossesCategory, setTopBossesCategory] = useState<string>('All');
   const [serverStatsCategory, setServerStatsCategory] = useState<string>('All');
 
-  const categories: string[] = ['Archdemons', 'Rookgaard', 'Pits of Inferno', 'Creatures'];
+  const categories: string[] = ['Archdemons', 'POI', 'Creatures'];
 
   // Filter Top Bosses
   const filteredTopBosses = bosses.filter(boss => {

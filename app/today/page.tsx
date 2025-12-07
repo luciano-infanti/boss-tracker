@@ -24,8 +24,6 @@ export default function TodayPage() {
     // We don't really sort here (it's fixed logic), but SearchBar needs these props
     const [sortBy, setSortBy] = useState('kills');
 
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
     // Calculate Most Active Boss (purely by kill count, ignoring "New" status)
     const mostActiveBoss = useMemo(() => {
         if (!data.daily?.kills || data.daily.kills.length === 0) return null;
@@ -169,8 +167,6 @@ export default function TodayPage() {
                         onCategoryChange={setSelectedCategories}
                         showMostKills={false}
                         showNeverKilled={false}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
                     />
 
                     <div className="min-h-screen">
@@ -181,10 +177,7 @@ export default function TodayPage() {
                                         "No bosses killed today matching your criteria"
                             } />
                         ) : (
-                            <div className={viewMode === 'grid'
-                                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-                                : "flex flex-col gap-3"
-                            }>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                 {sortedKills.map((kill) => {
                                     const boss = data.combined.find(b => b.name === kill.bossName) || {
                                         name: kill.bossName,
@@ -210,7 +203,7 @@ export default function TodayPage() {
                                                 isKilledToday={true}
                                                 isNew={isNew}
                                                 dailyKill={kill}
-                                                viewMode={viewMode}
+                                                viewMode="grid"
                                             />
                                         </motion.div>
                                     );

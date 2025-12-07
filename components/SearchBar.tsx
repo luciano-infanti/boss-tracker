@@ -18,8 +18,6 @@ interface SearchBarProps {
     neverKilled?: number;
     nextSpawn?: number;
   };
-  viewMode?: 'grid' | 'list';
-  onViewModeChange?: (mode: 'grid' | 'list') => void;
 }
 
 export default function SearchBar({
@@ -33,11 +31,9 @@ export default function SearchBar({
   showMostKills = true,
   showNeverKilled = true,
   counts,
-  viewMode = 'grid',
-  onViewModeChange
 }: SearchBarProps & { showMostKills?: boolean; showNeverKilled?: boolean }) {
 
-  const categories: BossCategory[] = ['Archdemons', 'Rookgaard', 'Pits of Inferno', 'Creatures'];
+  const categories: BossCategory[] = ['Archdemons', 'POI', 'Creatures'];
 
   const handleSortClick = (sort: string) => {
     if (sortBy === sort) {
@@ -58,46 +54,19 @@ export default function SearchBar({
   };
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
-      <div className="flex gap-4">
-        <div className="relative group flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-white transition-colors" size={20} />
-          <input
-            type="text"
-            placeholder="Search bosses..."
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-surface border border-border rounded-lg text-base text-white placeholder-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-          />
-        </div>
-
-        {onViewModeChange && (
-          <div className="flex bg-surface border border-border rounded-lg p-1 gap-1 shrink-0">
-            <button
-              onClick={() => onViewModeChange('grid')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'grid'
-                  ? 'bg-surface-hover text-white shadow-sm'
-                  : 'text-secondary hover:text-white hover:bg-surface-hover/50'
-                }`}
-              title="Grid View"
-            >
-              <LayoutGrid size={20} />
-            </button>
-            <button
-              onClick={() => onViewModeChange('list')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'list'
-                  ? 'bg-surface-hover text-white shadow-sm'
-                  : 'text-secondary hover:text-white hover:bg-surface-hover/50'
-                }`}
-              title="List View"
-            >
-              <List size={20} />
-            </button>
-          </div>
-        )}
+    <div className="flex flex-col xl:flex-row gap-4 mb-6 xl:items-center">
+      <div className="relative group w-full xl:w-[300px] shrink-0">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-white transition-colors" size={20} />
+        <input
+          type="text"
+          placeholder="Search bosses..."
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full pl-11 pr-4 py-2.5 bg-surface border border-border rounded-lg text-sm text-white placeholder-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+        />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         {/* Sort Filters */}
         {showMostKills && (
           <FilterPill

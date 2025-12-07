@@ -18,8 +18,6 @@ export default function GlobalPage() {
   const [sortBy, setSortBy] = useState('kills');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
   // Calculate aggregated stats from all worlds
   const aggregatedStats = useMemo(() => {
     const stats = new Map<string, number>();
@@ -124,8 +122,6 @@ export default function GlobalPage() {
         counts={counts}
         showMostKills={false}
         showNeverKilled={false}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
       />
       <div className="min-h-screen">
         {filtered.length === 0 ? (
@@ -135,10 +131,7 @@ export default function GlobalPage() {
                 "No bosses found"
           } />
         ) : (
-          <div className={viewMode === 'grid'
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-            : "flex flex-col gap-3"
-          }>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((boss) => (
               <motion.div
                 key={boss.name}
@@ -146,7 +139,7 @@ export default function GlobalPage() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                <BossCard boss={boss} type="combined" showNextSpawn={false} viewMode={viewMode} />
+                <BossCard boss={boss} type="combined" showNextSpawn={false} viewMode="grid" />
               </motion.div>
             ))}
           </div>

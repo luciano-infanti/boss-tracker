@@ -22,7 +22,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const categories: BossCategory[] = ['Archdemons', 'Rookgaard', 'Pits of Inferno', 'Creatures'];
+    const categories: BossCategory[] = ['Archdemons', 'POI', 'Creatures'];
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {
@@ -198,7 +198,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
                                                             Avg Interval: {pred.stats?.avgGap ?? '?'} days
                                                         </div>
                                                         <div className={`text-[10px] font-bold mt-1 ${pred.confidenceLabel === 'High' ? 'text-emerald-400' :
-                                                                pred.confidenceLabel === 'Medium' ? 'text-yellow-400' : 'text-red-400'
+                                                            pred.confidenceLabel === 'Medium' ? 'text-yellow-400' : 'text-red-400'
                                                             }`}>
                                                             Confidence: {pred.confidenceLabel}
                                                         </div>

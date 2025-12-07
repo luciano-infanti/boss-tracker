@@ -24,29 +24,35 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
     }, [killDates]);
 
     const predictions = useMemo(() => {
-        if (!predictor || !killDates || !selectedWorld) return [];
+        if (!predictor || !killDates) return [];
 
         const results: Prediction[] = [];
 
         killDates.forEach(boss => {
-            // Find the most recent kill for this boss on the selected world
-            const worldHistory = boss.killsByWorld[selectedWorld];
-            if (!worldHistory || worldHistory.length === 0) return;
+            // Determine which worlds to check
+            const worldsToCheck = selectedWorld
+                ? [selectedWorld]
+                : Object.keys(boss.killsByWorld);
 
-            // Sort by date descending to get latest
-            const sortedHistory = [...worldHistory].sort((a, b) => {
-                const [d1, m1, y1] = a.date.split('/').map(Number);
-                const [d2, m2, y2] = b.date.split('/').map(Number);
-                return new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime();
+            worldsToCheck.forEach(world => {
+                const worldHistory = boss.killsByWorld[world];
+                if (!worldHistory || worldHistory.length === 0) return;
+
+                // Sort by date descending to get latest
+                const sortedHistory = [...worldHistory].sort((a, b) => {
+                    const [d1, m1, y1] = a.date.split('/').map(Number);
+                    const [d2, m2, y2] = b.date.split('/').map(Number);
+                    return new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime();
+                });
+
+                const lastKill = sortedHistory[0];
+                const prediction = predictor.predict(boss.bossName, world, lastKill.date);
+
+                // Only add if we have valid stats (not UNKNOWN)
+                if (prediction.status !== 'UNKNOWN') {
+                    results.push(prediction);
+                }
             });
-
-            const lastKill = sortedHistory[0];
-            const prediction = predictor.predict(boss.bossName, selectedWorld, lastKill.date);
-
-            // Only add if we have valid stats (not UNKNOWN)
-            if (prediction.status !== 'UNKNOWN') {
-                results.push(prediction);
-            }
         });
 
         // Sort results
