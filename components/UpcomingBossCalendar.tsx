@@ -22,7 +22,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const categories: BossCategory[] = ['Archdemons', 'POI', 'Creatures'];
+    const categories: BossCategory[] = ['Archdemons', 'POI', 'Criaturas'];
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {
@@ -95,8 +95,8 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
     };
 
     const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
     return (
@@ -104,7 +104,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
             <div className="flex flex-col gap-6 mb-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-medium text-white">
-                        Expected Spawns {worldName ? `(${worldName})` : '(All Servers)'}
+                        Spawns Previstos {worldName ? `(${worldName})` : '(Todos os Servidores)'}
                     </h2>
                     <div className="flex items-center gap-4">
                         <button onClick={prevMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
@@ -137,7 +137,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
 
             <div className="overflow-x-auto pb-2">
                 <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border min-w-[600px]">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(day => (
                         <div key={day} className="bg-surface p-3 text-center text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {day}
                         </div>
@@ -195,16 +195,16 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
                                                             {pred.world}
                                                         </div>
                                                         <div className="text-[10px] text-secondary mt-1">
-                                                            Avg Interval: {pred.stats?.avgGap ?? '?'} days
+                                                            Intervalo Médio: {pred.stats?.avgGap ?? '?'} dias
                                                         </div>
                                                         <div className={`text-[10px] font-bold mt-1 ${pred.confidenceLabel === 'High' ? 'text-emerald-400' :
                                                             pred.confidenceLabel === 'Medium' ? 'text-yellow-400' : 'text-red-400'
                                                             }`}>
-                                                            Confidence: {pred.confidenceLabel}
+                                                            Confiança: {pred.confidenceLabel}
                                                         </div>
                                                         {isOverdue && (
                                                             <div className="text-[10px] text-red-400 font-bold mt-1">
-                                                                OVERDUE
+                                                                ATRASADO
                                                             </div>
                                                         )}
                                                     </div>

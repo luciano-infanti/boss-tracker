@@ -9,7 +9,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: #0F1115;
+  background: #1a1c24;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -17,7 +17,7 @@ body {
 /* Minimal Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #242730 transparent;
+  scrollbar-color: #3a3d4a transparent;
 }
 
 *::-webkit-scrollbar {
@@ -29,10 +29,10 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #242730;
+  background-color: #3a3d4a; /* Matches border */
   border-radius: 3px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #3F4350;
+  background-color: #4a4d5a; /* Lighter than border */
 }

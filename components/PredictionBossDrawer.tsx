@@ -121,7 +121,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                         }`}
                                 >
                                     <Info size={16} />
-                                    Overview
+                                    Visão Geral
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('breakdown')}
@@ -131,7 +131,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                         }`}
                                 >
                                     <Calculator size={16} />
-                                    Math Breakdown
+                                    Análise Matemática
                                 </button>
                             </div>
 
@@ -141,12 +141,12 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     {/* Confidence Section */}
                                     <div className="p-3 rounded bg-surface-hover/30 border border-border/50">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-sm text-secondary">Confidence Score</span>
+                                            <span className="text-sm text-secondary">Pontuação de Confiança</span>
                                             <span className={`text-sm font-bold ${prediction.confidenceLabel === 'High' ? 'text-emerald-400' :
                                                 prediction.confidenceLabel === 'Medium' ? 'text-yellow-400' :
                                                     'text-red-400'
                                                 }`}>
-                                                {prediction.confidence}% ({prediction.confidenceLabel})
+                                                {prediction.confidence}% ({prediction.confidenceLabel === 'High' ? 'Alta' : prediction.confidenceLabel === 'Medium' ? 'Média' : 'Baixa'})
                                             </span>
                                         </div>
                                         <div className="h-1.5 bg-black/40 rounded-full overflow-hidden">
@@ -159,7 +159,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                             />
                                         </div>
                                         <p className="text-[10px] text-secondary mt-2">
-                                            Based on sample size ({stats?.sampleSize ?? 0}), consistency (stdDev: {stats?.stdDev?.toFixed(2) ?? '?'}), and cross-server verification.
+                                            Baseado no tamanho da amostra ({stats?.sampleSize ?? 0}), consistência (stdDev: {stats?.stdDev?.toFixed(2) ?? '?'}), e verificação entre servidores.
                                         </p>
                                     </div>
 
@@ -181,9 +181,9 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                             </span>
                                         </div>
                                         <p className="text-xs text-secondary/80">
-                                            {prediction.status === 'OVERDUE' ? 'This boss has exceeded its maximum expected spawn time.' :
-                                                prediction.status === 'WINDOW_OPEN' ? 'The spawn window is currently active.' :
-                                                    'The boss is currently in its cooldown period.'
+                                            {prediction.status === 'OVERDUE' ? 'Este boss excedeu seu tempo máximo de espera.' :
+                                                prediction.status === 'WINDOW_OPEN' ? 'A janela de spawn está ativa.' :
+                                                    'O boss está atualmente em período de recarga.'
                                             }
                                         </p>
                                     </div>
@@ -191,7 +191,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     {/* Progress Bar */}
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs text-secondary">
-                                            <span>Window Progress</span>
+                                            <span>Progresso da Janela</span>
                                             <span>{Math.round(prediction.windowProgress)}%</span>
                                         </div>
                                         <div className="h-2 bg-surface-hover rounded-full overflow-hidden">
@@ -209,11 +209,11 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     {/* Key Dates */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-surface-hover/50 p-3 rounded-lg border border-border/50">
-                                            <div className="text-xs text-secondary mb-1">Window Opens</div>
+                                            <div className="text-xs text-secondary mb-1">Janela Abre</div>
                                             <div className="font-medium text-white">{formatDate(prediction.nextMinSpawn)}</div>
                                         </div>
                                         <div className="bg-surface-hover/50 p-3 rounded-lg border border-border/50">
-                                            <div className="text-xs text-secondary mb-1">Window Closes</div>
+                                            <div className="text-xs text-secondary mb-1">Janela Fecha</div>
                                             <div className="font-medium text-white">{formatDate(prediction.nextMaxSpawn)}</div>
                                         </div>
                                     </div>
@@ -222,62 +222,62 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     <div className="flex items-center justify-between p-3 rounded-lg bg-surface-hover/50 border border-border/50">
                                         <div className="flex items-center gap-2 text-secondary">
                                             <Clock size={16} />
-                                            <span className="text-sm">Last Seen</span>
+                                            <span className="text-sm">Última Aparição</span>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-white font-medium">{lastSeenStr}</div>
-                                            <div className="text-xs text-secondary">{daysSinceLast} days ago</div>
+                                            <div className="text-xs text-secondary">{daysSinceLast} dias atrás</div>
                                         </div>
                                     </div>
 
                                     {/* Enhanced Results Table */}
                                     <div className="bg-surface-hover/20 rounded-lg border border-border/50 overflow-hidden">
                                         <div className="bg-surface-hover/50 px-4 py-2 border-b border-border/50">
-                                            <h3 className="text-sm font-bold text-white">Prediction Statistics</h3>
+                                            <h3 className="text-sm font-bold text-white">Estatísticas de Previsão</h3>
                                         </div>
                                         <table className="w-full text-sm">
                                             <tbody>
                                                 <tr className="border-b border-border/30">
-                                                    <td className="px-4 py-3 text-secondary">Min Gap</td>
-                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.minGap ?? '?'} days</td>
-                                                    <td className="px-4 py-3 text-xs text-secondary/70">Spawn window opens at earliest</td>
+                                                    <td className="px-4 py-3 text-secondary">Intervalo Mín</td>
+                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.minGap ?? '?'} dias</td>
+                                                    <td className="px-4 py-3 text-xs text-secondary/70">Janela abre no mínimo</td>
                                                 </tr>
                                                 <tr className="border-b border-border/30">
-                                                    <td className="px-4 py-3 text-secondary">Max Gap</td>
-                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.maxGap ?? '?'} days</td>
-                                                    <td className="px-4 py-3 text-xs text-secondary/70">Spawn window closes at latest</td>
+                                                    <td className="px-4 py-3 text-secondary">Intervalo Máx</td>
+                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.maxGap ?? '?'} dias</td>
+                                                    <td className="px-4 py-3 text-xs text-secondary/70">Janela fecha no máximo</td>
                                                 </tr>
                                                 <tr className="border-b border-border/30">
-                                                    <td className="px-4 py-3 text-secondary">Avg Gap</td>
-                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.avgGap ?? '?'} days</td>
-                                                    <td className="px-4 py-3 text-xs text-secondary/70">Expected respawn time</td>
+                                                    <td className="px-4 py-3 text-secondary">Intervalo Médio</td>
+                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.avgGap ?? '?'} dias</td>
+                                                    <td className="px-4 py-3 text-xs text-secondary/70">Tempo esperado de respawn</td>
                                                 </tr>
                                                 <tr className="border-b border-border/30">
-                                                    <td className="px-4 py-3 text-secondary">StdDev</td>
-                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.stdDev?.toFixed(2) ?? '?'} days</td>
-                                                    <td className="px-4 py-3 text-xs text-secondary/70">Consistency measure</td>
+                                                    <td className="px-4 py-3 text-secondary">Desvio Padrão</td>
+                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.stdDev?.toFixed(2) ?? '?'} dias</td>
+                                                    <td className="px-4 py-3 text-xs text-secondary/70">Medida de consistência</td>
                                                 </tr>
                                                 <tr className="border-b border-border/30">
-                                                    <td className="px-4 py-3 text-secondary">Confidence</td>
+                                                    <td className="px-4 py-3 text-secondary">Confiança</td>
                                                     <td className="px-4 py-3 text-white font-mono text-right">{prediction.confidence}%</td>
                                                     <td className="px-4 py-3 text-xs">
                                                         <span className={`font-bold ${prediction.confidenceLabel === 'High' ? 'text-emerald-400' :
                                                             prediction.confidenceLabel === 'Medium' ? 'text-yellow-400' :
                                                                 'text-red-400'
                                                             }`}>
-                                                            {prediction.confidenceLabel}
+                                                            {prediction.confidenceLabel === 'High' ? 'Alta' : prediction.confidenceLabel === 'Medium' ? 'Média' : 'Baixa'}
                                                         </span>
                                                     </td>
                                                 </tr>
                                                 <tr className="border-b border-border/30">
-                                                    <td className="px-4 py-3 text-secondary">Sample Size</td>
-                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.sampleSize ?? 0} gaps</td>
-                                                    <td className="px-4 py-3 text-xs text-secondary/70">Data coverage</td>
+                                                    <td className="px-4 py-3 text-secondary">Tamanho da Amostra</td>
+                                                    <td className="px-4 py-3 text-white font-mono text-right">{stats?.sampleSize ?? 0} intervalos</td>
+                                                    <td className="px-4 py-3 text-xs text-secondary/70">Cobertura de dados</td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="px-4 py-3 text-secondary">Worlds</td>
+                                                    <td className="px-4 py-3 text-secondary">Mundos</td>
                                                     <td className="px-4 py-3 text-white font-mono text-right">{stats?.worldGaps ? Object.keys(stats.worldGaps).length : 0}</td>
-                                                    <td className="px-4 py-3 text-xs text-secondary/70">Cross-verification</td>
+                                                    <td className="px-4 py-3 text-xs text-secondary/70">Verificação cruzada</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -289,17 +289,17 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     {stats?.worldGaps && Object.keys(stats.worldGaps).length > 0 && (
                                         <div className="bg-surface-hover/20 rounded-lg border border-border/50 overflow-hidden">
                                             <div className="bg-surface-hover/50 px-4 py-2 border-b border-border/50">
-                                                <h3 className="text-sm font-bold text-white">World-by-World Gap Breakdown</h3>
+                                                <h3 className="text-sm font-bold text-white">Intervalos por Mundo</h3>
                                             </div>
                                             <div className="p-4 space-y-3">
                                                 {Object.entries(stats.worldGaps).map(([world, gaps]) => (
                                                     <div key={world} className="bg-surface-hover/30 p-3 rounded border border-border/30">
                                                         <div className="flex justify-between items-center mb-2">
                                                             <span className="text-sm font-medium text-white">{world}</span>
-                                                            <span className="text-xs text-secondary">{gaps.length} gaps</span>
+                                                            <span className="text-xs text-secondary">{gaps.length} intervalos</span>
                                                         </div>
                                                         <div className="text-xs text-secondary font-mono">
-                                                            [{gaps.join(', ')}] days
+                                                            [{gaps.join(', ')}] dias
                                                         </div>
                                                     </div>
                                                 ))}
@@ -312,7 +312,7 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                         <div className="bg-surface-hover/20 rounded-lg border border-border/50 overflow-hidden">
                                             <div className="bg-surface-hover/50 px-4 py-2 border-b border-border/50 flex items-center gap-2">
                                                 <BarChart3 size={16} className="text-primary" />
-                                                <h3 className="text-sm font-bold text-white">Gap Distribution</h3>
+                                                <h3 className="text-sm font-bold text-white">Distribuição de Intervalos</h3>
                                             </div>
                                             <div className="p-4">
                                                 <div className="flex items-end justify-between gap-1 h-32">
@@ -344,11 +344,11 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                                 <div className="mt-4 flex items-center gap-4 text-xs">
                                                     <div className="flex items-center gap-1">
                                                         <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                                                        <span className="text-secondary">Median (Avg)</span>
+                                                        <span className="text-secondary">Mediana (Média)</span>
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <div className="w-3 h-3 bg-red-500/50 rounded"></div>
-                                                        <span className="text-secondary">Filtered Out (Outliers)</span>
+                                                        <span className="text-secondary">Filtrado (Sem Kills)</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -358,83 +358,83 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     {/* Step-by-Step Calculations */}
                                     <div className="bg-surface-hover/20 rounded-lg border border-border/50 overflow-hidden">
                                         <div className="bg-surface-hover/50 px-4 py-2 border-b border-border/50">
-                                            <h3 className="text-sm font-bold text-white">Step-by-Step Calculations</h3>
+                                            <h3 className="text-sm font-bold text-white">Cálculos Passo-a-Passo</h3>
                                         </div>
                                         <div className="p-4 space-y-4 text-sm">
                                             {/* Step 1 */}
                                             <div>
-                                                <div className="text-primary font-bold mb-1">1. Collect All Gaps</div>
+                                                <div className="text-primary font-bold mb-1">1. Coletar Todos os Intervalos</div>
                                                 <div className="text-secondary text-xs mb-1">
-                                                    Calculated time difference between consecutive kills across all worlds
+                                                    Diferença de tempo calculada entre kills consecutivas em todos os mundos
                                                 </div>
                                                 <div className="bg-surface-hover/50 p-2 rounded text-xs font-mono text-white">
-                                                    All Gaps = [{stats?.rawGaps?.join(', ')}]
+                                                    Todos Intervalos = [{stats?.rawGaps?.join(', ')}]
                                                 </div>
                                                 <div className="text-xs text-secondary mt-1">
-                                                    Total: {stats?.rawGaps?.length} gaps collected
+                                                    Total: {stats?.rawGaps?.length} intervalos coletados
                                                 </div>
                                             </div>
 
                                             {/* Step 2 */}
                                             <div>
-                                                <div className="text-primary font-bold mb-1">2. Apply 80th Percentile Filter</div>
+                                                <div className="text-primary font-bold mb-1">2. Aplicar Filtro do 80º Percentil</div>
                                                 <div className="text-secondary text-xs mb-1">
-                                                    Remove outliers caused by "ghost spawns" (missed kills)
+                                                    Remover anomalias causadas por "fantasmas" (mortes perdidas)
                                                 </div>
                                                 <div className="bg-surface-hover/50 p-2 rounded text-xs font-mono text-white">
-                                                    Filtered Gaps = [{stats?.filteredGaps?.join(', ')}]
+                                                    Intervalos Filtrados = [{stats?.filteredGaps?.join(', ')}]
                                                 </div>
                                                 <div className="text-xs text-secondary mt-1">
-                                                    Kept: {stats?.filteredGaps?.length} gaps | Removed: {(stats?.rawGaps?.length ?? 0) - (stats?.filteredGaps?.length ?? 0)} outliers
+                                                    Mantidos: {stats?.filteredGaps?.length} intervalos | Removidos: {(stats?.rawGaps?.length ?? 0) - (stats?.filteredGaps?.length ?? 0)} outliers
                                                 </div>
                                             </div>
 
                                             {/* Step 3 */}
                                             <div>
-                                                <div className="text-primary font-bold mb-1">3. Calculate Statistics</div>
+                                                <div className="text-primary font-bold mb-1">3. Calcular Estatísticas</div>
                                                 <div className="space-y-2 text-xs">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-secondary">Min Gap:</span>
-                                                        <span className="font-mono text-white">{stats?.minGap} days (earliest respawn)</span>
+                                                        <span className="text-secondary">Intervalo Mín:</span>
+                                                        <span className="font-mono text-white">{stats?.minGap} dias (respawn mais cedo)</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-secondary">Max Gap:</span>
-                                                        <span className="font-mono text-white">{stats?.maxGap} days (80th percentile)</span>
+                                                        <span className="text-secondary">Intervalo Máx:</span>
+                                                        <span className="font-mono text-white">{stats?.maxGap} dias (80º percentil)</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-secondary">Avg Gap (Median):</span>
-                                                        <span className="font-mono text-white">{stats?.avgGap} days</span>
+                                                        <span className="text-secondary">Média (Mediana):</span>
+                                                        <span className="font-mono text-white">{stats?.avgGap} dias</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-secondary">Std Deviation:</span>
-                                                        <span className="font-mono text-white">{stats?.stdDev?.toFixed(2)} days</span>
+                                                        <span className="text-secondary">Desvio Padrão:</span>
+                                                        <span className="font-mono text-white">{stats?.stdDev?.toFixed(2)} dias</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Step 4 */}
                                             <div>
-                                                <div className="text-primary font-bold mb-1">4. Calculate Confidence Score</div>
+                                                <div className="text-primary font-bold mb-1">4. Calcular Pontuação de Confiança</div>
                                                 <div className="space-y-1 text-xs">
                                                     <div className="flex justify-between">
-                                                        <span className="text-secondary">Sample Size Factor:</span>
-                                                        <span className="text-white">{stats?.sampleSize} gaps</span>
+                                                        <span className="text-secondary">Fator Tamanho da Amostra:</span>
+                                                        <span className="text-white">{stats?.sampleSize} intervalos</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-secondary">Consistency (Range):</span>
-                                                        <span className="text-white">{(stats?.maxGap ?? 0) - (stats?.minGap ?? 0)} days spread</span>
+                                                        <span className="text-secondary">Consistência (Alcance):</span>
+                                                        <span className="text-white">{(stats?.maxGap ?? 0) - (stats?.minGap ?? 0)} dias de dispersão</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span className="text-secondary">Cross-Server Bonus:</span>
-                                                        <span className="text-white">{stats?.worldGaps ? Object.keys(stats.worldGaps).length : 0} worlds</span>
+                                                        <span className="text-secondary">Bônus Multi-Servidor:</span>
+                                                        <span className="text-white">{stats?.worldGaps ? Object.keys(stats.worldGaps).length : 0} mundos</span>
                                                     </div>
                                                     <div className="flex justify-between items-center pt-2 border-t border-border/30">
-                                                        <span className="text-secondary font-bold">Final Confidence:</span>
+                                                        <span className="text-secondary font-bold">Confiança Final:</span>
                                                         <span className={`font-bold ${prediction.confidenceLabel === 'High' ? 'text-emerald-400' :
                                                             prediction.confidenceLabel === 'Medium' ? 'text-yellow-400' :
                                                                 'text-red-400'
                                                             }`}>
-                                                            {prediction.confidence}% ({prediction.confidenceLabel})
+                                                            {prediction.confidence}% ({prediction.confidenceLabel === 'High' ? 'Alta' : prediction.confidenceLabel === 'Medium' ? 'Média' : 'Baixa'})
                                                         </span>
                                                     </div>
                                                 </div>

@@ -28,7 +28,7 @@ const getConfidenceBadge = () => {
         <CheckCircle size={14} className="text-emerald-500" />
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
           <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-            Verified by 10+ kills across servers.
+            Verificado por 10+ mortes em todos os servidores.
           </div>
         </div>
       </div>
@@ -41,7 +41,7 @@ const getConfidenceBadge = () => {
         <HelpCircle size={14} className="text-yellow-500" />
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
           <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-            Likely accurate, but limited data.
+            Provavelmente preciso, mas dados limitados.
           </div>
         </div>
       </div>
@@ -184,7 +184,7 @@ export default function BossCard({
     }
 
     if (!latestDate || !dateStr || dateStr === 'Never') {
-      return 'Last seen: Never';
+      return 'Visto por último: Nunca';
     }
 
     const now = new Date();
@@ -195,7 +195,7 @@ export default function BossCard({
     const diffTime = Math.abs(today.getTime() - lastSeen.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return `Last time seen ${dateStr} (${diffDays} days ago)`;
+    return `Visto pela última vez em ${dateStr} (${diffDays} dias atrás)`;
   }, [boss]);
 
   // Check if next spawn is overdue
@@ -243,7 +243,7 @@ export default function BossCard({
                   transition={{ duration: 0.2 }}
                   className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
                 >
-                  {(boss as any).confidence}% Confidence
+                  {(boss as any).confidence}% Confiança
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
                 </motion.div>
               )}
@@ -288,12 +288,12 @@ export default function BossCard({
                 {/* Tags Inline */}
                 {showKilledToday && type !== 'combined' && (
                   <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
-                    TODAY
+                    HOJE
                   </div>
                 )}
                 {isNew && (
                   <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30">
-                    NEW
+                    NOVO
                   </div>
                 )}
               </div>
@@ -306,9 +306,9 @@ export default function BossCard({
                   <div className="flex items-center gap-1.5">
                     <Calendar size={12} className="text-secondary/70" />
                     <span>
-                      Next: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                      Próx: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
                         {nextSpawnInfo.date}
-                        {nextSpawnInfo.isOverdue && ' (Overdue)'}
+                        {nextSpawnInfo.isOverdue && ' (Atrasado)'}
                       </span>
                     </span>
                   </div>
@@ -372,7 +372,7 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
                   <Trophy size={12} className="text-secondary/70" />
                   <span>
-                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
+                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} mortes</span>
                     {dailyKill && todayKills > 0 && (
                       <span className="text-emerald-400 ml-1">
                         ({todayKills})
@@ -410,7 +410,7 @@ export default function BossCard({
           <CheckCircle size={14} className="text-emerald-500" />
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
             <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-              Verified by 10+ kills across servers.
+              Verificado por 10+ mortes em todos os servidores.
             </div>
           </div>
         </div>
@@ -423,7 +423,7 @@ export default function BossCard({
           <HelpCircle size={14} className="text-yellow-500" />
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
             <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-              Likely accurate, but limited data.
+              Provavelmente preciso, mas dados limitados.
             </div>
           </div>
         </div>
@@ -435,7 +435,7 @@ export default function BossCard({
         <AlertTriangle size={14} className="text-red-500" />
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] z-50">
           <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
-            Very few data points. Estimate may be wrong.
+            Poucos dados. Estimativa pode estar errada.
           </div>
         </div>
       </div>
@@ -468,7 +468,7 @@ export default function BossCard({
               transition={{ duration: 0.2 }}
               className="absolute -top-10 left-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
             >
-              {(boss as any).confidence}% Confidence
+              {(boss as any).confidence}% Confiança
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
             </motion.div>
           )}
@@ -479,14 +479,14 @@ export default function BossCard({
           {/* Today Tag - Hide on Today's Kills page (combined view) */}
           {showKilledToday && type !== 'combined' && (
             <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
-              TODAY
+              HOJE
             </div>
           )}
 
           {/* New Tag */}
           {isNew && (
             <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
-              NEW
+              NOVO
             </div>
           )}
         </div>
@@ -536,12 +536,12 @@ export default function BossCard({
                   <Calendar size={12} className="text-secondary/70" />
                   <div className="flex items-center">
                     <span>
-                      Next: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                      Próx: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
                         {(() => {
                           if (nextSpawnInfo.isOverdue) {
                             // @ts-ignore
-                            if (boss.confidenceLabel === 'Low') return 'Insufficient Data';
-                            return 'Overdue';
+                            if (boss.confidenceLabel === 'Low') return 'Dados Insuficientes';
+                            return 'Atrasado';
                           }
                           return nextSpawnInfo.date;
                         })()}
@@ -590,10 +590,10 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary">
                   <Trophy size={12} className="text-secondary/70" />
                   <span>
-                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} kills</span>
+                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} mortes</span>
                     {dailyKill && todayKills > 0 && (
                       <span className="text-emerald-400 ml-1">
-                        ({todayKills} today)
+                        ({todayKills} hoje)
                       </span>
                     )}
                   </span>

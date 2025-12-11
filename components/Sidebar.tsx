@@ -72,7 +72,7 @@ export default function Sidebar() {
                 }`}
             >
               <Calendar size={16} />
-              Today's Kills
+              Bosses de Hoje
             </Link>
 
             <Link
@@ -84,7 +84,7 @@ export default function Sidebar() {
                 }`}
             >
               <Clock size={16} />
-              Upcoming Bosses
+              Próximos Bosses
             </Link>
 
             <Link
@@ -96,7 +96,7 @@ export default function Sidebar() {
                 }`}
             >
               <Globe size={16} />
-              Global Stats
+              Estatísticas Globais
             </Link>
 
             <Link
@@ -108,11 +108,11 @@ export default function Sidebar() {
                 }`}
             >
               <Skull size={16} />
-              Most Wanted
+              Mais Procurados
             </Link>
 
             <div className="pt-6 pb-2">
-              <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider px-3">Worlds</p>
+              <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider px-3">Mundos</p>
             </div>
 
             {WORLDS.map((world) => (
@@ -173,7 +173,7 @@ export default function Sidebar() {
               }`}
           >
             <Calculator size={16} />
-            About
+            Sobre
           </Link>
         </div>
       </aside>

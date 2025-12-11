@@ -58,7 +58,7 @@ export default function Header() {
                                     }`}
                             >
                                 <BarChart3 size={14} />
-                                Global Stats
+                                Estatísticas
                             </Link>
                             <Link
                                 href="/upcoming"
@@ -68,7 +68,7 @@ export default function Header() {
                                     }`}
                             >
                                 <TrendingUp size={14} />
-                                Upcoming
+                                Próximos
                             </Link>
                             <Link
                                 href="/today"
@@ -78,7 +78,7 @@ export default function Header() {
                                     }`}
                             >
                                 <Clock size={14} />
-                                Today
+                                Hoje
                             </Link>
                             <Link
                                 href="/most-wanted"
@@ -88,7 +88,7 @@ export default function Header() {
                                     }`}
                             >
                                 <Calendar size={14} />
-                                Most Wanted
+                                Procurados
                             </Link>
                             <Link
                                 href="/about"
@@ -98,7 +98,7 @@ export default function Header() {
                                     }`}
                             >
                                 <Info size={14} />
-                                About
+                                Sobre
                             </Link>
                         </nav>
                     </div>

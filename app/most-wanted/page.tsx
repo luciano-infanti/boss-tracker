@@ -24,7 +24,7 @@ export default function MostWantedPage() {
     }, [neverKilledBosses, searchTerm]);
 
     if (isLoading) {
-        return <div className="p-8 text-center text-secondary">Loading data...</div>;
+        return <div className="p-8 text-center text-secondary">Carregando dados...</div>;
     }
 
     return (
@@ -33,16 +33,16 @@ export default function MostWantedPage() {
                 <div>
                     <h1 className="text-3xl font-bold text-red-500 flex items-center gap-3">
                         <Skull size={32} />
-                        MOST WANTED
+                        MAIS PROCURADOS
                     </h1>
                     <p className="text-red-200/70 mt-1">
-                        These bosses have <span className="font-bold text-red-400">NEVER</span> been killed on any server.
-                        Be the first to claim the bounty!
+                        Estes bosses <span className="font-bold text-red-400">NUNCA</span> foram mortos em nenhum servidor.
+                        Seja o primeiro a reclamar a recompensa!
                     </p>
                 </div>
                 <div className="bg-red-950/50 px-4 py-2 rounded-lg border border-red-900/30">
                     <span className="text-2xl font-mono font-bold text-red-500">{neverKilledBosses.length}</span>
-                    <span className="text-xs text-red-400 uppercase ml-2 tracking-wider">Targets Remaining</span>
+                    <span className="text-xs text-red-400 uppercase ml-2 tracking-wider">Alvos Restantes</span>
                 </div>
             </div>
 
@@ -51,7 +51,7 @@ export default function MostWantedPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary" size={18} />
                 <input
                     type="text"
-                    placeholder="Search targets..."
+                    placeholder="Buscar alvos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-surface border border-border rounded-lg text-white placeholder-secondary focus:outline-none focus:border-red-500/50 transition-colors"
@@ -70,7 +70,7 @@ export default function MostWantedPage() {
                         />
                         {/* Wanted Stamp */}
                         <div className="absolute top-4 right-4 rotate-12 border-4 border-red-500/30 text-red-500/30 font-black text-xl px-2 py-1 rounded opacity-50 pointer-events-none select-none">
-                            WANTED
+                            PROCURADO
                         </div>
                     </div>
                 ))}
@@ -78,7 +78,7 @@ export default function MostWantedPage() {
 
             {filteredBosses.length === 0 && (
                 <div className="text-center py-12 text-secondary">
-                    <p>No targets found matching your search.</p>
+                    <p>Nenhum alvo encontrado com sua busca.</p>
                 </div>
             )}
         </div>

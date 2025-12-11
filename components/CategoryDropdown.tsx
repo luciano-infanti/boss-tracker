@@ -49,7 +49,7 @@ export default function CategoryDropdown({ value, onChange, categories }: Catego
                         className="w-4 h-4 object-contain rounded-full"
                     />
                 )}
-                <span className="font-medium">{value}</span>
+                <span className="font-medium">{value === 'All' ? 'Todos' : value}</span>
                 <ChevronDown size={14} className={`text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -66,7 +66,7 @@ export default function CategoryDropdown({ value, onChange, categories }: Catego
                             onClick={() => handleSelect('All')}
                             className={`w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-surface-hover transition-colors ${value === 'All' ? 'text-primary bg-primary/10' : 'text-secondary'}`}
                         >
-                            <span>All</span>
+                            <span>Todos</span>
                             {value === 'All' && <Check size={14} />}
                         </button>
                         {categories.map((category) => (

@@ -95,9 +95,9 @@ export default function UpcomingPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Upcoming Bosses</h1>
+                    <h1 className="text-2xl font-bold text-white mb-2">Bosses Previstos</h1>
                     <p className="text-secondary text-sm">
-                        Advanced spawn predictions using IAT analysis.
+                        Previsões avançadas de spawn usando análise IAT.
                     </p>
                 </div>
 
@@ -109,7 +109,7 @@ export default function UpcomingPage() {
                             onClick={() => setIsWorldDropdownOpen(!isWorldDropdownOpen)}
                             className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-white hover:bg-surface-hover transition-colors min-w-[140px] justify-between"
                         >
-                            <span className="truncate">{localWorld || 'All Servers'}</span>
+                            <span className="truncate">{localWorld || 'Todos os Servidores'}</span>
                             <ChevronDown size={16} className={`text-secondary transition-transform ${isWorldDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
@@ -137,7 +137,7 @@ export default function UpcomingPage() {
                                                 `}
                                             >
                                                 <Globe size={14} />
-                                                All Servers
+                                                Todos os Servidores
                                             </button>
                                             {worlds.map((world) => (
                                                 <button
@@ -193,8 +193,8 @@ export default function UpcomingPage() {
                             <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-white">Priority Checks</h2>
-                            <p className="text-xs text-emerald-400">High confidence bosses currently in spawn window</p>
+                            <h2 className="text-lg font-bold text-white">Verificações Prioritárias</h2>
+                            <p className="text-xs text-emerald-400">Bosses de alta confiança atualmente na janela de spawn</p>
                         </div>
                     </div>
                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -209,9 +209,9 @@ export default function UpcomingPage() {
                                 name: pred.bossName,
                                 totalDaysSpawned: 0,
                                 totalKills: 0,
-                                spawnFrequency: `${pred.stats?.avgGap || '?'} days`,
+                                spawnFrequency: `${pred.stats?.avgGap || '?'} dias`,
                                 nextExpectedSpawn: nextSpawnStr,
-                                lastKillDate: 'See Details',
+                                lastKillDate: 'Ver Detalhes',
                                 history: '',
                                 confidence: pred.confidence,
                                 confidenceLabel: pred.confidenceLabel
@@ -250,7 +250,7 @@ export default function UpcomingPage() {
 
             {predictions.length === 0 ? (
                 <div className="text-center py-12 text-secondary bg-surface rounded-lg border border-border">
-                    No prediction data available for {selectedWorld}. Need at least 2 kills to calculate intervals.
+                    Dados de previsão não disponíveis para {selectedWorld}. Necessário pelo menos 2 mortes para calcular intervalos.
                 </div>
             ) : (
                 <>
@@ -260,6 +260,15 @@ export default function UpcomingPage() {
                         <div className="space-y-8">
                             {Object.entries(groupedPredictions).map(([group, preds]) => {
                                 if (preds.length === 0) return null;
+
+                                const groupTitle = {
+                                    'Active Spawn Window': 'Janela de Spawn Ativa',
+                                    'Window Opens Today': 'Janela Abre Hoje',
+                                    'Tomorrow': 'Amanhã',
+                                    'Next 3 Days': 'Próximos 3 Dias',
+                                    'This Week': 'Esta Semana',
+                                    'Later': 'Mais Tarde'
+                                }[group] || group;
 
                                 return (
                                     <div key={group} className="space-y-4">
@@ -272,16 +281,16 @@ export default function UpcomingPage() {
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                                                 </span>}
-                                                {group}
+                                                {groupTitle}
                                                 <span className="text-xs font-normal text-secondary bg-surface-hover px-2 py-0.5 rounded-full">
                                                     {preds.length}
                                                 </span>
                                             </h2>
                                             {group === 'Active Spawn Window' && (
-                                                <p className="text-xs text-secondary/70">Spawn window is currently open or overdue</p>
+                                                <p className="text-xs text-secondary/70">A janela de spawn está aberta ou atrasada</p>
                                             )}
                                             {group === 'Window Opens Today' && (
-                                                <p className="text-xs text-secondary/70">Scheduled to enter spawn window later today</p>
+                                                <p className="text-xs text-secondary/70">Programado para entrar na janela de spawn hoje mais tarde</p>
                                             )}
                                         </div>
 
@@ -298,9 +307,9 @@ export default function UpcomingPage() {
                                                     name: pred.bossName,
                                                     totalDaysSpawned: 0,
                                                     totalKills: 0,
-                                                    spawnFrequency: `${pred.stats?.avgGap || '?'} days`,
+                                                    spawnFrequency: `${pred.stats?.avgGap || '?'} dias`,
                                                     nextExpectedSpawn: nextSpawnStr,
-                                                    lastKillDate: 'See Details',
+                                                    lastKillDate: 'Ver Detalhes',
                                                     history: '',
                                                     confidence: pred.confidence, // Pass confidence score
                                                     confidenceLabel: pred.confidenceLabel

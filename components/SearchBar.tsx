@@ -33,7 +33,7 @@ export default function SearchBar({
   counts,
 }: SearchBarProps & { showMostKills?: boolean; showNeverKilled?: boolean }) {
 
-  const categories: BossCategory[] = ['Archdemons', 'POI', 'Creatures'];
+  const categories: BossCategory[] = ['Archdemons', 'POI', 'Criaturas'];
 
   const handleSortClick = (sort: string) => {
     if (sortBy === sort) {
@@ -59,7 +59,7 @@ export default function SearchBar({
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-white transition-colors" size={20} />
         <input
           type="text"
-          placeholder="Search bosses..."
+          placeholder="Buscar bosses..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-11 pr-4 py-2.5 bg-surface border border-border rounded-lg text-sm text-white placeholder-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
@@ -70,7 +70,7 @@ export default function SearchBar({
         {/* Sort Filters */}
         {showMostKills && (
           <FilterPill
-            label="All"
+            label="Todos"
             active={sortBy === 'kills'}
             onClick={() => handleSortClick('kills')}
             removable={false}
@@ -78,14 +78,14 @@ export default function SearchBar({
         )}
         {showKilledTodayFilter && (
           <FilterPill
-            label={`Killed Today${counts?.killedToday !== undefined ? ` (${counts.killedToday})` : ''}`}
+            label={`Mortos Hoje${counts?.killedToday !== undefined ? ` (${counts.killedToday})` : ''}`}
             active={sortBy === 'killedToday'}
             onClick={() => handleSortClick('killedToday')}
           />
         )}
         {showNeverKilled && (
           <FilterPill
-            label={`Never Killed${counts?.neverKilled !== undefined ? ` (${counts.neverKilled})` : ''}`}
+            label={`Nunca Mortos${counts?.neverKilled !== undefined ? ` (${counts.neverKilled})` : ''}`}
             active={sortBy === 'neverKilled'}
             onClick={() => handleSortClick('neverKilled')}
           />

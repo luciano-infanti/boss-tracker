@@ -256,7 +256,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                             onChange={(e) => setSelectedServer(e.target.value)}
                             className="bg-surface border border-border rounded text-xs text-secondary px-2 py-1 focus:outline-none focus:border-primary/50"
                         >
-                            <option value="all">All Servers</option>
+                            <option value="all">Todos os Servidores</option>
                             {availableServers.map(server => (
                                 <option key={server} value={server}>{server}</option>
                             ))}
@@ -402,7 +402,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                             <div className="flex items-center gap-4">
                                 <div>
                                     <h2 className="text-xl font-bold text-white">{boss.name}</h2>
-                                    <p className="text-sm text-secondary">Boss Details</p>
+                                    <p className="text-sm text-secondary">Detalhes do Boss</p>
                                 </div>
                                 {(() => {
                                     const extraInfo = getBossExtraInfo(boss.name);
@@ -413,7 +413,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 rounded-full bg-surface-hover/50 text-secondary hover:text-primary hover:bg-surface-hover transition-colors border border-border/50"
-                                                title="Open TibiaWiki"
+                                                title="Abrir TibiaWiki"
                                             >
                                                 <ExternalLink size={18} />
                                             </a>
@@ -444,11 +444,11 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
 
                                 <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
-                                        <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Total Kills</div>
+                                        <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Total de Mortes</div>
                                         <div className="text-2xl font-bold text-white">{adjustedTotalKills}</div>
                                     </div>
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
-                                        <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Frequency</div>
+                                        <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Frequência</div>
                                         <div className="text-lg font-medium text-white">
                                             {'spawnFrequency' in boss ? boss.spawnFrequency :
                                                 'typicalSpawnFrequency' in boss ? boss.typicalSpawnFrequency : 'N/A'}
@@ -457,7 +457,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                     {/* Last Seen - Only for World View */}
                                     {'history' in boss && (
                                         <div className="col-span-2 bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
-                                            <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Last Seen</div>
+                                            <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Última Aparição</div>
                                             <div className="text-lg font-medium text-white">
                                                 {(() => {
                                                     let latestDate: Date | null = null;
@@ -485,7 +485,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                         latestDate = new Date(year, month - 1, day);
                                                     }
 
-                                                    if (!latestDate || !dateStr || dateStr === 'Never') return 'Never';
+                                                    if (!latestDate || !dateStr || dateStr === 'Never') return 'Nunca';
 
                                                     const now = new Date();
                                                     // Normalize to midnight
@@ -499,7 +499,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                         <>
                                                             {dateStr}
                                                             <span className="text-sm text-secondary ml-2 font-normal">
-                                                                ({diffDays} days ago)
+                                                                ({diffDays} dias atrás)
                                                             </span>
                                                         </>
                                                     );
@@ -579,7 +579,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                         <Clock size={18} className="text-primary" />
-                                        Kill History
+                                        Histórico de Mortes
                                     </h3>
 
                                     {/* Sort Toggles */}
@@ -592,7 +592,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                 }`}
                                         >
                                             <Server size={12} />
-                                            Server
+                                            Servidor
                                         </button>
                                         <button
                                             onClick={() => setSortMode('date')}
@@ -602,7 +602,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                 }`}
                                         >
                                             <Calendar size={12} />
-                                            Date
+                                            Data
                                         </button>
                                     </div>
                                 </div>
@@ -615,7 +615,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                 allKillsByDate.length > 0 ? (
                                                     <div>
                                                         <div className="text-sm font-medium text-white mb-2">
-                                                            {worldName || 'Current World'}
+                                                            {worldName || 'Mundo Atual'}
                                                         </div>
                                                         <ul className="space-y-2">
                                                             {allKillsByDate.map((kill, i) => (
@@ -628,7 +628,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                         </ul>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-center text-secondary py-8">No history available</div>
+                                                    <div className="text-center text-secondary py-8">Sem histórico disponível</div>
                                                 )
                                             ) : (
                                                 // Combined View - Use serverStats
@@ -645,7 +645,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                                         <span className="font-medium text-white">{stat.world}</span>
                                                                     </div>
                                                                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 font-medium">
-                                                                        {getAdjustedKillCount(boss.name, stat.kills)} kills
+                                                                        {getAdjustedKillCount(boss.name, stat.kills)} mortes
                                                                     </span>
                                                                 </button>
 
@@ -667,7 +667,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                                                     ))
                                                                                 ) : (
                                                                                     <div className="text-xs text-secondary/50 pl-6 py-1 italic">
-                                                                                        Detailed dates not available
+                                                                                        Datas detalhadas não disponíveis
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -678,7 +678,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <div className="text-center text-secondary py-8">No history available</div>
+                                                    <div className="text-center text-secondary py-8">Sem histórico disponível</div>
                                                 )
                                             )}
                                         </div>
@@ -705,7 +705,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="text-center text-secondary py-8">No history available</div>
+                                                <div className="text-center text-secondary py-8">Sem histórico disponível</div>
                                             )}
                                         </div>
                                     )}

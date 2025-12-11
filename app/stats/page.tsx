@@ -102,8 +102,8 @@ export default function GlobalPage() {
   return (
     <PageTransition>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Global Stats</h1>
-        <p className="text-secondary">Aggregated statistics across all worlds</p>
+        <h1 className="text-2xl font-bold text-white mb-2">Estatísticas Globais</h1>
+        <p className="text-secondary">Estatísticas agregadas de todos os mundos</p>
       </div>
       <GlobalStats
         bosses={data.combined.map(b => ({
@@ -126,9 +126,9 @@ export default function GlobalPage() {
       <div className="min-h-screen">
         {filtered.length === 0 ? (
           <NoResults message={
-            search ? `No bosses found matching "${search}"` :
-              selectedCategories.length > 0 ? `No bosses found in selected categories` :
-                "No bosses found"
+            search ? `Nenhum boss encontrado para "${search}"` :
+              selectedCategories.length > 0 ? `Nenhum boss encontrado nas categorias selecionadas` :
+                "Nenhum boss encontrado"
           } />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

@@ -96,15 +96,15 @@ export default function TodayPage() {
     return (
         <PageTransition>
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-white mb-2">Today's Kills</h1>
+                <h1 className="text-2xl font-bold text-white mb-2">Mortes de Hoje</h1>
                 <p className="text-secondary">
-                    {daily?.date ? `Latest update: ${daily.timestamp}` : 'No data for today'}
+                    {daily?.date ? `Última atualização: ${daily.timestamp}` : 'Sem dados para hoje'}
                 </p>
             </div>
 
             {!daily ? (
                 <div className="bg-surface-hover rounded-lg p-12 text-center border border-border border-dashed">
-                    <p className="text-secondary">No daily data available. Upload a daily-stats.txt file.</p>
+                    <p className="text-secondary">Nenhum dado diário disponível. Envie um arquivo daily-stats.txt.</p>
                 </div>
             ) : (
                 <div className="space-y-8">
@@ -113,7 +113,7 @@ export default function TodayPage() {
                         <div className="bg-surface border border-border rounded-lg p-6">
                             <div className="flex items-center gap-2 mb-2">
                                 <Trophy className="text-yellow-400/80" size={18} />
-                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Total Kills</p>
+                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Total de Mortes</p>
                             </div>
                             <p className="text-3xl font-semibold text-white">{daily.totalKills}</p>
                         </div>
@@ -121,7 +121,7 @@ export default function TodayPage() {
                         <div className="bg-surface border border-border rounded-lg p-6">
                             <div className="flex items-center gap-2 mb-2">
                                 <Server className="text-emerald-400" size={18} />
-                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Unique Bosses</p>
+                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Bosses Únicos</p>
                             </div>
                             <p className="text-3xl font-semibold text-white">{daily.uniqueBosses}</p>
                         </div>
@@ -129,7 +129,7 @@ export default function TodayPage() {
                         <div className="bg-surface border border-border rounded-lg p-6">
                             <div className="flex items-center gap-2 mb-2">
                                 <Calendar className="text-primary" size={18} />
-                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Most Active Boss</p>
+                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Boss Mais Ativo</p>
                             </div>
                             <p className="text-xl font-medium text-white truncate">
                                 {mostActiveBoss?.bossName || '-'}
@@ -143,7 +143,7 @@ export default function TodayPage() {
                                     alt="World"
                                     className="w-4 h-4 object-contain opacity-80"
                                 />
-                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Top Server</p>
+                                <p className="text-secondary text-xs font-medium uppercase tracking-wide">Top Servidor</p>
                             </div>
                             <div className="flex items-baseline gap-2">
                                 <p className="text-xl font-medium text-white truncate">
@@ -151,7 +151,7 @@ export default function TodayPage() {
                                 </p>
                                 {mostActiveServer && (
                                     <span className="text-xs text-emerald-400">
-                                        {mostActiveServer.count} kills
+                                        {mostActiveServer.count} mortes
                                     </span>
                                 )}
                             </div>
@@ -172,9 +172,9 @@ export default function TodayPage() {
                     <div className="min-h-screen">
                         {sortedKills.length === 0 ? (
                             <NoResults message={
-                                search ? `No bosses found matching "${search}"` :
-                                    selectedCategories.length > 0 ? `No bosses found in selected categories` :
-                                        "No bosses killed today matching your criteria"
+                                search ? `Nenhum boss encontrado para "${search}"` :
+                                    selectedCategories.length > 0 ? `Nenhum boss encontrado nas categorias selecionadas` :
+                                        "Nenhum boss morto hoje com os filtros atuais"
                             } />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

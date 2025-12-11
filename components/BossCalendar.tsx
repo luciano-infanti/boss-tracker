@@ -23,7 +23,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const categories: BossCategory[] = ['Archdemons', 'POI', 'Creatures'];
+    const categories: BossCategory[] = ['Archdemons', 'POI', 'Criaturas'];
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {
@@ -217,15 +217,15 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
     };
 
     const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
     return (
         <div className="bg-surface border border-border rounded-lg p-6">
             <div className="flex flex-col gap-6 mb-6">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-medium text-white">Boss Kill Calendar {worldName ? `(${worldName})` : ''}</h2>
+                    <h2 className="text-sm font-medium text-white">Calendário de Mortes {worldName ? `(${worldName})` : ''}</h2>
                     <div className="flex items-center gap-4">
                         <button onClick={prevMonth} className="p-1.5 hover:bg-surface-hover rounded-md text-secondary hover:text-white transition-colors">
                             <ChevronLeft size={16} />
@@ -257,7 +257,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
 
             <div className="overflow-x-auto pb-2">
                 <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border min-w-[600px]">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map(day => (
                         <div key={day} className="bg-surface p-3 text-center text-[10px] font-medium text-secondary uppercase tracking-wider">
                             {day}
                         </div>
@@ -311,7 +311,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
                                                         <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
                                                             <div className="font-medium text-white">
-                                                                {bossName} {info.count > 1 ? `(${info.count} kills)` : ''}
+                                                                {bossName} {info.count > 1 ? `(${info.count} mortes)` : ''}
                                                             </div>
                                                         </div>
                                                         {/* Arrow */}

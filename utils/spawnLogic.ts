@@ -181,13 +181,13 @@ export class SpawnPredictor {
 
         // Calc Status
         let status: Prediction['status'] = 'COOLDOWN';
-        let label = 'Cooling Down';
+        let label = 'Resfriando';
         let progress = 0;
 
         if (daysSince < stats.minGap) {
             status = 'COOLDOWN';
             progress = (daysSince / stats.minGap) * 100; // Progress bar fills as cooldown ends
-            label = `Cooldown (${stats.minGap - daysSince} days left)`;
+            label = `Cooldown (${stats.minGap - daysSince} dias restantes)`;
         } else {
             const windowSize = stats.maxGap - stats.minGap || 1;
             const daysIn = daysSince - stats.minGap;
@@ -195,10 +195,10 @@ export class SpawnPredictor {
 
             if (daysSince > stats.maxGap + (windowSize * 0.5)) {
                 status = 'OVERDUE'; // 50% past the max window
-                label = 'Overdue (Missed?)';
+                label = 'Atrasado (Perdido?)';
             } else {
                 status = 'WINDOW_OPEN';
-                label = 'Spawn Window Open';
+                label = 'Janela de Spawn Aberta';
             }
         }
 
@@ -222,7 +222,7 @@ export class SpawnPredictor {
         return {
             bossName, world, status: 'UNKNOWN', windowProgress: 0,
             nextMinSpawn: new Date(), nextMaxSpawn: new Date(),
-            probabilityLabel: 'No Data', confidence: 0, confidenceLabel: 'Low',
+            probabilityLabel: 'Sem Dados', confidence: 0, confidenceLabel: 'Low',
             stats: { minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0 },
             lastKill: new Date(0)
         } as Prediction;
