@@ -299,7 +299,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                                         <img
                                                             src={bossImg}
                                                             alt={bossName}
-                                                            className="w-10 h-10 object-contain rounded bg-surface-hover p-0.5 border border-border/50 transition-transform hover:scale-110"
+                                                            className="w-10 h-10 object-contain rounded bg-surface-hover p-0.5 border border-border/50"
                                                         />
                                                     ) : (
                                                         <div className="w-10 h-10 bg-surface-hover rounded flex items-center justify-center text-[8px] text-secondary border border-border/50">

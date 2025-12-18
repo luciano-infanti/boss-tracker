@@ -124,6 +124,8 @@ export const bossImages: Record<string, string> = {
   "Undead Cavebear": "https://www.tibiawiki.com.br/images/4/4b/Undead_Cavebear.gif",
   "Rottie the Rotworm": "https://www.tibiawiki.com.br/images/9/9a/Rottie_the_Rotworm.gif",
   "Apprentice Sheng": "https://www.tibiawiki.com.br/images/d/d5/Apprentice_Sheng.gif",
+  "Frostreaper": "https://wiki.rubinot.com/annual-events/christmas-2025/bosses/frostreaper.png",
+  "Frostbell": "https://wiki.rubinot.com/annual-events/christmas-2025/bosses/frostbell.apng",
 };
 
 export function getBossImage(bossName: string): string | null {

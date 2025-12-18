@@ -226,7 +226,7 @@ export default function BossCard({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           className={`
-            relative rounded-lg p-4 border transition-all cursor-pointer group hover:bg-surface-hover flex items-center gap-6
+            relative rounded-lg p-4 border transition-colors cursor-pointer group hover:bg-surface-hover flex items-center gap-6
             ${showKilledToday ? 'bg-surface border-border' : 'bg-surface border-border'}
             ${isZeroKills ? 'opacity-80' : ''}
           `}
@@ -265,7 +265,7 @@ export default function BossCard({
               <img
                 src={bossImage}
                 alt={boss.name}
-                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg transition-transform group-hover:scale-110"
+                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg"
               />
             ) : (
               <span className="text-[10px] font-bold text-secondary">{boss.name.slice(0, 2)}</span>
@@ -449,7 +449,7 @@ export default function BossCard({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={`
-          relative rounded-lg p-5 border transition-all cursor-pointer group hover:bg-surface-hover h-full flex flex-col
+          relative rounded-lg p-5 border transition-colors cursor-pointer group hover:bg-surface-hover h-full flex flex-col
           ${showKilledToday
             ? 'bg-surface border-border'
             : 'bg-surface border-border'
@@ -507,7 +507,7 @@ export default function BossCard({
               <img
                 src={bossImage}
                 alt={boss.name}
-                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg transition-transform group-hover:scale-110"
+                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg"
               />
             ) : (
               <span className="text-xs font-bold text-secondary">{boss.name.slice(0, 2)}</span>
