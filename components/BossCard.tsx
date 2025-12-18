@@ -64,6 +64,7 @@ const getConfidenceBadge = () => {
 
 
 import { calculateAdjustedTotalKills, getAdjustedKillCount } from '@/utils/soulpitUtils';
+import { getBossExtraInfo } from '@/utils/bossExtraData';
 
 import { DailyKill } from '@/types';
 
@@ -102,6 +103,8 @@ export default function BossCard({
   const { data } = useData();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bossImage = getBossImage(boss.name);
+  const bossExtra = getBossExtraInfo(boss.name);
+  const eventTag = bossExtra?.eventTag;
 
 
 
@@ -292,13 +295,18 @@ export default function BossCard({
                   </div>
                 )}
                 {isNew && (
-                  <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30">
-                    NOVO
-                  </div>
-                )}
-              </div>
+                                  <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30">
+                                    NOVO
+                                  </div>
+                                )}
+                                {eventTag && (
+                                  <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">
+                                    {eventTag}
+                                  </div>
+                                )}
+                              </div>
 
-              {children && <div className="mb-1">{children}</div>}
+                              {children && <div className="mb-1">{children}</div>}
 
               <div className="flex items-center gap-4 text-xs text-secondary">
                 {/* Next Spawn */}
@@ -487,6 +495,13 @@ export default function BossCard({
           {isNew && (
             <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
               NOVO
+            </div>
+          )}
+
+          {/* Event Tag */}
+          {eventTag && (
+            <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-500/30">
+              {eventTag}
             </div>
           )}
         </div>

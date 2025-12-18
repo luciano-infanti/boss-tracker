@@ -14,6 +14,7 @@ export interface BossExtraInfo {
     loot?: BossLootItem[];
     locations?: BossLocation[];
     wiki?: string;
+    eventTag?: string;
 }
 
 export const bossExtraData: Record<string, BossExtraInfo> = {
@@ -40,6 +41,8 @@ export const bossExtraData: Record<string, BossExtraInfo> = {
     "Elvira Hammerthrust": { wiki: "https://www.tibiawiki.com.br/wiki/Elvira_Hammerthrust" },
     "Fernfang": { wiki: "https://www.tibiawiki.com.br/wiki/Fernfang" },
     "Feroxa": { wiki: "https://www.tibiawiki.com.br/wiki/Feroxa_(Mortal)" },
+    "Frostreaper": { eventTag: "Natal 2025" },
+    "Frostbell": { eventTag: "Natal 2025" },
     "Ferumbras": {
         wiki: "https://www.tibiawiki.com.br/wiki/Ferumbras",
         loot: [
