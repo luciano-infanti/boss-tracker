@@ -318,6 +318,12 @@ export default function Footer() {
                                 >
                                     Feedback
                                 </Link>
+                                <Link
+                                    href="/admin"
+                                    className="text-white/50 hover:text-white text-sm transition-colors duration-200"
+                                >
+                                    Admin
+                                </Link>
                             </div>
                         </div>
 
