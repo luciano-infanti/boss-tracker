@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Github, Skull, Info, ExternalLink, Calendar, TrendingUp, Clock, BarChart3 } from 'lucide-react';
+import { Info, Calendar, TrendingUp, Clock, BarChart3 } from 'lucide-react';
+import { ProductSwitcher } from './ProductSwitcher';
 
 const WORLDS = [
     'Auroria',
@@ -38,15 +39,10 @@ export default function Header() {
             {/* Main Navigation Row */}
             <div className="border-b border-border/50">
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    {/* Left: Logo & Nav */}
-                    <div className="flex items-center gap-8">
-                        {/* Logo */}
-                        <Link href="/stats" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20">
-                                <Skull size={16} className="text-white" />
-                            </div>
-                            <span className="text-lg font-bold text-primary tracking-tight">RubinOT Boss Tracker</span>
-                        </Link>
+                    {/* Left: Product Switcher & Nav */}
+                    <div className="flex items-center gap-6">
+                        {/* Product Switcher */}
+                        <ProductSwitcher />
 
                         {/* Navigation */}
                         <nav className="hidden md:flex items-center gap-1">
@@ -103,34 +99,6 @@ export default function Header() {
                         </nav>
                     </div>
 
-                    {/* Right: External Links & Version */}
-                    <div className="flex items-center gap-4">
-                        <a
-                            href="https://rubinot-hub.vercel.app/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hidden md:flex items-center gap-2 text-sm text-secondary hover:text-purple-400 transition-colors"
-                        >
-                            <span>RubinOT Hub</span>
-                            <ExternalLink size={12} />
-                        </a>
-
-                        <div className="h-4 w-px bg-border hidden md:block" />
-
-                        <a
-                            href="https://github.com/luciano-infanti/boss-tracker"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-secondary hover:text-primary transition-colors p-2 hover:bg-surface-hover rounded-full"
-                            title="View on GitHub"
-                        >
-                            <Github size={20} />
-                        </a>
-
-                        <span className="text-xs font-mono text-secondary/50 border border-border px-2 py-0.5 rounded">
-                            v1.0
-                        </span>
-                    </div>
                 </div>
             </div>
 
