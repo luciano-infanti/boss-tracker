@@ -109,7 +109,11 @@ export default function BossCard({
 
 
   // Determine if boss has 0 kills (grayscale)
-  const totalKills = calculateAdjustedTotalKills(boss);
+  // For combined view with daily data, use the daily total (more accurate for today's context)
+  const storedTotalKills = calculateAdjustedTotalKills(boss);
+  const totalKills = (type === 'combined' && dailyKill) 
+    ? dailyKill.totalKills 
+    : storedTotalKills;
 
 
 
@@ -140,8 +144,11 @@ export default function BossCard({
 
   const [showTooltip, setShowTooltip] = useState(false);
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isCardHovered, setIsCardHovered] = useState(false);
 
   const handleMouseEnter = () => {
+    setIsCardHovered(true);
+    
     // Show tooltip if confidence info is available
     if ((boss as any).confidence === undefined) return;
 
@@ -152,6 +159,7 @@ export default function BossCard({
   };
 
   const handleMouseLeave = () => {
+    setIsCardHovered(false);
     if (hoverTimer) clearTimeout(hoverTimer);
     setShowTooltip(false);
   };
@@ -221,6 +229,111 @@ export default function BossCard({
     };
   }, [boss]);
 
+  // Build tags array for animated dots
+  const tags = useMemo(() => {
+    const result: Array<{
+      label: string;
+      dotColor: string;
+      bgColor: string;
+      textColor: string;
+      borderColor: string;
+    }> = [];
+    
+    if (showKilledToday && type !== 'combined') {
+      result.push({
+        label: 'HOJE',
+        dotColor: 'bg-emerald-500',
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-400',
+        borderColor: 'border-emerald-500/30'
+      });
+    }
+    
+    if (isNew) {
+      result.push({
+        label: 'NOVO',
+        dotColor: 'bg-yellow-500',
+        bgColor: 'bg-yellow-500/20',
+        textColor: 'text-yellow-500',
+        borderColor: 'border-yellow-500/30'
+      });
+    }
+    
+    if (eventTag) {
+      result.push({
+        label: eventTag.toUpperCase(),
+        dotColor: 'bg-cyan-500',
+        bgColor: 'bg-cyan-500/20',
+        textColor: 'text-cyan-400',
+        borderColor: 'border-cyan-500/30'
+      });
+    }
+    
+    return result;
+  }, [showKilledToday, type, isNew, eventTag]);
+
+  // Animated Tag Dots Component
+  const AnimatedTagDots = ({ position = 'top-3 right-3' }: { position?: string }) => {
+    if (tags.length === 0) return null;
+    
+    return (
+      <div 
+        className={`absolute ${position} flex gap-1.5 pointer-events-none`}
+        style={{ zIndex: 9999, isolation: 'isolate' }}
+      >
+        {tags.map((tag, i) => (
+          <motion.div
+            key={tag.label}
+            initial={false}
+            animate={isCardHovered ? "expanded" : "dot"}
+            variants={{
+              dot: { 
+                width: 4, 
+                height: 4, 
+                borderRadius: 2,
+                paddingLeft: 0,
+                paddingRight: 0,
+                paddingTop: 0,
+                paddingBottom: 0
+              },
+              expanded: { 
+                width: "auto", 
+                height: "auto", 
+                borderRadius: 4,
+                paddingLeft: 4,
+                paddingRight: 4,
+                paddingTop: 6,
+                paddingBottom: 6
+              }
+            }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 500, 
+              damping: 30, 
+              delay: i * 0.03 
+            }}
+            style={{ position: 'relative', zIndex: 9999 }}
+            className={`${isCardHovered ? tag.bgColor : tag.dotColor} ${tag.borderColor} border overflow-hidden flex items-center justify-center`}
+          >
+            <AnimatePresence>
+              {isCardHovered && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15, delay: i * 0.03 + 0.05 }}
+                  className={`${tag.textColor} text-[10px] font-bold whitespace-nowrap leading-none`}
+                >
+                  {tag.label}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
+    );
+  };
+
   if (viewMode === 'list') {
     return (
       <>
@@ -236,26 +349,26 @@ export default function BossCard({
         >
           {/* Tooltip */}
           <AnimatePresence>
-            {/* Tooltip */}
-            <AnimatePresence>
-              {showTooltip && (boss as any).confidence !== undefined && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-                  animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
-                  exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
-                >
-                  {(boss as any).confidence}% Confiança
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {showTooltip && (boss as any).confidence !== undefined && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+                animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+                exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
+                transition={{ duration: 0.2 }}
+                className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
+              >
+                {(boss as any).confidence}% Confiança
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
+              </motion.div>
+            )}
           </AnimatePresence>
+
+          {/* Animated Tag Dots - Absolute positioned */}
+          <AnimatedTagDots position="top-2 right-3" />
 
           {/* Image Container - Smaller for List View */}
           <div className={`
-            w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border relative
+            w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border relative z-0
             ${isNew
               ? 'bg-yellow-500/20 border-yellow-500/30'
               : showKilledToday
@@ -276,7 +389,7 @@ export default function BossCard({
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-w-0 flex items-center justify-between">
+          <div className="flex-1 min-w-0 flex items-center justify-between relative z-0">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <h3 className="font-medium text-white text-sm truncate group-hover:text-primary transition-colors flex items-center gap-2">
@@ -288,23 +401,7 @@ export default function BossCard({
                       }`} />
                   )}
                 </h3>
-                {/* Tags Inline */}
-                {showKilledToday && type !== 'combined' && (
-                  <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
-                    HOJE
-                  </div>
-                )}
-                {isNew && (
-                                  <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-500/30">
-                                    NOVO
-                                  </div>
-                                )}
-                                {eventTag && (
-                                  <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30 uppercase">
-                                    {eventTag}
-                                  </div>
-                                )}
-                              </div>
+              </div>
 
                               {children && <div className="mb-1">{children}</div>}
 
@@ -370,7 +467,7 @@ export default function BossCard({
                           className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
                         >
                           {w.world}
-                          {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
+                          {adjustedCount >= 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
                         </span>
                       );
                     })}
@@ -380,7 +477,7 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
                   <Trophy size={12} className="text-secondary/70" />
                   <span>
-                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} mortes</span>
+                    <span className="text-secondary font-medium">{totalKills} mortes</span>
                     {dailyKill && todayKills > 0 && (
                       <span className="text-emerald-400 ml-1">
                         ({todayKills})
@@ -482,33 +579,10 @@ export default function BossCard({
           )}
         </AnimatePresence>
 
-        {/* Tags Row - Horizontal, above boss info */}
-        {(showKilledToday && type !== 'combined') || isNew || eventTag ? (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {/* Today Tag */}
-            {showKilledToday && type !== 'combined' && (
-              <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
-                HOJE
-              </div>
-            )}
+        {/* Animated Tag Dots - Absolute positioned */}
+        <AnimatedTagDots position="top-3 right-3" />
 
-            {/* New Tag */}
-            {isNew && (
-              <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
-                NOVO
-              </div>
-            )}
-
-            {/* Event Tag */}
-            {eventTag && (
-              <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-500/30 uppercase">
-                {eventTag}
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        <div className="flex items-start gap-6">
+        <div className="flex items-start gap-6 relative z-0">
           {/* Image Container with Pop-out effect */}
           <div className={`
             w-16 h-16 rounded-lg flex items-center justify-center shrink-0 border relative
@@ -607,7 +681,7 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary whitespace-nowrap">
                   <Trophy size={12} className="text-secondary/70 shrink-0" />
                   <span>
-                    <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} mortes</span>
+                    <span className="text-secondary font-medium">{totalKills} mortes</span>
                     {dailyKill && todayKills > 0 && (
                       <span className="text-emerald-400 ml-1">
                         ({todayKills} hoje)
@@ -632,7 +706,7 @@ export default function BossCard({
                   className="inline-flex items-center px-2 py-1 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
                 >
                   {w.world}
-                  {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
+                  {adjustedCount >= 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
                 </span>
               );
             })}

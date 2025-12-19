@@ -6,6 +6,7 @@ import { DataProvider } from '@/context/DataContext';
 import { WorldProvider } from '@/context/WorldContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Snowflakes from '@/components/Snowflakes';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -51,6 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             opacity: 0.3
           }}
         />
+
+        {/* Christmas Snowflakes Effect */}
+        <Snowflakes count={25} />
 
         <DataProvider>
           <WorldProvider>
