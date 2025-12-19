@@ -300,7 +300,7 @@ export default function BossCard({
                                   </div>
                                 )}
                                 {eventTag && (
-                                  <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30">
+                                  <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-cyan-500/30 uppercase">
                                     {eventTag}
                                   </div>
                                 )}
@@ -482,29 +482,31 @@ export default function BossCard({
           )}
         </AnimatePresence>
 
-        {/* ... (keep existing card content) ... */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
-          {/* Today Tag - Hide on Today's Kills page (combined view) */}
-          {showKilledToday && type !== 'combined' && (
-            <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
-              HOJE
-            </div>
-          )}
+        {/* Tags Row - Horizontal, above boss info */}
+        {(showKilledToday && type !== 'combined') || isNew || eventTag ? (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {/* Today Tag */}
+            {showKilledToday && type !== 'combined' && (
+              <div className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">
+                HOJE
+              </div>
+            )}
 
-          {/* New Tag */}
-          {isNew && (
-            <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
-              NOVO
-            </div>
-          )}
+            {/* New Tag */}
+            {isNew && (
+              <div className="bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/30">
+                NOVO
+              </div>
+            )}
 
-          {/* Event Tag */}
-          {eventTag && (
-            <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-500/30">
-              {eventTag}
-            </div>
-          )}
-        </div>
+            {/* Event Tag */}
+            {eventTag && (
+              <div className="bg-cyan-500/20 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded border border-cyan-500/30 uppercase">
+                {eventTag}
+              </div>
+            )}
+          </div>
+        ) : null}
 
         <div className="flex items-start gap-6">
           {/* Image Container with Pop-out effect */}
@@ -602,8 +604,8 @@ export default function BossCard({
 
               {/* Total Kills */}
               {!hideStats && (
-                <div className="flex items-center gap-1.5 text-xs text-secondary">
-                  <Trophy size={12} className="text-secondary/70" />
+                <div className="flex items-center gap-1.5 text-xs text-secondary whitespace-nowrap">
+                  <Trophy size={12} className="text-secondary/70 shrink-0" />
                   <span>
                     <span className="text-secondary font-medium">{Math.max(totalKills, todayKills)} mortes</span>
                     {dailyKill && todayKills > 0 && (
@@ -614,28 +616,28 @@ export default function BossCard({
                   </span>
                 </div>
               )}
-
-              {/* World Badges (only if dailyKill exists AND not on world page) */}
-              {dailyKill && type !== 'world' && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {dailyKill.worlds.map((w) => {
-                    const adjustedCount = getAdjustedKillCount(boss.name, w.count);
-                    if (adjustedCount === 0) return null;
-                    return (
-                      <span
-                        key={w.world}
-                        className="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
-                      >
-                        {w.world}
-                        {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </div>
+
+        {/* World Badges - Full width, below boss info (only if dailyKill exists AND not on world page) */}
+        {dailyKill && type !== 'world' && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {dailyKill.worlds.map((w) => {
+              const adjustedCount = getAdjustedKillCount(boss.name, w.count);
+              if (adjustedCount === 0) return null;
+              return (
+                <span
+                  key={w.world}
+                  className="inline-flex items-center px-2 py-1 rounded bg-surface-hover border border-border/50 text-[10px] text-secondary"
+                >
+                  {w.world}
+                  {adjustedCount > 1 && <span className="ml-1 text-white opacity-70">x{adjustedCount}</span>}
+                </span>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
       <BossDetailsDrawer
