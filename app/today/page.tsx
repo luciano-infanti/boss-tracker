@@ -138,11 +138,13 @@ export default function TodayPage() {
 
                         <div className="bg-surface border border-border rounded-lg p-6">
                             <div className="flex items-center gap-2 mb-2">
-                                <img
-                                    src={mostActiveServer ? getWorldIcon(mostActiveServer.name) : ''}
-                                    alt="World"
-                                    className="w-4 h-4 object-contain opacity-80"
-                                />
+                                {mostActiveServer && (
+                                    <img
+                                        src={getWorldIcon(mostActiveServer.name)}
+                                        alt="World"
+                                        className="w-4 h-4 object-contain opacity-80"
+                                    />
+                                )}
                                 <p className="text-secondary text-xs font-medium uppercase tracking-wide">Top Servidor</p>
                             </div>
                             <div className="flex items-baseline gap-2">

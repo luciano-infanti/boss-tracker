@@ -144,66 +144,119 @@ export async function GET() {
       console.log('⚠️ [API] Yeti NOT in killDatesMap');
     }
 
-    // Reconstruct Worlds (Record<string, Boss[]>)
-    // This is derived from perWorldStats or kill history.
-    // Ideally, we iterate combined bosses and split them into worlds.
-    const worlds: Record<string, Boss[]> = {};
-
+    // Update combined bosses' totalKills from actual kill_history data
     combined.forEach(cb => {
-      if (cb.perWorldStats) {
-        cb.perWorldStats.forEach(stat => {
-          if (!worlds[stat.world]) worlds[stat.world] = [];
-
-          // Find next spawn and last kill for this specific world if possible
-          // For now, we use the combined data or generic defaults
-          // To be accurate, we should look at kill_history for this world
-
-          // Case-insensitive lookup for kill history
-          const bossNameLower = cb.name.toLowerCase();
-          const historyEntry = Array.from(killDatesMap.values()).find(k => k.bossName.toLowerCase() === bossNameLower);
-          const worldKills = historyEntry?.killsByWorld[stat.world] || [];
-          // Sort by date desc
-          worldKills.sort((a, b) => { // Parse DD/MM/YYYY
-            const [d1, m1, y1] = a.date.split('/').map(Number);
-            const [d2, m2, y2] = b.date.split('/').map(Number);
-            return new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime();
-          });
-          const lastKill = worldKills[0]?.date || 'Never';
-
-          worlds[stat.world].push({
-            name: cb.name,
-            totalDaysSpawned: stat.spawns, // Approximation
-            totalKills: stat.kills,
-            spawnFrequency: stat.frequency,
-            nextExpectedSpawn: 'N/A', // Logic for next spawn per world is complex, usually global
-            lastKillDate: lastKill,
-            history: worldKills.map(k => k.count === 1 ? k.date : `${k.date} (${k.count}x)`).join(', ')
-          });
-
-          // DEBUG: Log Yeti specifically
-          if (cb.name?.toLowerCase() === 'yeti') {
-            console.log(`🔍 [API] Constructing Yeti for world ${stat.world}:`, {
-              historyEntry: historyEntry ? 'FOUND' : 'NOT FOUND',
-              worldKills: worldKills.length,
-              worldKillsData: worldKills,
-              historyString: worldKills.map(k => k.count === 1 ? k.date : `${k.date} (${k.count}x)`).join(', ')
-            });
-          }
-        });
+      const bossNameLower = cb.name.toLowerCase();
+      const historyEntry = Array.from(killDatesMap.values()).find(k => k.bossName.toLowerCase() === bossNameLower);
+      if (historyEntry) {
+        // Calculate total kills from all worlds in kill_history
+        const calculatedTotal = Object.values(historyEntry.killsByWorld)
+          .flat()
+          .reduce((sum, k) => sum + k.count, 0);
+        cb.totalKills = calculatedTotal;
       }
     });
 
-    // 5. Fetch Metadata (Daily Update)
-    const { data: metaData, error: metaError } = await supabase
-      .from('metadata')
-      .select('value')
-      .eq('key', 'daily_update')
-      .single();
+    // Reconstruct Worlds (Record<string, Boss[]>)
+    // Build directly from killDatesMap (kill_history table) - the source of truth
+    const worlds: Record<string, Boss[]> = {};
 
-    // If error is not "row not found", throw it. But single() returns error if 0 rows.
-    // So we ignore error if it's just missing data.
+    // Iterate through all bosses in killDatesMap
+    killDatesMap.forEach((historyEntry, bossName) => {
+      // For each world this boss has kills in
+      Object.entries(historyEntry.killsByWorld).forEach(([worldName, kills]) => {
+        if (!worlds[worldName]) worlds[worldName] = [];
+        
+        // Sort kills by date descending
+        const sortedKills = [...kills].sort((a, b) => {
+          const [d1, m1, y1] = a.date.split('/').map(Number);
+          const [d2, m2, y2] = b.date.split('/').map(Number);
+          return new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime();
+        });
+        
+        const lastKill = sortedKills[0]?.date || 'Never';
+        const totalKills = kills.reduce((sum, k) => sum + k.count, 0);
+        const totalDays = kills.length; // Each entry is a unique day
+        
+        // Try to get spawn frequency from combined boss data
+        const combinedBoss = combined.find(cb => cb.name.toLowerCase() === bossName.toLowerCase());
+        const worldStat = combinedBoss?.perWorldStats?.find(s => s.world === worldName);
+        
+        worlds[worldName].push({
+          name: bossName,
+          totalDaysSpawned: totalDays,
+          totalKills: totalKills,
+          spawnFrequency: worldStat?.frequency || 'N/A',
+          nextExpectedSpawn: 'N/A',
+          lastKillDate: lastKill,
+          history: sortedKills.map(k => k.count === 1 ? k.date : `${k.date} (${k.count}x)`).join(', ')
+        });
 
-    const daily = metaData?.value || undefined;
+        // DEBUG: Log Yeti specifically
+        if (bossName.toLowerCase() === 'yeti') {
+          console.log(`🔍 [API] Constructing Yeti for world ${worldName}:`, {
+            totalKills,
+            totalDays,
+            lastKill,
+            killsCount: kills.length
+          });
+        }
+      });
+    });
+
+    // 5. Compute daily kills from kill_history (source of truth)
+    let daily: any = undefined;
+    
+    if (killHistoryData && killHistoryData.length > 0) {
+      // Parse dates and find the most recent one
+      const parseDate = (dateStr: string): Date => {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      };
+      
+      // Find all unique dates and sort them descending
+      const uniqueDates = [...new Set((killHistoryData as any[]).map(k => k.date))];
+      uniqueDates.sort((a, b) => parseDate(b).getTime() - parseDate(a).getTime());
+      
+      // Use the most recent date
+      const mostRecentDate = uniqueDates[0];
+      
+      if (mostRecentDate) {
+        // Filter kill_history for the most recent date
+        const recentKills = (killHistoryData || []).filter((kill: any) => kill.date === mostRecentDate);
+        
+        if (recentKills.length > 0) {
+          // Aggregate kills by boss
+          const killsByBoss = new Map<string, { bossName: string; worlds: { world: string; count: number }[]; totalKills: number }>();
+          
+          recentKills.forEach((kill: any) => {
+            if (!killsByBoss.has(kill.boss_name)) {
+              killsByBoss.set(kill.boss_name, {
+                bossName: kill.boss_name,
+                worlds: [],
+                totalKills: 0
+              });
+            }
+            const entry = killsByBoss.get(kill.boss_name)!;
+            entry.worlds.push({ world: kill.world, count: kill.count });
+            entry.totalKills += kill.count;
+          });
+          
+          const kills = Array.from(killsByBoss.values());
+          const totalKills = kills.reduce((sum, k) => sum + k.totalKills, 0);
+          
+          daily = {
+            date: mostRecentDate,
+            timestamp: 'Última atualização',
+            totalKills,
+            uniqueBosses: kills.length,
+            kills
+          };
+          
+          console.log(`📅 [API] Computed daily from kill_history (${mostRecentDate}): ${kills.length} bosses, ${totalKills} kills`);
+        }
+      }
+    }
 
     const parsedData: ParsedData = {
       worlds,

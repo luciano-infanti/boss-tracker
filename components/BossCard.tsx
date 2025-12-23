@@ -278,8 +278,7 @@ export default function BossCard({
     
     return (
       <div 
-        className={`absolute ${position} flex gap-1.5 pointer-events-none`}
-        style={{ zIndex: 9999, isolation: 'isolate' }}
+        className={`absolute ${position} flex gap-1.5 pointer-events-none z-10`}
       >
         {tags.map((tag, i) => (
           <motion.div
@@ -312,7 +311,6 @@ export default function BossCard({
               damping: 30, 
               delay: i * 0.03 
             }}
-            style={{ position: 'relative', zIndex: 9999 }}
             className={`${isCardHovered ? tag.bgColor : tag.dotColor} ${tag.borderColor} border overflow-hidden flex items-center justify-center`}
           >
             <AnimatePresence>
