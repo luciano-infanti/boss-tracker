@@ -166,22 +166,22 @@ export async function GET() {
       // For each world this boss has kills in
       Object.entries(historyEntry.killsByWorld).forEach(([worldName, kills]) => {
         if (!worlds[worldName]) worlds[worldName] = [];
-        
+
         // Sort kills by date descending
         const sortedKills = [...kills].sort((a, b) => {
           const [d1, m1, y1] = a.date.split('/').map(Number);
           const [d2, m2, y2] = b.date.split('/').map(Number);
           return new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime();
         });
-        
+
         const lastKill = sortedKills[0]?.date || 'Never';
         const totalKills = kills.reduce((sum, k) => sum + k.count, 0);
         const totalDays = kills.length; // Each entry is a unique day
-        
+
         // Try to get spawn frequency from combined boss data
         const combinedBoss = combined.find(cb => cb.name.toLowerCase() === bossName.toLowerCase());
         const worldStat = combinedBoss?.perWorldStats?.find(s => s.world === worldName);
-        
+
         worlds[worldName].push({
           name: bossName,
           totalDaysSpawned: totalDays,
@@ -206,29 +206,29 @@ export async function GET() {
 
     // 5. Compute daily kills from kill_history (source of truth)
     let daily: any = undefined;
-    
+
     if (killHistoryData && killHistoryData.length > 0) {
       // Parse dates and find the most recent one
       const parseDate = (dateStr: string): Date => {
         const [day, month, year] = dateStr.split('/').map(Number);
         return new Date(year, month - 1, day);
       };
-      
+
       // Find all unique dates and sort them descending
       const uniqueDates = [...new Set((killHistoryData as any[]).map(k => k.date))];
       uniqueDates.sort((a, b) => parseDate(b).getTime() - parseDate(a).getTime());
-      
+
       // Use the most recent date
       const mostRecentDate = uniqueDates[0];
-      
+
       if (mostRecentDate) {
         // Filter kill_history for the most recent date
         const recentKills = (killHistoryData || []).filter((kill: any) => kill.date === mostRecentDate);
-        
+
         if (recentKills.length > 0) {
           // Aggregate kills by boss
           const killsByBoss = new Map<string, { bossName: string; worlds: { world: string; count: number }[]; totalKills: number }>();
-          
+
           recentKills.forEach((kill: any) => {
             if (!killsByBoss.has(kill.boss_name)) {
               killsByBoss.set(kill.boss_name, {
@@ -241,18 +241,18 @@ export async function GET() {
             entry.worlds.push({ world: kill.world, count: kill.count });
             entry.totalKills += kill.count;
           });
-          
+
           const kills = Array.from(killsByBoss.values());
           const totalKills = kills.reduce((sum, k) => sum + k.totalKills, 0);
-          
+
           daily = {
             date: mostRecentDate,
-            timestamp: 'Última atualização',
+            timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }),
             totalKills,
             uniqueBosses: kills.length,
             kills
           };
-          
+
           console.log(`📅 [API] Computed daily from kill_history (${mostRecentDate}): ${kills.length} bosses, ${totalKills} kills`);
         }
       }

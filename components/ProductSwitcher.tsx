@@ -39,7 +39,7 @@ const products: Product[] = [
         id: "bosses",
         name: "Bosses.RubinOT",
         description: "Timers e tracking de bosses",
-        href: "/stats",
+        href: "/",
         icon: null,
         customImage: "https://www.tibiawiki.com.br/images/e/e9/Yeti.gif",
         gradient: "from-amber-500 to-amber-700",
@@ -50,7 +50,7 @@ const products: Product[] = [
 export function ProductSwitcher() {
     const [isOpen, setIsOpen] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    
+
     const currentProduct = products.find(p => p.current) || products[0];
 
     const handleMouseEnter = () => {
@@ -68,20 +68,20 @@ export function ProductSwitcher() {
     };
 
     return (
-        <div 
+        <div
             className="relative"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
             {/* Trigger */}
             <button
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-zinc-900/80 border border-white/[0.06] hover:bg-zinc-800/80 hover:border-white/[0.1] transition-all duration-200 group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group"
             >
                 {/* Current Product Logo */}
                 {currentProduct.customImage ? (
                     <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center overflow-hidden">
-                        <img 
-                            src={currentProduct.customImage} 
+                        <img
+                            src={currentProduct.customImage}
                             alt={currentProduct.name}
                             className="w-6 h-6 object-contain"
                         />
@@ -127,14 +127,14 @@ export function ProductSwitcher() {
                         <div className="space-y-1">
                             {products.map((product) => {
                                 const isExternal = product.href.startsWith('http');
-                                
+
                                 const content = (
                                     <>
                                         {/* Product Logo */}
                                         {product.customImage ? (
                                             <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center overflow-hidden">
-                                                <img 
-                                                    src={product.customImage} 
+                                                <img
+                                                    src={product.customImage}
                                                     alt={product.name}
                                                     className="w-7 h-7 object-contain"
                                                 />
@@ -160,10 +160,10 @@ export function ProductSwitcher() {
                                             <motion.div
                                                 initial={{ scale: 0 }}
                                                 animate={{ scale: 1 }}
-                                                transition={{ 
-                                                    type: "spring", 
-                                                    stiffness: 500, 
-                                                    damping: 25 
+                                                transition={{
+                                                    type: "spring",
+                                                    stiffness: 500,
+                                                    damping: 25
                                                 }}
                                                 className="flex items-center justify-center w-5 h-5 rounded-full bg-purple-500/20"
                                             >

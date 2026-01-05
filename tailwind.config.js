@@ -9,9 +9,9 @@ module.exports = {
     extend: {
       colors: {
         background: '#1a1c24', // Main page background
-        surface: '#252832', // Cards, Sidebar, Element backgrounds
-        'surface-hover': '#2d303b', // Interactive elements (hover state)
-        border: '#3a3d4a', // Borders, Separators
+        surface: '#1e2028', // Cards, Sidebar, Element backgrounds (darker)
+        'surface-hover': '#252832', // Interactive elements (hover state)
+        border: '#2d303b', // Borders, Separators (slightly darker)
         primary: '#ffffff', // Primary Text (White)
         secondary: '#9ca3af', // Secondary Text (Gray)
         accent: '#9333ea', // Highlights, Buttons (Purple)

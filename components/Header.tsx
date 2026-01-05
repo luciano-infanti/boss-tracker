@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Info, Calendar, TrendingUp, Clock, BarChart3 } from 'lucide-react';
+import { Info, Calendar, TrendingUp, Home, BarChart3 } from 'lucide-react';
 import { ProductSwitcher } from './ProductSwitcher';
 
 const WORLDS = [
@@ -47,6 +47,16 @@ export default function Header() {
                         {/* Navigation */}
                         <nav className="hidden md:flex items-center gap-1">
                             <Link
+                                href="/"
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/')
+                                    ? 'bg-purple-500/10 text-purple-400'
+                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
+                                    }`}
+                            >
+                                <Home size={14} />
+                                Home
+                            </Link>
+                            <Link
                                 href="/stats"
                                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/stats')
                                     ? 'bg-purple-500/10 text-purple-400'
@@ -57,24 +67,14 @@ export default function Header() {
                                 Estatísticas
                             </Link>
                             <Link
-                                href="/upcoming"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/upcoming')
+                                href="/previsoes"
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/previsoes')
                                     ? 'bg-purple-500/10 text-purple-400'
                                     : 'text-secondary hover:text-primary hover:bg-surface-hover'
                                     }`}
                             >
                                 <TrendingUp size={14} />
-                                Próximos
-                            </Link>
-                            <Link
-                                href="/today"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/today')
-                                    ? 'bg-purple-500/10 text-purple-400'
-                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                                    }`}
-                            >
-                                <Clock size={14} />
-                                Hoje
+                                Previsões
                             </Link>
                             <Link
                                 href="/most-wanted"
