@@ -37,6 +37,9 @@ export type Prediction = {
     confidence: number; // 0 to 100
     confidenceLabel: 'Low' | 'Medium' | 'High';
     lastKill: Date;
+    daysSinceKill: number; // Days since last kill
+    relativeLabel: string; // "Opens in 2 days" or "Overdue by 5 days"
+    isLowConfidence: boolean; // True if confidence < 40%
 };
 
 // --- Core Math Helper: Percentile ---
@@ -175,6 +178,7 @@ export class SpawnPredictor {
 
         const lastKill = this.parseDate(lastKillDateStr);
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const minSpawn = addDays(lastKill, stats.minGap);
         const maxSpawn = addDays(lastKill, stats.maxGap);
         const daysSince = differenceInDays(today, lastKill);
@@ -183,24 +187,34 @@ export class SpawnPredictor {
         let status: Prediction['status'] = 'COOLDOWN';
         let label = 'Resfriando';
         let progress = 0;
+        let relativeLabel = '';
 
         if (daysSince < stats.minGap) {
             status = 'COOLDOWN';
             progress = (daysSince / stats.minGap) * 100; // Progress bar fills as cooldown ends
-            label = `Cooldown (${stats.minGap - daysSince} dias restantes)`;
+            const daysLeft = stats.minGap - daysSince;
+            label = `Cooldown (${daysLeft} dias restantes)`;
+            relativeLabel = daysLeft === 1 ? 'Abre amanhã' : `Abre em ${daysLeft} dias`;
         } else {
             const windowSize = stats.maxGap - stats.minGap || 1;
             const daysIn = daysSince - stats.minGap;
             progress = (daysIn / windowSize) * 100;
 
-            if (daysSince > stats.maxGap + (windowSize * 0.5)) {
-                status = 'OVERDUE'; // 50% past the max window
-                label = 'Atrasado (Perdido?)';
+            if (daysSince > stats.maxGap) {
+                status = 'OVERDUE';
+                const overdueBy = daysSince - stats.maxGap;
+                label = 'Atrasado';
+                relativeLabel = overdueBy === 1 ? 'Atrasado 1 dia' : `Atrasado ${overdueBy} dias`;
             } else {
                 status = 'WINDOW_OPEN';
                 label = 'Janela de Spawn Aberta';
+                const daysUntilClose = stats.maxGap - daysSince;
+                relativeLabel = daysUntilClose === 0 ? 'Fecha hoje' :
+                    daysUntilClose === 1 ? 'Fecha amanhã' : `Fecha em ${daysUntilClose} dias`;
             }
         }
+
+        const isLowConfidence = stats.confidence < 40;
 
         return {
             bossName,
@@ -213,7 +227,10 @@ export class SpawnPredictor {
             confidence: stats.confidence,
             confidenceLabel: stats.confidence > 75 ? 'High' : stats.confidence > 40 ? 'Medium' : 'Low',
             stats,
-            lastKill
+            lastKill,
+            daysSinceKill: daysSince,
+            relativeLabel,
+            isLowConfidence
         };
     }
 
@@ -224,7 +241,10 @@ export class SpawnPredictor {
             nextMinSpawn: new Date(), nextMaxSpawn: new Date(),
             probabilityLabel: 'Sem Dados', confidence: 0, confidenceLabel: 'Low',
             stats: { minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0 },
-            lastKill: new Date(0)
+            lastKill: new Date(0),
+            daysSinceKill: 0,
+            relativeLabel: 'Dados insuficientes',
+            isLowConfidence: true
         } as Prediction;
     }
 }

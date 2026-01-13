@@ -144,16 +144,32 @@ export async function GET() {
       console.log('⚠️ [API] Yeti NOT in killDatesMap');
     }
 
-    // Update combined bosses' totalKills from actual kill_history data
+    // Update combined bosses' totalKills from multiple sources to ensure accuracy
     combined.forEach(cb => {
       const bossNameLower = cb.name.toLowerCase();
       const historyEntry = Array.from(killDatesMap.values()).find(k => k.bossName.toLowerCase() === bossNameLower);
-      if (historyEntry) {
-        // Calculate total kills from all worlds in kill_history
-        const calculatedTotal = Object.values(historyEntry.killsByWorld)
+
+      // Source 1: kill_history table
+      const killHistoryTotal = historyEntry
+        ? Object.values(historyEntry.killsByWorld)
           .flat()
-          .reduce((sum, k) => sum + k.count, 0);
-        cb.totalKills = calculatedTotal;
+          .reduce((sum, k) => sum + k.count, 0)
+        : 0;
+
+      // Source 2: Already loaded from bosses.total_kills (cb.totalKills)
+      const databaseTotal = cb.totalKills || 0;
+
+      // Source 3: perWorldStats aggregation
+      const perWorldStatsTotal = cb.perWorldStats
+        ? cb.perWorldStats.reduce((sum, s) => sum + (s.kills || 0), 0)
+        : 0;
+
+      // Use the maximum of all sources to ensure we don't miss any kills
+      cb.totalKills = Math.max(killHistoryTotal, databaseTotal, perWorldStatsTotal);
+
+      // Debug log for bosses that might have inconsistent data
+      if (killHistoryTotal !== databaseTotal && (killHistoryTotal > 0 || databaseTotal > 0)) {
+        console.log(`⚠️ [API] ${cb.name}: killHistory=${killHistoryTotal}, database=${databaseTotal}, perWorldStats=${perWorldStatsTotal}, using=${cb.totalKills}`);
       }
     });
 

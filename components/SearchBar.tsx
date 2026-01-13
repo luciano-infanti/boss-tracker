@@ -62,7 +62,7 @@ export default function SearchBar({
           placeholder="Buscar bosses..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-11 pr-4 py-2.5 bg-surface border border-border rounded-lg text-sm text-white placeholder-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+          className="w-full pl-11 pr-4 py-2.5 bg-surface border border-border rounded-lg text-sm text-white placeholder-secondary focus:outline-none focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/50 transition-all"
         />
       </div>
 

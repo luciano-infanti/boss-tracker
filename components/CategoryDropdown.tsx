@@ -40,7 +40,7 @@ export default function CategoryDropdown({ value, onChange, categories }: Catego
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 bg-surface-hover hover:bg-surface-hover/80 text-xs text-white border border-border rounded px-3 py-1.5 transition-colors outline-none focus:border-primary/50"
+                className="flex items-center gap-2 bg-surface-hover hover:bg-surface-hover/80 text-xs text-white border border-border rounded px-3 py-1.5 transition-colors outline-none focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/50"
             >
                 {value !== 'All' && getIcon(value) && (
                     <img

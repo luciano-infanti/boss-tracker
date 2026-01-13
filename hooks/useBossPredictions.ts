@@ -3,12 +3,22 @@ import { SpawnPredictor, KillRecord, Prediction } from '@/utils/spawnLogic';
 import { BossKillHistory } from '@/types';
 
 export function useBossPredictions(killDates: BossKillHistory[] | undefined, selectedWorld: string) {
+    // Bosses to exclude from predictions
+    const PREDICTION_BLACKLIST = [
+        'Frostbell', 'Frostreaper',
+        'Ferumbras Mortal Shell', 'Bakragore', 'The Percht Queen', 'The World Devourer',
+        'Mahatheb', 'Yakchal', 'Undead Cavebear', 'Crustacea Gigantica', 'Oodok', 'Arthem',
+        'Ghazbaran', "Gaz'haragoth",
+        'Midnight Panther', 'Feroxa', 'Dreadful Disruptor'
+    ];
     const predictor = useMemo(() => {
         if (!killDates) return null;
 
         // Transform BossKillHistory to KillRecord[]
         const allKills: KillRecord[] = [];
         killDates.forEach(boss => {
+            if (PREDICTION_BLACKLIST.includes(boss.bossName)) return;
+
             Object.entries(boss.killsByWorld).forEach(([world, entries]) => {
                 entries.forEach(entry => {
                     allKills.push({
@@ -48,24 +58,23 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
                 const lastKill = sortedHistory[0];
                 const prediction = predictor.predict(boss.bossName, world, lastKill.date);
 
-                // Only add if we have valid stats (not UNKNOWN)
-                if (prediction.status !== 'UNKNOWN') {
+                // Only add if we have valid stats (not UNKNOWN) and sufficient data (confidence > 0)
+                if (prediction.status !== 'UNKNOWN' && prediction.confidence > 0) {
                     results.push(prediction);
                 }
             });
         });
 
         // Sort results
-        // 1. Active Windows (High Priority) - Sort by progress desc
-        // 2. Upcoming (Cooldown) - Sort by time until open asc
-        // 3. Overdue - Sort by progress desc
+        // 1. WINDOW_OPEN first (actively huntable)
+        // 2. COOLDOWN by urgency (opening soon first)
+        // 3. OVERDUE at bottom (likely missed/ghost kills)
 
         return results.sort((a, b) => {
-            // Priority: WINDOW_OPEN > OVERDUE > COOLDOWN
             const getPriority = (status: string) => {
                 if (status === 'WINDOW_OPEN') return 3;
-                if (status === 'OVERDUE') return 2;
-                if (status === 'COOLDOWN') return 1;
+                if (status === 'COOLDOWN') return 2;
+                if (status === 'OVERDUE') return 1; // Bottom - likely ghosts
                 return 0;
             };
 
@@ -77,11 +86,11 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
             if (a.status === 'WINDOW_OPEN') {
                 return b.windowProgress - a.windowProgress; // Higher progress first
             }
-            if (a.status === 'OVERDUE') {
-                return b.windowProgress - a.windowProgress;
-            }
             if (a.status === 'COOLDOWN') {
-                return a.nextMinSpawn.getTime() - b.nextMinSpawn.getTime(); // Sooner first
+                return a.nextMinSpawn.getTime() - b.nextMinSpawn.getTime(); // Opening sooner first
+            }
+            if (a.status === 'OVERDUE') {
+                return a.windowProgress - b.windowProgress; // Less overdue first
             }
             return 0;
         });

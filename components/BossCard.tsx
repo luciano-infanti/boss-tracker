@@ -65,6 +65,8 @@ const getConfidenceBadge = () => {
 
 import { calculateAdjustedTotalKills, getAdjustedKillCount } from '@/utils/soulpitUtils';
 import { getBossExtraInfo } from '@/utils/bossExtraData';
+import { useData } from '@/context/DataContext';
+import BossDetailsDrawer from './BossDetailsDrawer';
 
 import { DailyKill } from '@/types';
 
@@ -78,12 +80,8 @@ interface BossCardProps {
   onClick?: (boss: Boss | CombinedBoss) => void;
   children?: React.ReactNode;
   hideConfidence?: boolean;
+  status?: 'COOLDOWN' | 'WINDOW_OPEN' | 'OVERDUE' | 'UNKNOWN';
 }
-
-import { useData } from '@/context/DataContext';
-
-
-import BossDetailsDrawer from './BossDetailsDrawer';
 
 export default function BossCard({
   boss,
@@ -98,7 +96,8 @@ export default function BossCard({
   showLastKill = true,
   onClick,
   children,
-  hideConfidence = false
+  hideConfidence = false,
+  status
 }: BossCardProps & { showNextSpawn?: boolean; viewMode?: 'grid' | 'list'; hideStats?: boolean; showLastKill?: boolean }) {
   const { data } = useData();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -111,8 +110,8 @@ export default function BossCard({
   // Determine if boss has 0 kills (grayscale)
   // For combined view with daily data, use the daily total (more accurate for today's context)
   const storedTotalKills = calculateAdjustedTotalKills(boss);
-  const totalKills = (type === 'combined' && dailyKill) 
-    ? dailyKill.totalKills 
+  const totalKills = (type === 'combined' && dailyKill)
+    ? dailyKill.totalKills
     : storedTotalKills;
 
 
@@ -134,6 +133,16 @@ export default function BossCard({
   // Override isKilledToday based on filtered count
   const showKilledToday = isKilledToday && todayKills > 0;
 
+  // Status-based image filter
+  // COOLDOWN = grayscale, WINDOW_OPEN = normal, OVERDUE = red tint
+  const getImageFilter = () => {
+    if (status === 'COOLDOWN') return 'grayscale';
+    if (status === 'OVERDUE') return 'sepia saturate-200 hue-rotate-[-50deg]'; // Red tint
+    return ''; // WINDOW_OPEN or no status = normal
+  };
+  const imageFilter = getImageFilter();
+
+
   const handleCardClick = () => {
     if (onClick) {
       onClick(boss);
@@ -148,7 +157,7 @@ export default function BossCard({
 
   const handleMouseEnter = () => {
     setIsCardHovered(true);
-    
+
     // Show tooltip if confidence info is available
     if ((boss as any).confidence === undefined) return;
 
@@ -221,13 +230,14 @@ export default function BossCard({
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // Check if date is strictly before today
-    const isOverdue = expectedDate < today;
+    // If 'status' prop is provided, use it. Otherwise fall back to date check.
+    const isOverdue = status ? status === 'OVERDUE' : expectedDate < today;
 
     return {
       date: boss.nextExpectedSpawn,
       isOverdue
     };
-  }, [boss]);
+  }, [boss, status]);
 
   // Build tags array for animated dots
   const tags = useMemo(() => {
@@ -238,7 +248,7 @@ export default function BossCard({
       textColor: string;
       borderColor: string;
     }> = [];
-    
+
     if (showKilledToday && type !== 'combined') {
       result.push({
         label: 'HOJE',
@@ -248,7 +258,7 @@ export default function BossCard({
         borderColor: 'border-emerald-500/30'
       });
     }
-    
+
     if (isNew) {
       result.push({
         label: 'NOVO',
@@ -258,7 +268,7 @@ export default function BossCard({
         borderColor: 'border-yellow-500/30'
       });
     }
-    
+
     if (eventTag) {
       result.push({
         label: eventTag.toUpperCase(),
@@ -268,16 +278,16 @@ export default function BossCard({
         borderColor: 'border-cyan-500/30'
       });
     }
-    
+
     return result;
   }, [showKilledToday, type, isNew, eventTag]);
 
   // Animated Tag Dots Component
   const AnimatedTagDots = ({ position = 'top-3 right-3' }: { position?: string }) => {
     if (tags.length === 0) return null;
-    
+
     return (
-      <div 
+      <div
         className={`absolute ${position} flex gap-1.5 pointer-events-none z-10`}
       >
         {tags.map((tag, i) => (
@@ -286,18 +296,18 @@ export default function BossCard({
             initial={false}
             animate={isCardHovered ? "expanded" : "dot"}
             variants={{
-              dot: { 
-                width: 4, 
-                height: 4, 
+              dot: {
+                width: 4,
+                height: 4,
                 borderRadius: 2,
                 paddingLeft: 0,
                 paddingRight: 0,
                 paddingTop: 0,
                 paddingBottom: 0
               },
-              expanded: { 
-                width: "auto", 
-                height: "auto", 
+              expanded: {
+                width: "auto",
+                height: "auto",
                 borderRadius: 4,
                 paddingLeft: 4,
                 paddingRight: 4,
@@ -305,11 +315,11 @@ export default function BossCard({
                 paddingBottom: 6
               }
             }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 500, 
-              damping: 30, 
-              delay: i * 0.03 
+            transition={{
+              type: "spring",
+              stiffness: 500,
+              damping: 30,
+              delay: i * 0.03
             }}
             className={`${isCardHovered ? tag.bgColor : tag.dotColor} ${tag.borderColor} border overflow-hidden flex items-center justify-center`}
           >
@@ -371,15 +381,16 @@ export default function BossCard({
               ? 'bg-yellow-500/20 border-yellow-500/30'
               : showKilledToday
                 ? 'bg-emerald-500/20 border-emerald-500/30'
-                : 'bg-surface-hover border-border/50'
+                : status === 'OVERDUE'
+                  ? 'bg-red-500/10 border-red-500/30'
+                  : 'bg-surface-hover border-border/50'
             }
-            ${isZeroKills ? 'grayscale' : ''}
           `}>
             {bossImage ? (
               <img
                 src={bossImage}
                 alt={boss.name}
-                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg"
+                className={`w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg ${imageFilter}`}
               />
             ) : (
               <span className="text-[10px] font-bold text-secondary">{boss.name.slice(0, 2)}</span>
@@ -401,7 +412,7 @@ export default function BossCard({
                 </h3>
               </div>
 
-                              {children && <div className="mb-1">{children}</div>}
+              {children && <div className="mb-1">{children}</div>}
 
               <div className="flex items-center gap-4 text-xs text-secondary">
                 {/* Next Spawn */}
@@ -411,7 +422,6 @@ export default function BossCard({
                     <span>
                       Próx: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
                         {nextSpawnInfo.date}
-                        {nextSpawnInfo.isOverdue && ' (Atrasado)'}
                       </span>
                     </span>
                   </div>
@@ -588,15 +598,16 @@ export default function BossCard({
               ? 'bg-yellow-500/20 border-yellow-500/30'
               : showKilledToday
                 ? 'bg-emerald-500/20 border-emerald-500/30'
-                : 'bg-surface-hover border-border/50'
+                : status === 'OVERDUE'
+                  ? 'bg-red-500/10 border-red-500/30'
+                  : 'bg-surface-hover border-border/50'
             }
-            ${isZeroKills ? 'grayscale' : ''}
           `}>
             {bossImage ? (
               <img
                 src={bossImage}
                 alt={boss.name}
-                className="w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg"
+                className={`w-[120%] h-[120%] max-w-none object-contain absolute -top-[20%] drop-shadow-lg ${imageFilter}`}
               />
             ) : (
               <span className="text-xs font-bold text-secondary">{boss.name.slice(0, 2)}</span>
@@ -625,15 +636,8 @@ export default function BossCard({
                   <Calendar size={12} className="text-secondary/70" />
                   <div className="flex items-center">
                     <span>
-                      Próx: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
-                        {(() => {
-                          if (nextSpawnInfo.isOverdue) {
-                            // @ts-ignore
-                            if (boss.confidenceLabel === 'Low') return 'Dados Insuficientes';
-                            return 'Atrasado';
-                          }
-                          return nextSpawnInfo.date;
-                        })()}
+                      {nextSpawnInfo.isOverdue ? 'Esperado: ' : 'Próx: '}<span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                        {nextSpawnInfo.date}
                       </span>
                     </span>
                     {!hideConfidence && getConfidenceBadge()}

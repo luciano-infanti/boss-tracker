@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, TrendingUp, AlertCircle, Info, BarChart3, Calculator } from 'lucide-react';
 import { getBossImage } from '@/utils/bossImages';
 import { Prediction } from '@/utils/spawnLogic';
+import BossTimeline from './BossTimeline';
 
 interface PredictionBossDrawerProps {
     prediction: Prediction | null;
@@ -40,12 +41,12 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
     if (!mounted || !prediction) return null;
 
     const formatDate = (date: Date) => {
-        return date.toLocaleDateString('en-GB', {
-            weekday: 'short',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        // Use pt-BR style explicitly
+        const weekday = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+        return `${weekday}, ${d}/${m}/${y}`;
     };
 
     // Calculate Last Seen text
@@ -161,6 +162,17 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                         <p className="text-[10px] text-secondary mt-2">
                                             Baseado no tamanho da amostra ({stats?.sampleSize ?? 0}), consistência (stdDev: {stats?.stdDev?.toFixed(2) ?? '?'}), e verificação entre servidores.
                                         </p>
+                                    </div>
+
+                                    {/* Timeline Visualization */}
+                                    <div className="p-4 rounded-lg bg-surface-hover/30 border border-border/50">
+                                        <div className="text-sm text-secondary mb-3">Ciclo de Spawn</div>
+                                        <BossTimeline
+                                            minGap={stats?.minGap || 1}
+                                            maxGap={stats?.maxGap || 1}
+                                            daysSince={prediction.daysSinceKill}
+                                            status={prediction.status}
+                                        />
                                     </div>
 
                                     {/* Status Banner */}

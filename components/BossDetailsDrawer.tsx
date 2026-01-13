@@ -254,7 +254,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                         <select
                             value={selectedServer}
                             onChange={(e) => setSelectedServer(e.target.value)}
-                            className="bg-surface border border-border rounded text-xs text-secondary px-2 py-1 focus:outline-none focus:border-primary/50"
+                            className="bg-surface border border-border rounded text-xs text-secondary px-2 py-1 focus:outline-none focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/50"
                         >
                             <option value="all">Todos os Servidores</option>
                             {availableServers.map(server => (
@@ -424,6 +424,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                             </div>
                             <button
                                 onClick={onClose}
+                                aria-label="Close"
                                 className="p-2 rounded-full hover:bg-surface-hover text-secondary hover:text-white transition-colors"
                             >
                                 <X size={24} />
