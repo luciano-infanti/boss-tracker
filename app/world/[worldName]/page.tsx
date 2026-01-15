@@ -15,6 +15,8 @@ import { getBossCategory } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { getWorldIcon } from '@/utils/worldIcons';
+
 export default function WorldPage() {
   const params = useParams();
   const worldName = params.worldName as string;
@@ -147,16 +149,6 @@ export default function WorldPage() {
   }
 
   const totalKills = worldData.reduce((sum, boss) => sum + (boss.totalKills || 0), 0);
-
-  const getWorldIcon = (worldName: string) => {
-    if (['Auroria', 'Belaria'].includes(worldName)) {
-      return 'https://wiki.rubinot.com/icons/open-pvp.gif';
-    }
-    if (['Bellum', 'Tenebrium', 'Spectrum'].includes(worldName)) {
-      return 'https://wiki.rubinot.com/icons/retro-open-pvp.gif';
-    }
-    return 'https://wiki.rubinot.com/icons/optional-pvp.gif';
-  };
 
   return (
     <PageTransition>

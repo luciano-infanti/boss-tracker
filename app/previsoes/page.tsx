@@ -13,6 +13,8 @@ import { Boss } from '@/types';
 import { Calendar as CalendarIcon, List as ListIcon } from 'lucide-react';
 import Loading from '@/components/Loading';
 
+import { getWorldIcon } from '@/utils/worldIcons';
+
 export default function UpcomingPage() {
     const { data, isLoading } = useData();
     const { selectedWorld, worlds } = useWorld();
@@ -118,16 +120,6 @@ export default function UpcomingPage() {
                 {/* World Pill Buttons */}
                 <div className="flex flex-wrap items-center gap-2">
                     {worlds.map((world) => {
-                        const getWorldIcon = (w: string) => {
-                            if (['Auroria', 'Belaria'].includes(w)) {
-                                return 'https://wiki.rubinot.com/icons/open-pvp.gif';
-                            }
-                            if (['Bellum', 'Tenebrium', 'Spectrum'].includes(w)) {
-                                return 'https://wiki.rubinot.com/icons/retro-open-pvp.gif';
-                            }
-                            return 'https://wiki.rubinot.com/icons/optional-pvp.gif';
-                        };
-
                         return (
                             <button
                                 key={world}

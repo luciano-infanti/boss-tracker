@@ -5,34 +5,14 @@ import { usePathname } from 'next/navigation';
 import { Info, Calendar, TrendingUp, Home, BarChart3 } from 'lucide-react';
 import { ProductSwitcher } from './ProductSwitcher';
 
-const WORLDS = [
-    'Auroria',
-    'Belaria',
-    'Bellum',
-    'Elysian',
-    'Lunarian',
-    'Mystian',
-    'Solarian',
-    'Spectrum',
-    'Tenebrium',
-    'Vesperia'
-];
+import { WORLDS } from '@/utils/constants';
+import { getWorldIcon } from '@/utils/worldIcons';
 
 export default function Header() {
     const pathname = usePathname();
 
     const isActive = (path: string) => pathname === path;
     const isWorldActive = (world: string) => pathname === `/world/${world}`;
-
-    const getWorldIcon = (worldName: string) => {
-        if (['Auroria', 'Belaria'].includes(worldName)) {
-            return 'https://wiki.rubinot.com/icons/open-pvp.gif';
-        }
-        if (['Bellum', 'Tenebrium', 'Spectrum'].includes(worldName)) {
-            return 'https://wiki.rubinot.com/icons/retro-open-pvp.gif';
-        }
-        return 'https://wiki.rubinot.com/icons/optional-pvp.gif';
-    };
 
     return (
         <header className="bg-surface border-b border-border sticky top-0 z-50">

@@ -5,6 +5,7 @@ export const WORLDS = [
     'Elysian',
     'Lunarian',
     'Mystian',
+    'Serenian',
     'Solarian',
     'Spectrum',
     'Tenebrium',
