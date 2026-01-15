@@ -21,7 +21,7 @@ BEGIN;
   -- INSERT INTO worlds (name, type) VALUES ('Serenian', 'Optional PVP') ON CONFLICT DO NOTHING;
 
   -- Since we don't see a explicit worlds table causing constraint errors, 
-  -- this migration is asdasdmostly documentation or for future distinct lists.
+  -- this migration is mostly documentation or for future distinct lists.
   -- We can update any 'metadata' if it exists.
   
   COMMIT;

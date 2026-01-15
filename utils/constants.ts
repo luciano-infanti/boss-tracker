@@ -1,3 +1,4 @@
+// List of all game worlds
 export const WORLDS = [
     'Auroria',
     'Belaria',

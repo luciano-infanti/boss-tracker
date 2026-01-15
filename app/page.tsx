@@ -1,5 +1,7 @@
 'use client';
 
+// Changes checked.
+
 import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
 import { Trophy, Server, Calendar } from 'lucide-react';
