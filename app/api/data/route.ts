@@ -234,12 +234,25 @@ export async function GET() {
       const uniqueDates = [...new Set((killHistoryData as any[]).map(k => k.date))];
       uniqueDates.sort((a, b) => parseDate(b).getTime() - parseDate(a).getTime());
 
-      // Use the most recent date
+      // Use the most recent date, but ONLY if it's today
       const mostRecentDate = uniqueDates[0];
 
+      // Get today's date in DD/MM/YYYY format for comparison
+      const now = new Date();
+      const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+      const isToday = mostRecentDate === todayStr;
+      console.log(`📅 [API] Most recent date: ${mostRecentDate}, Today: ${todayStr}, Match: ${isToday}`);
+
       if (mostRecentDate) {
-        // Filter kill_history for the most recent date
-        const recentKills = (killHistoryData || []).filter((kill: any) => kill.date === mostRecentDate);
+        if (!isToday) {
+          console.log(`⚠️ [API] Most recent date (${mostRecentDate}) is not today (${todayStr}). Daily kills will be empty.`);
+        }
+
+        // Filter kill_history for the most recent date, but only if it's today
+        const recentKills = isToday
+          ? (killHistoryData || []).filter((kill: any) => kill.date === mostRecentDate)
+          : [];
 
         if (recentKills.length > 0) {
           // Aggregate kills by boss

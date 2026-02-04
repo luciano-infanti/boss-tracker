@@ -1,4 +1,5 @@
 import { DailyUpdate, DailyKill } from '@/types';
+import { normalizeBossName } from '@/utils/bossExtraData';
 
 export function parseDailyUpdate(content: string): DailyUpdate | null {
   try {
@@ -27,7 +28,7 @@ export function parseDailyUpdate(content: string): DailyUpdate | null {
       for (const line of bossLines) {
         const match = line.match(/• ([^:]+): (.+)/);
         if (match) {
-          const bossName = match[1].trim();
+          const bossName = normalizeBossName(match[1].trim());
           const worldsData = match[2].split(',').map(w => w.trim());
 
           const worlds: Array<{ world: string; count: number }> = [];

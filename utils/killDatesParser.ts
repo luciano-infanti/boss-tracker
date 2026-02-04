@@ -1,3 +1,5 @@
+import { normalizeBossName } from '@/utils/bossExtraData';
+
 export interface KillDateEntry {
   date: string; // DD/MM/YYYY
   world: string;
@@ -32,7 +34,7 @@ export function parseCompleteKillDates(content: string): BossKillHistory[] {
       const trimmed = line.trim();
 
       if (trimmed.startsWith('Boss:')) {
-        boss.bossName = trimmed.replace('Boss:', '').trim();
+        boss.bossName = normalizeBossName(trimmed.replace('Boss:', '').trim());
       } else if (trimmed.startsWith('Total Spawn Days:')) {
         boss.totalSpawnDays = parseInt(trimmed.split(':')[1].trim());
       } else if (trimmed.startsWith('Total Kills:')) {

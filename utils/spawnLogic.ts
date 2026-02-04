@@ -1,250 +1,275 @@
 /**
- * REQ: npm install date-fns
  * Logic: Calculates spawn windows based on historical kill data using
- * Inter-Arrival Time (IAT) analysis with outlier filtering for "Ghost Spawns".
+ * Inter-Arrival Time (IAT) analysis with Cycle + Multiples logic.
  */
-import { differenceInDays, addDays } from "date-fns";
+import { differenceInDays, addDays, isAfter, isBefore, subDays } from "date-fns";
 
 // --- Types ---
-// --- Types ---
+
 export type KillRecord = {
     bossName: string;
     world: string;
-    killedAt: string; // ISO Date or "DD/MM/YYYY"
+    killedAt: string; // ISO string or 'DD/MM/YYYY'
 };
 
-export type BossStats = {
-    minGap: number;     // The "Safety Floor"
-    maxGap: number;     // The "Likely Ceiling" (75th percentile)
-    avgGap: number;     // Median gap (more stable than mean)
-    stdDev: number;     // Standard Deviation for consistency
-    sampleSize: number; // Number of intervals observed
-    confidence: number; // 0 to 100
-    rawGaps?: number[]; // All gaps collected (sorted)
-    filteredGaps?: number[]; // After 80th percentile filter
-    worldGaps?: Record<string, number[]>; // Gaps per world for breakdown
-};
-
-export type Prediction = {
+export interface Prediction {
     bossName: string;
     world: string;
-    status: 'COOLDOWN' | 'WINDOW_OPEN' | 'OVERDUE' | 'UNKNOWN';
-    windowProgress: number; // 0% to 100%+
+    status: 'WINDOW_OPEN' | 'COOLDOWN' | 'OVERDUE' | 'UNKNOWN';
     nextMinSpawn: Date;
     nextMaxSpawn: Date;
+    avgSpawnDate: Date;
+    confidence: number; // 0-100
+    windowProgress: number; // 0-100%
+    daysUntilMin: number;
+    cycleInfo?: {
+        cycleDuration: number; // The global average (e.g., 14 days)
+        cyclesSkipped: number; // How many "ghost" windows we skipped
+        margin: number; // The +/- days calculated
+    };
+
+    // --- Compatibility Fields for UI ---
     probabilityLabel: string;
-    stats?: BossStats; // Added to expose stats for UI
-    confidence: number; // 0 to 100
     confidenceLabel: 'Low' | 'Medium' | 'High';
     lastKill: Date;
-    daysSinceKill: number; // Days since last kill
-    relativeLabel: string; // "Opens in 2 days" or "Overdue by 5 days"
-    isLowConfidence: boolean; // True if confidence < 40%
-};
-
-// --- Core Math Helper: Percentile ---
-// We use the 75th percentile for "Max" to ignore long gaps caused by missed kills.
-function getPercentile(data: number[], q: number): number {
-    const sorted = [...data].sort((a, b) => a - b);
-    const pos = (sorted.length - 1) * q;
-    const base = Math.floor(pos);
-    const rest = pos - base;
-    if (sorted[base + 1] !== undefined) {
-        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
-    }
-    return sorted[base];
+    daysSinceKill: number;
+    relativeLabel: string;
+    isLowConfidence: boolean;
+    stats?: {
+        minGap: number;
+        maxGap: number;
+        avgGap: number;
+        stdDev: number;
+        sampleSize: number;
+        confidence: number;
+    };
 }
 
 // --- The Analyzer ---
 export class SpawnPredictor {
-    private statsCache: Record<string, BossStats> = {};
+    private globalStats: Map<string, { avgInterval: number; stdDev: number; sampleSize: number }>;
 
-    constructor(private killHistory: KillRecord[]) {
-        this.trainModel();
+    constructor(allKills: KillRecord[]) {
+        this.globalStats = this.calculateGlobalStats(allKills);
     }
 
-    // Helper to parse dates that might be DD/MM/YYYY
-    private parseDate(dateStr: string): Date {
-        if (dateStr.includes('/')) {
-            const [day, month, year] = dateStr.split('/').map(Number);
-            return new Date(year, month - 1, day);
-        }
-        return new Date(dateStr);
-    }
+    /**
+     * 1. Aggregates ALL worlds data to find the "True Interval" for the boss.
+     */
+    private calculateGlobalStats(kills: KillRecord[]) {
+        const stats = new Map<string, { avgInterval: number; stdDev: number; sampleSize: number }>();
+        const killsByBoss = this.groupByBoss(kills);
 
-    private trainModel() {
-        // 1. Group data by Boss -> World -> Date[]
-        const killsByBossAndWorld: Record<string, Record<string, Date[]>> = {};
+        killsByBoss.forEach((bossKills, bossName) => {
+            // Sort all kills purely by date, ignoring world (to find global rhythm)
+            const allIntervals: number[] = [];
+            const killsByWorld = this.groupByWorld(bossKills);
 
-        // Sort chronology
-        const sortedHistory = [...this.killHistory].sort((a, b) => {
-            const dateA = this.parseDate(a.killedAt);
-            const dateB = this.parseDate(b.killedAt);
-            return dateA.getTime() - dateB.getTime();
-        });
-
-        sortedHistory.forEach(kill => {
-            if (!killsByBossAndWorld[kill.bossName]) killsByBossAndWorld[kill.bossName] = {};
-            if (!killsByBossAndWorld[kill.bossName][kill.world]) killsByBossAndWorld[kill.bossName][kill.world] = [];
-            killsByBossAndWorld[kill.bossName][kill.world].push(this.parseDate(kill.killedAt));
-        });
-
-        // 2. Process Stats
-        Object.keys(killsByBossAndWorld).forEach(boss => {
-            let allGaps: number[] = [];
-            let serverCount = 0;
-            const worldGapsMap: Record<string, number[]> = {};
-
-            // Collect ALL gaps from ALL servers (Intra-server calculation)
-            Object.keys(killsByBossAndWorld[boss]).forEach(world => {
-                const dates = killsByBossAndWorld[boss][world];
-                if (dates.length > 1) {
-                    serverCount++;
-                    const worldGaps: number[] = [];
-                    for (let i = 1; i < dates.length; i++) {
-                        const gap = differenceInDays(dates[i], dates[i - 1]);
-                        if (gap >= 1) {
-                            allGaps.push(gap);
-                            worldGaps.push(gap);
-                        }
-                    }
-                    worldGapsMap[world] = worldGaps;
+            Object.values(killsByWorld).forEach(worldKills => {
+                const sorted = worldKills.sort((a, b) => this.parseDate(a.killedAt).getTime() - this.parseDate(b.killedAt).getTime());
+                for (let i = 1; i < sorted.length; i++) {
+                    const days = differenceInDays(this.parseDate(sorted[i].killedAt), this.parseDate(sorted[i - 1].killedAt));
+                    // Filter obvious outliers (e.g. 1 day double kills)
+                    if (days > 1) allIntervals.push(days);
                 }
             });
 
-            if (allGaps.length === 0) {
-                // Not enough data, fallback defaults
-                this.statsCache[boss] = {
-                    minGap: 1,
-                    maxGap: 1,
-                    avgGap: 1,
-                    stdDev: 0,
-                    sampleSize: 0,
-                    confidence: 0,
-                    rawGaps: [],
-                    filteredGaps: [],
-                    worldGaps: {}
-                };
-                return;
-            }
+            if (allIntervals.length === 0) return;
 
-            // -- CORE MATH --
-            // Filter outliers (Ghost Spawns) using 80th percentile
-            allGaps.sort((a, b) => a - b);
-            const p80Index = Math.floor(allGaps.length * 0.80);
-            const filteredGaps = allGaps.slice(0, p80Index + 1);
+            // Calculate Mean (Global Average)
+            const sum = allIntervals.reduce((a, b) => a + b, 0);
+            const mean = sum / allIntervals.length;
 
-            const minGap = filteredGaps[0];
-            const maxGap = filteredGaps[filteredGaps.length - 1]; // Use filtered max
-            const avgGap = Math.floor(getPercentile(filteredGaps, 0.50));
-
-            // Calculate StdDev
-            const mean = filteredGaps.reduce((a, b) => a + b, 0) / filteredGaps.length;
-            const variance = filteredGaps.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / filteredGaps.length;
+            // Calculate StdDev to determine "Stability"
+            const variance = allIntervals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / allIntervals.length;
             const stdDev = Math.sqrt(variance);
 
-            // -- CONFIDENCE CALCULATION --
-            // Factor 1: Sample Size (Logarithmic scale: 10 samples = ~80% base score)
-            let baseScore = Math.min(100, (Math.log(allGaps.length + 1) / Math.log(15)) * 100);
-
-            // Factor 2: Consistency (Penalty for high variance)
-            // If gaps range from 10 to 30, variance is high. If 10 to 12, variance is low.
-            const range = maxGap - minGap;
-            const consistencyFactor = range === 0 ? 1 : Math.max(0.5, 1 - (range / minGap));
-
-            // Factor 3: Server Bonus (Cross-verification)
-            const serverBonus = serverCount > 1 ? 1.2 : 1.0;
-
-            let finalConfidence = baseScore * consistencyFactor * serverBonus;
-            finalConfidence = Math.min(95, Math.floor(finalConfidence)); // Cap at 95% because nothing is certain
-
-            this.statsCache[boss] = {
-                minGap,
-                maxGap,
-                avgGap,
-                stdDev,
-                sampleSize: allGaps.length,
-                confidence: finalConfidence,
-                rawGaps: [...allGaps],
-                filteredGaps: [...filteredGaps],
-                worldGaps: worldGapsMap
-            };
+            stats.set(bossName, { avgInterval: mean, stdDev, sampleSize: allIntervals.length });
         });
+
+        return stats;
     }
 
+    /**
+     * 2. Predicts using the Cycle + Multiples logic
+     */
     public predict(bossName: string, world: string, lastKillDateStr: string): Prediction {
-        const stats = this.statsCache[bossName];
-        if (!stats) return this.getUnknownState(bossName, world);
+        const stats = this.globalStats.get(bossName);
+        const lastKillDate = this.parseDate(lastKillDateStr);
+        const now = new Date(); // Use current date
+        now.setHours(0, 0, 0, 0); // Normalize 'now' to midnight for comparison
 
-        const lastKill = this.parseDate(lastKillDateStr);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const minSpawn = addDays(lastKill, stats.minGap);
-        const maxSpawn = addDays(lastKill, stats.maxGap);
-        const daysSince = differenceInDays(today, lastKill);
-
-        // Calc Status
-        let status: Prediction['status'] = 'COOLDOWN';
-        let label = 'Resfriando';
-        let progress = 0;
-        let relativeLabel = '';
-
-        if (daysSince < stats.minGap) {
-            status = 'COOLDOWN';
-            progress = (daysSince / stats.minGap) * 100; // Progress bar fills as cooldown ends
-            const daysLeft = stats.minGap - daysSince;
-            label = `Cooldown (${daysLeft} dias restantes)`;
-            relativeLabel = daysLeft === 1 ? 'Abre amanhã' : `Abre em ${daysLeft} dias`;
-        } else {
-            const windowSize = stats.maxGap - stats.minGap || 1;
-            const daysIn = daysSince - stats.minGap;
-            progress = (daysIn / windowSize) * 100;
-
-            if (daysSince > stats.maxGap) {
-                status = 'OVERDUE';
-                const overdueBy = daysSince - stats.maxGap;
-                label = 'Atrasado';
-                relativeLabel = overdueBy === 1 ? 'Atrasado 1 dia' : `Atrasado ${overdueBy} dias`;
-            } else {
-                status = 'WINDOW_OPEN';
-                label = 'Janela de Spawn Aberta';
-                const daysUntilClose = stats.maxGap - daysSince;
-                relativeLabel = daysUntilClose === 0 ? 'Fecha hoje' :
-                    daysUntilClose === 1 ? 'Fecha amanhã' : `Fecha em ${daysUntilClose} dias`;
-            }
+        // --- FALLBACK: If no global stats, return UNKNOWN ---
+        if (!stats || stats.sampleSize < 2) {
+            return this.createUnknownPrediction(bossName, world);
         }
 
-        const isLowConfidence = stats.confidence < 40;
+        const { avgInterval, stdDev } = stats;
+
+        // --- STEP A: Calculate Dynamic Margin ---
+        // If the boss is very regular (low StdDev), window is tight. 
+        // We clamp it: Minimum +/- 1 day, Maximum +/- 3 days
+        let margin = Math.ceil(stdDev);
+        if (margin < 1) margin = 1;
+        if (margin > 3) margin = 3;
+
+        // --- STEP B: Calculate Cycles ---
+        // How many days have passed since the last kill?
+        const daysSinceLast = differenceInDays(now, lastKillDate);
+
+        // How many "cycles" of the average interval fit into this time?
+        let cycles = Math.round(daysSinceLast / avgInterval);
+
+        // If we are currently "before" the first cycle (e.g. 5 days passed, avg 14), 
+        // we assume we are aiming for the 1st cycle.
+        if (cycles < 1) cycles = 1;
+
+        // --- STEP C: Project the Date ---
+        // Target Date = LastKill + (Cycles * Average)
+        let targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
+
+        // CRITICAL FIX: If the target window + margin is ALREADY in the past, 
+        // it means we missed this window too. Jump to the next cycle.
+        // We use 'while' to ensure we skip ALL missed windows, not just the previous one.
+        while (isBefore(addDays(targetDate, margin), now)) {
+            cycles++;
+            targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
+        }
+
+        const minSpawn = subDays(targetDate, margin);
+        const maxSpawn = addDays(targetDate, margin);
+
+        // --- STEP D: Determine Status ---
+        let status: Prediction['status'] = 'COOLDOWN';
+        let probabilityLabel = '';
+        let relativeLabel = '';
+
+        if (isAfter(now, maxSpawn)) {
+            status = 'OVERDUE';
+            const overdueBy = differenceInDays(now, maxSpawn);
+            probabilityLabel = 'Atrasado';
+            relativeLabel = overdueBy === 1 ? 'Atrasado 1 dia' : `Atrasado ${overdueBy} dias`;
+        } else if (isAfter(now, minSpawn) || this.isSameDay(now, minSpawn)) {
+            status = 'WINDOW_OPEN';
+            probabilityLabel = 'Janela Aberta';
+            const daysUntilClose = differenceInDays(maxSpawn, now);
+            relativeLabel = daysUntilClose === 0 ? 'Fecha hoje' :
+                daysUntilClose === 1 ? 'Fecha amanhã' : `Fecha em ${daysUntilClose} dias`;
+        } else {
+            status = 'COOLDOWN';
+            const daysLeft = differenceInDays(minSpawn, now);
+            probabilityLabel = `Cooldown`;
+            relativeLabel = daysLeft === 1 ? 'Abre amanhã' : `Abre em ${daysLeft} dias`;
+        }
+
+        // --- STEP E: Calculate Confidence ---
+        let confidence = 0;
+        if (stats.sampleSize > 5) confidence += 0.3;
+        if (stats.sampleSize > 10) confidence += 0.2;
+        if (stdDev < 2) confidence += 0.3; // Very stable boss
+        else if (stdDev < 5) confidence += 0.1;
+
+        // Penalty for high cycle count (prediction gets fuzzier the further out we guess)
+        confidence -= (cycles - 1) * 0.1;
+        if (confidence < 0.1) confidence = 0.1;
+        if (confidence > 1) confidence = 1;
+
+        const isLowConfidence = confidence < 0.4;
+        const confidenceLabel = confidence > 0.75 ? 'High' : confidence > 0.4 ? 'Medium' : 'Low';
+        const windowProgress = this.calculateProgress(lastKillDate, minSpawn, now);
+        const daysUntilMin = differenceInDays(minSpawn, now);
 
         return {
             bossName,
             world,
             status,
-            windowProgress: Math.min(100, Math.max(0, progress)),
             nextMinSpawn: minSpawn,
             nextMaxSpawn: maxSpawn,
-            probabilityLabel: label,
-            confidence: stats.confidence,
-            confidenceLabel: stats.confidence > 75 ? 'High' : stats.confidence > 40 ? 'Medium' : 'Low',
-            stats,
-            lastKill,
-            daysSinceKill: daysSince,
+            avgSpawnDate: targetDate,
+            confidence: Math.round(confidence * 100), // Scaled
+            windowProgress,
+            daysUntilMin,
+            cycleInfo: {
+                cycleDuration: avgInterval,
+                cyclesSkipped: cycles - 1,
+                margin
+            },
+            // Compatibility
+            probabilityLabel,
+            confidenceLabel,
+            lastKill: lastKillDate,
+            daysSinceKill: daysSinceLast,
             relativeLabel,
-            isLowConfidence
+            isLowConfidence,
+            stats: {
+                // FIXED: Return cumulative days from LastKill for timeline compatibility
+                minGap: differenceInDays(minSpawn, lastKillDate),
+                maxGap: differenceInDays(maxSpawn, lastKillDate),
+                avgGap: Math.round(avgInterval),
+                stdDev: stdDev,
+                sampleSize: stats.sampleSize,
+                confidence: Math.round(confidence * 100)
+            }
         };
     }
 
-    private getUnknownState(bossName: string, world: string): Prediction {
-        // Return default empty state
+    // --- Helpers ---
+
+    private groupByBoss(kills: KillRecord[]) {
+        const map = new Map<string, KillRecord[]>();
+        kills.forEach(k => {
+            if (!map.has(k.bossName)) map.set(k.bossName, []);
+            map.get(k.bossName)?.push(k);
+        });
+        return map;
+    }
+
+    private groupByWorld(kills: KillRecord[]) {
+        const map: Record<string, KillRecord[]> = {};
+        kills.forEach(k => {
+            if (!map[k.world]) map[k.world] = [];
+            map[k.world].push(k);
+        });
+        return map;
+    }
+
+    private parseDate(dateStr: string): Date {
+        // Assuming DD/MM/YYYY or ISO.
+        if (dateStr.includes('/')) {
+            const [d, m, y] = dateStr.split('/').map(Number);
+            return new Date(y, m - 1, d);
+        }
+        return new Date(dateStr);
+    }
+
+    private isSameDay(d1: Date, d2: Date) {
+        return d1.getDate() === d2.getDate() &&
+            d1.getMonth() === d2.getMonth() &&
+            d1.getFullYear() === d2.getFullYear();
+    }
+
+    private calculateProgress(start: Date, target: Date, now: Date): number {
+        const total = differenceInDays(target, start);
+        const current = differenceInDays(now, start);
+        if (total <= 0) return 100;
+        const p = (current / total) * 100;
+        return Math.min(Math.max(p, 0), 100);
+    }
+
+    private createUnknownPrediction(bossName: string, world: string): Prediction {
         return {
-            bossName, world, status: 'UNKNOWN', windowProgress: 0,
-            nextMinSpawn: new Date(), nextMaxSpawn: new Date(),
-            probabilityLabel: 'Sem Dados', confidence: 0, confidenceLabel: 'Low',
-            stats: { minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0 },
+            bossName, world, status: 'UNKNOWN',
+            nextMinSpawn: new Date(), nextMaxSpawn: new Date(), avgSpawnDate: new Date(),
+            confidence: 0, windowProgress: 0, daysUntilMin: 0,
+            probabilityLabel: 'Sem Dados',
+            confidenceLabel: 'Low',
             lastKill: new Date(0),
             daysSinceKill: 0,
             relativeLabel: 'Dados insuficientes',
-            isLowConfidence: true
-        } as Prediction;
+            isLowConfidence: true,
+            stats: {
+                minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0
+            }
+        };
     }
 }

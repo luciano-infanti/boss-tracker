@@ -165,3 +165,14 @@ export function getBossExtraInfo(bossName: string): BossExtraInfo | null {
     const key = Object.keys(bossExtraData).find(k => k.toLowerCase() === lowerName);
     return key ? bossExtraData[key] : null;
 }
+
+export function normalizeBossName(bossName: string): string {
+    // Try exact match first
+    if (bossExtraData[bossName]) return bossName;
+
+    // Try case-insensitive match
+    const lowerName = bossName.toLowerCase();
+    const key = Object.keys(bossExtraData).find(k => k.toLowerCase() === lowerName);
+
+    return key || bossName;
+}

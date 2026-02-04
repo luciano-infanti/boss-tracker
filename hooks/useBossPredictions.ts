@@ -11,6 +11,7 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
         'Ghazbaran', "Gaz'haragoth",
         'Midnight Panther', 'Feroxa', 'Dreadful Disruptor'
     ];
+
     const predictor = useMemo(() => {
         if (!killDates) return null;
 
@@ -39,6 +40,8 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
         const results: Prediction[] = [];
 
         killDates.forEach(boss => {
+            if (PREDICTION_BLACKLIST.includes(boss.bossName)) return;
+
             // Determine which worlds to check
             const worldsToCheck = selectedWorld
                 ? [selectedWorld]
@@ -48,7 +51,7 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
                 const worldHistory = boss.killsByWorld[world];
                 if (!worldHistory || worldHistory.length === 0) return;
 
-                // Sort by date descending to get latest
+                // Sort by date descending to get latest kill date
                 const sortedHistory = [...worldHistory].sort((a, b) => {
                     const [d1, m1, y1] = a.date.split('/').map(Number);
                     const [d2, m2, y2] = b.date.split('/').map(Number);
@@ -58,8 +61,8 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
                 const lastKill = sortedHistory[0];
                 const prediction = predictor.predict(boss.bossName, world, lastKill.date);
 
-                // Only add if we have valid stats (not UNKNOWN) and sufficient data (confidence > 0)
-                if (prediction.status !== 'UNKNOWN' && prediction.confidence > 0) {
+                // Only add if we have valid stats (not UNKNOWN)
+                if (prediction.status !== 'UNKNOWN') {
                     results.push(prediction);
                 }
             });
@@ -68,13 +71,13 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
         // Sort results
         // 1. WINDOW_OPEN first (actively huntable)
         // 2. COOLDOWN by urgency (opening soon first)
-        // 3. OVERDUE at bottom (likely missed/ghost kills)
+        // 3. OVERDUE at bottom
 
         return results.sort((a, b) => {
             const getPriority = (status: string) => {
                 if (status === 'WINDOW_OPEN') return 3;
                 if (status === 'COOLDOWN') return 2;
-                if (status === 'OVERDUE') return 1; // Bottom - likely ghosts
+                if (status === 'OVERDUE') return 1;
                 return 0;
             };
 
@@ -90,7 +93,7 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
                 return a.nextMinSpawn.getTime() - b.nextMinSpawn.getTime(); // Opening sooner first
             }
             if (a.status === 'OVERDUE') {
-                return a.windowProgress - b.windowProgress; // Less overdue first
+                return a.daysSinceKill - b.daysSinceKill;
             }
             return 0;
         });

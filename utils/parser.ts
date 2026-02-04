@@ -1,4 +1,5 @@
 import { Boss, CombinedBoss, BossKillHistory } from '@/types';
+import { normalizeBossName } from '@/utils/bossExtraData';
 
 export function parseSingleWorldFile(content: string): Boss[] {
   const bosses: Boss[] = [];
@@ -17,7 +18,7 @@ export function parseSingleWorldFile(content: string): Boss[] {
 
     for (const line of lines) {
       if (line.startsWith('Boss:')) {
-        boss.name = line.replace('Boss:', '').trim();
+        boss.name = normalizeBossName(line.replace('Boss:', '').trim());
       } else if (line.startsWith('Total Days Spawned:')) {
         const val = parseInt(line.split(':')[1].trim());
         boss.totalDaysSpawned = isNaN(val) ? 0 : val;
@@ -76,7 +77,7 @@ export function parseCombinedFile(content: string): CombinedBoss[] {
       const trimmedLine = line.trim();
 
       if (trimmedLine.startsWith('Boss:')) {
-        boss.name = trimmedLine.replace('Boss:', '').trim();
+        boss.name = normalizeBossName(trimmedLine.replace('Boss:', '').trim());
       } else if (trimmedLine.startsWith('Total Spawn Days:')) {
         const val = parseInt(trimmedLine.split(':')[1].trim());
         boss.totalSpawnDays = isNaN(val) ? 0 : val;
