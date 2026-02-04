@@ -42,12 +42,23 @@ export interface Prediction {
         stdDev: number;
         sampleSize: number;
         confidence: number;
+        rawGaps?: number[];
+        filteredGaps?: number[];
+        worldGaps?: Record<string, number[]>;
     };
 }
 
 // --- The Analyzer ---
 export class SpawnPredictor {
-    private globalStats: Map<string, { avgInterval: number; stdDev: number; sampleSize: number }>;
+    // UPDATED: Store detailed stats in memory so we can return them for charts
+    private globalStats: Map<string, {
+        avgInterval: number;
+        stdDev: number;
+        sampleSize: number;
+        rawGaps: number[];
+        filteredGaps: number[];
+        worldGaps: Record<string, number[]>;
+    }>;
 
     constructor(allKills: KillRecord[]) {
         this.globalStats = this.calculateGlobalStats(allKills);
@@ -57,20 +68,35 @@ export class SpawnPredictor {
      * 1. Aggregates ALL worlds data to find the "True Interval" for the boss.
      */
     private calculateGlobalStats(kills: KillRecord[]) {
-        const stats = new Map<string, { avgInterval: number; stdDev: number; sampleSize: number }>();
+        const stats = new Map<string, {
+            avgInterval: number;
+            stdDev: number;
+            sampleSize: number;
+            rawGaps: number[];
+            filteredGaps: number[];
+            worldGaps: Record<string, number[]>;
+        }>();
         const killsByBoss = this.groupByBoss(kills);
 
         killsByBoss.forEach((bossKills, bossName) => {
             // Sort all kills purely by date, ignoring world (to find global rhythm)
             const allIntervals: number[] = [];
             const killsByWorld = this.groupByWorld(bossKills);
+            const worldGaps: Record<string, number[]> = {};
 
-            Object.values(killsByWorld).forEach(worldKills => {
+            Object.entries(killsByWorld).forEach(([w, worldKills]) => {
                 const sorted = worldKills.sort((a, b) => this.parseDate(a.killedAt).getTime() - this.parseDate(b.killedAt).getTime());
+                const currentWorldGaps: number[] = [];
                 for (let i = 1; i < sorted.length; i++) {
                     const days = differenceInDays(this.parseDate(sorted[i].killedAt), this.parseDate(sorted[i - 1].killedAt));
                     // Filter obvious outliers (e.g. 1 day double kills)
-                    if (days > 1) allIntervals.push(days);
+                    if (days > 1) {
+                        allIntervals.push(days);
+                        currentWorldGaps.push(days);
+                    }
+                }
+                if (currentWorldGaps.length > 0) {
+                    worldGaps[w] = currentWorldGaps;
                 }
             });
 
@@ -84,7 +110,14 @@ export class SpawnPredictor {
             const variance = allIntervals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / allIntervals.length;
             const stdDev = Math.sqrt(variance);
 
-            stats.set(bossName, { avgInterval: mean, stdDev, sampleSize: allIntervals.length });
+            stats.set(bossName, {
+                avgInterval: mean,
+                stdDev,
+                sampleSize: allIntervals.length,
+                rawGaps: allIntervals,
+                filteredGaps: allIntervals, // For now, we are using all valid gaps as "filtered"
+                worldGaps
+            });
         });
 
         return stats;
@@ -208,7 +241,11 @@ export class SpawnPredictor {
                 avgGap: Math.round(avgInterval),
                 stdDev: stdDev,
                 sampleSize: stats.sampleSize,
-                confidence: Math.round(confidence * 100)
+                confidence: Math.round(confidence * 100),
+                // Compatibility for Drawer charts
+                rawGaps: stats.rawGaps,
+                filteredGaps: stats.filteredGaps,
+                worldGaps: stats.worldGaps
             }
         };
     }
@@ -268,7 +305,8 @@ export class SpawnPredictor {
             relativeLabel: 'Dados insuficientes',
             isLowConfidence: true,
             stats: {
-                minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0
+                minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0,
+                rawGaps: [], filteredGaps: [], worldGaps: {}
             }
         };
     }
