@@ -7,6 +7,7 @@ import { useData } from '@/context/DataContext';
 import BossMap from './BossMap';
 import { getBossExtraInfo } from '@/utils/bossExtraData';
 import { getAdjustedKillCount, isSoulpitBoss } from '@/utils/soulpitUtils';
+import { formatNumber } from '@/utils/formatNumber';
 
 interface BossDetailsDrawerProps {
     boss: Boss | CombinedBoss;
@@ -446,7 +447,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                 <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                         <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Total de Mortes</div>
-                                        <div className="text-2xl font-bold text-white">{adjustedTotalKills}</div>
+                                        <div className="text-2xl font-bold text-white">{formatNumber(adjustedTotalKills)}</div>
                                     </div>
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                         <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Frequência</div>
@@ -646,7 +647,7 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                                                         <span className="font-medium text-white">{stat.world}</span>
                                                                     </div>
                                                                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 font-medium">
-                                                                        {getAdjustedKillCount(boss.name, stat.kills)} mortes
+                                                                        {formatNumber(getAdjustedKillCount(boss.name, stat.kills))} mortes
                                                                     </span>
                                                                 </button>
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
 import { getBossImage } from '@/utils/bossImages';
+import { formatNumber } from '@/utils/formatNumber';
 import {
   Clock,
   Calendar,
@@ -134,10 +135,11 @@ export default function BossCard({
   const showKilledToday = isKilledToday && todayKills > 0;
 
   // Status-based image filter
-  // COOLDOWN = grayscale, WINDOW_OPEN = normal, OVERDUE = red tint
+  // COOLDOWN = grayscale, WINDOW_OPEN = normal, OVERDUE = red tint, 0 kills = grayscale
   const getImageFilter = () => {
     if (status === 'COOLDOWN') return 'grayscale';
     if (status === 'OVERDUE') return 'sepia saturate-200 hue-rotate-[-50deg]'; // Red tint
+    if (isZeroKills) return 'grayscale';
     return ''; // WINDOW_OPEN or no status = normal
   };
   const imageFilter = getImageFilter();
@@ -485,10 +487,10 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary min-w-[80px] justify-end">
                   <Trophy size={12} className="text-secondary/70" />
                   <span>
-                    <span className="text-secondary font-medium">{totalKills} mortes</span>
+                    <span className="text-secondary font-medium">{formatNumber(totalKills)} mortes</span>
                     {dailyKill && todayKills > 0 && (
                       <span className="text-emerald-400 ml-1">
-                        ({todayKills})
+                        ({formatNumber(todayKills)})
                       </span>
                     )}
                   </span>
@@ -683,10 +685,10 @@ export default function BossCard({
                 <div className="flex items-center gap-1.5 text-xs text-secondary whitespace-nowrap">
                   <Trophy size={12} className="text-secondary/70 shrink-0" />
                   <span>
-                    <span className="text-secondary font-medium">{totalKills} mortes</span>
+                    <span className="text-secondary font-medium">{formatNumber(totalKills)} mortes</span>
                     {dailyKill && todayKills > 0 && (
                       <span className="text-emerald-400 ml-1">
-                        ({todayKills} hoje)
+                        ({formatNumber(todayKills)} hoje)
                       </span>
                     )}
                   </span>

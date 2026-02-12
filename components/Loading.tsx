@@ -16,7 +16,7 @@ export default function Loading() {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center justify-center min-h-screen">
             {randomBoss && (
                 <div className="relative w-24 h-24 mb-4">
                     <Image

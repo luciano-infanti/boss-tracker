@@ -5,12 +5,11 @@ import { useData } from '@/context/DataContext';
 import { useWorld } from '@/context/WorldContext';
 import { useBossPredictions } from '@/hooks/useBossPredictions';
 import { Prediction } from '@/utils/spawnLogic';
-import UpcomingBossCalendar from '@/components/UpcomingBossCalendar';
 import BossTimeline from '@/components/BossTimeline';
 import BossCard from '@/components/BossCard';
 import PredictionBossDrawer from '@/components/PredictionBossDrawer';
 import { Boss } from '@/types';
-import { Calendar as CalendarIcon, List as ListIcon } from 'lucide-react';
+import { List as ListIcon } from 'lucide-react';
 import Loading from '@/components/Loading';
 
 import { getWorldIcon } from '@/utils/worldIcons';
@@ -18,7 +17,6 @@ import { getWorldIcon } from '@/utils/worldIcons';
 export default function UpcomingPage() {
     const { data, isLoading } = useData();
     const { selectedWorld, worlds } = useWorld();
-    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
     const [selectedPrediction, setSelectedPrediction] = useState<any | null>(null);
     const [localWorld, setLocalWorld] = useState<string>(selectedWorld || 'Auroria');
 
@@ -27,7 +25,7 @@ export default function UpcomingPage() {
         setLocalWorld(selectedWorld || 'Auroria');
     }, [selectedWorld]);
 
-    const predictions = useBossPredictions(data.killDates, localWorld);
+    const { predictions } = useBossPredictions(data.killDates, localWorld);
 
 
 
@@ -97,24 +95,6 @@ export default function UpcomingPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h1 className="text-2xl font-bold text-white">Previsões 🔮</h1>
-
-                    {/* View Toggle */}
-                    <div className="flex items-center bg-surface border border-border rounded-lg p-1">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary/20 text-primary' : 'text-secondary hover:text-white'
-                                }`}
-                        >
-                            <ListIcon size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('calendar')}
-                            className={`p-2 rounded-md transition-colors ${viewMode === 'calendar' ? 'bg-primary/20 text-primary' : 'text-secondary hover:text-white'
-                                }`}
-                        >
-                            <CalendarIcon size={18} />
-                        </button>
-                    </div>
                 </div>
 
                 {/* World Pill Buttons */}
@@ -147,97 +127,93 @@ export default function UpcomingPage() {
                 </div>
             ) : (
                 <>
-                    {viewMode === 'calendar' ? (
-                        <UpcomingBossCalendar predictions={predictions} worldName={selectedWorld} />
-                    ) : (
-                        <div className="space-y-8">
-                            {Object.entries(groupedPredictions).map(([group, preds]) => {
-                                if (preds.length === 0) return null;
+                    <div className="space-y-8">
+                        {Object.entries(groupedPredictions).map(([group, preds]) => {
+                            if (preds.length === 0) return null;
 
-                                const groupTitle = {
-                                    'Window Open': 'Janela Aberta',
-                                    'Overdue': 'Atrasados',
-                                    'Tomorrow': 'Amanhã',
-                                    'Next 7 Days': 'Próximos 7 Dias',
-                                    'Later': 'Mais Tarde'
-                                }[group] || group;
+                            const groupTitle = {
+                                'Window Open': 'Janela Aberta',
+                                'Overdue': 'Atrasados',
+                                'Tomorrow': 'Amanhã',
+                                'Next 7 Days': 'Próximos 7 Dias',
+                                'Later': 'Mais Tarde'
+                            }[group] || group;
 
-                                const isWindowOpen = group === 'Window Open';
-                                const isOverdue = group === 'Overdue';
+                            const isWindowOpen = group === 'Window Open';
+                            const isOverdue = group === 'Overdue';
 
-                                return (
-                                    <div key={group} className="space-y-4">
-                                        <div className="flex flex-col gap-1">
-                                            <h2 className={`text-lg font-semibold flex items-center gap-2 ${isWindowOpen ? 'text-emerald-400' :
-                                                isOverdue ? 'text-red-400' : 'text-secondary'
-                                                }`}>
-                                                {isWindowOpen && <span className="relative flex h-3 w-3">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                                                </span>}
-                                                {groupTitle}
-                                                <span className="text-xs font-normal text-secondary bg-surface-hover px-2 py-0.5 rounded-full">
-                                                    {preds.length}
-                                                </span>
-                                            </h2>
-                                            {isWindowOpen && (
-                                                <p className="text-xs text-secondary/70">Janela de spawn aberta. Verificar agora!</p>
-                                            )}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                            {preds.map((pred, idx) => {
-                                                // Format window dates as DD/MM — DD/MM
-                                                const openDate = pred.nextMinSpawn;
-                                                const closeDate = pred.nextMaxSpawn;
-                                                const openStr = `${openDate.getDate().toString().padStart(2, '0')}/${(openDate.getMonth() + 1).toString().padStart(2, '0')}`;
-                                                const closeStr = `${closeDate.getDate().toString().padStart(2, '0')}/${(closeDate.getMonth() + 1).toString().padStart(2, '0')}`;
-                                                const windowStr = `${openStr} — ${closeStr}`;
-
-                                                const bossData: any = {
-                                                    name: pred.bossName,
-                                                    totalDaysSpawned: 0,
-                                                    totalKills: 0,
-                                                    spawnFrequency: `${pred.stats?.avgGap || '?'} dias`,
-                                                    nextExpectedSpawn: windowStr,
-                                                    lastKillDate: 'Ver Detalhes',
-                                                    history: '',
-                                                    confidence: pred.confidence,
-                                                    confidenceLabel: pred.confidenceLabel
-                                                };
-
-                                                return (
-                                                    <div key={`${pred.bossName}-${pred.world}-${idx}`} className="relative">
-                                                        <BossCard
-                                                            boss={bossData}
-                                                            type="world"
-                                                            status={pred.status}
-                                                            isKilledToday={false}
-                                                            isNew={false}
-                                                            showNextSpawn={true}
-                                                            hideStats={true}
-                                                            showLastKill={false}
-                                                            hideConfidence={true}
-                                                            onClick={() => setSelectedPrediction(pred)}
-                                                        >
-                                                            <div className="w-full mt-2">
-                                                                <BossTimeline
-                                                                    minGap={pred.stats?.minGap || 1}
-                                                                    maxGap={pred.stats?.maxGap || 1}
-                                                                    daysSince={pred.daysSinceKill}
-                                                                    status={pred.status}
-                                                                />
-                                                            </div>
-                                                        </BossCard>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                            return (
+                                <div key={group} className="space-y-4">
+                                    <div className="flex flex-col gap-1">
+                                        <h2 className={`text-lg font-semibold flex items-center gap-2 ${isWindowOpen ? 'text-emerald-400' :
+                                            isOverdue ? 'text-red-400' : 'text-secondary'
+                                            }`}>
+                                            {isWindowOpen && <span className="relative flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                            </span>}
+                                            {groupTitle}
+                                            <span className="text-xs font-normal text-secondary bg-surface-hover px-2 py-0.5 rounded-full">
+                                                {preds.length}
+                                            </span>
+                                        </h2>
+                                        {isWindowOpen && (
+                                            <p className="text-xs text-secondary/70">Janela de spawn aberta. Verificar agora!</p>
+                                        )}
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {preds.map((pred, idx) => {
+                                            // Format window dates as DD/MM — DD/MM
+                                            const openDate = pred.nextMinSpawn;
+                                            const closeDate = pred.nextMaxSpawn;
+                                            const openStr = `${openDate.getDate().toString().padStart(2, '0')}/${(openDate.getMonth() + 1).toString().padStart(2, '0')}`;
+                                            const closeStr = `${closeDate.getDate().toString().padStart(2, '0')}/${(closeDate.getMonth() + 1).toString().padStart(2, '0')}`;
+                                            const windowStr = `${openStr} — ${closeStr}`;
+
+                                            const bossData: any = {
+                                                name: pred.bossName,
+                                                totalDaysSpawned: 0,
+                                                totalKills: 0,
+                                                spawnFrequency: `${pred.stats?.avgGap || '?'} dias`,
+                                                nextExpectedSpawn: windowStr,
+                                                lastKillDate: 'Ver Detalhes',
+                                                history: '',
+                                                confidence: pred.confidence,
+                                                confidenceLabel: pred.confidenceLabel
+                                            };
+
+                                            return (
+                                                <div key={`${pred.bossName}-${pred.world}-${idx}`} className="relative">
+                                                    <BossCard
+                                                        boss={bossData}
+                                                        type="world"
+                                                        status={pred.status}
+                                                        isKilledToday={false}
+                                                        isNew={false}
+                                                        showNextSpawn={true}
+                                                        hideStats={true}
+                                                        showLastKill={false}
+                                                        hideConfidence={true}
+                                                        onClick={() => setSelectedPrediction(pred)}
+                                                    >
+                                                        <div className="w-full mt-2">
+                                                            <BossTimeline
+                                                                minGap={pred.stats?.minGap || 1}
+                                                                maxGap={pred.stats?.maxGap || 1}
+                                                                daysSince={pred.daysSinceKill}
+                                                                status={pred.status}
+                                                            />
+                                                        </div>
+                                                    </BossCard>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </>
             )}
 

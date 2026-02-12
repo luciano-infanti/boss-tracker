@@ -1,8 +1,33 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { SpawnPredictor, KillRecord, Prediction } from '@/utils/spawnLogic';
 import { BossKillHistory } from '@/types';
+import {
+    recordPredictionAccuracy as recordAccuracy,
+    getAccuracyStats,
+    AccuracyStats
+} from '@/utils/accuracyTracking';
+import {
+    getSpawnPatternData,
+    SpawnPatternData
+} from '@/utils/spawnVisualization';
 
-export function useBossPredictions(killDates: BossKillHistory[] | undefined, selectedWorld: string) {
+export interface UseBossPredictionsResult {
+    predictions: Prediction[];
+    accuracyStats: AccuracyStats;
+    getSpawnPatternData: (bossName: string, world: string | null) => SpawnPatternData;
+    recordPredictionAccuracy: (
+        bossName: string,
+        world: string,
+        actualKillDate: Date,
+        predictedStatus: string,
+        predictedWindow: { min: Date; max: Date }
+    ) => void;
+}
+
+export function useBossPredictions(
+    killDates: BossKillHistory[] | undefined,
+    selectedWorld: string
+): UseBossPredictionsResult {
     // Bosses to exclude from predictions
     const PREDICTION_BLACKLIST = [
         'Frostbell', 'Frostreaper',
@@ -12,17 +37,18 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
         'Midnight Panther', 'Feroxa', 'Dreadful Disruptor'
     ];
 
-    const predictor = useMemo(() => {
-        if (!killDates) return null;
+    // Build predictor and all kills array
+    const { predictor, allKills } = useMemo(() => {
+        if (!killDates) return { predictor: null, allKills: [] };
 
         // Transform BossKillHistory to KillRecord[]
-        const allKills: KillRecord[] = [];
+        const kills: KillRecord[] = [];
         killDates.forEach(boss => {
             if (PREDICTION_BLACKLIST.includes(boss.bossName)) return;
 
             Object.entries(boss.killsByWorld).forEach(([world, entries]) => {
                 entries.forEach(entry => {
-                    allKills.push({
+                    kills.push({
                         bossName: boss.bossName,
                         world: world,
                         killedAt: entry.date
@@ -31,7 +57,7 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
             });
         });
 
-        return new SpawnPredictor(allKills);
+        return { predictor: new SpawnPredictor(kills), allKills: kills };
     }, [killDates]);
 
     const predictions = useMemo(() => {
@@ -68,37 +94,78 @@ export function useBossPredictions(killDates: BossKillHistory[] | undefined, sel
             });
         });
 
-        // Sort results
-        // 1. WINDOW_OPEN first (actively huntable)
-        // 2. COOLDOWN by urgency (opening soon first)
-        // 3. OVERDUE at bottom
+        // --- ENHANCED SORTING ---
+        // Priority order:
+        // 1. WINDOW_OPEN (actively huntable)
+        // 2. OVERDUE with isLateBuffer: true (POSSIBLE_LATE - keep checking!)
+        // 3. COOLDOWN (opening soon)
+        // 4. OVERDUE without isLateBuffer (long overdue)
 
         return results.sort((a, b) => {
-            const getPriority = (status: string) => {
-                if (status === 'WINDOW_OPEN') return 3;
-                if (status === 'COOLDOWN') return 2;
-                if (status === 'OVERDUE') return 1;
+            const getPriority = (pred: Prediction) => {
+                if (pred.status === 'WINDOW_OPEN') return 4;
+                if (pred.status === 'OVERDUE' && pred.isLateBuffer) return 3;
+                if (pred.status === 'COOLDOWN') return 2;
+                if (pred.status === 'OVERDUE') return 1;
                 return 0;
             };
 
-            const pA = getPriority(a.status);
-            const pB = getPriority(b.status);
+            const pA = getPriority(a);
+            const pB = getPriority(b);
 
             if (pA !== pB) return pB - pA;
 
+            // Within same priority, use secondary sorting
             if (a.status === 'WINDOW_OPEN') {
-                return b.windowProgress - a.windowProgress; // Higher progress first
+                // Higher window progress first (closer to closing)
+                return b.windowProgress - a.windowProgress;
+            }
+            if (a.status === 'OVERDUE' && a.isLateBuffer) {
+                // Sort by confidence * urgency (higher confidence first)
+                const scoreA = a.confidence * (1 / (a.daysSinceKill + 1));
+                const scoreB = b.confidence * (1 / (b.daysSinceKill + 1));
+                return scoreB - scoreA;
             }
             if (a.status === 'COOLDOWN') {
-                return a.nextMinSpawn.getTime() - b.nextMinSpawn.getTime(); // Opening sooner first
+                // Opening sooner first
+                return a.nextMinSpawn.getTime() - b.nextMinSpawn.getTime();
             }
             if (a.status === 'OVERDUE') {
-                return a.daysSinceKill - b.daysSinceKill;
+                // Days since kill (more overdue first)
+                return b.daysSinceKill - a.daysSinceKill;
             }
             return 0;
         });
 
     }, [predictor, killDates, selectedWorld]);
 
-    return predictions;
+    // --- ACCURACY TRACKING ---
+    const accuracyStats = useMemo(() => {
+        return getAccuracyStats();
+    }, []);
+
+    const recordPredictionAccuracyCallback = useCallback((
+        bossName: string,
+        world: string,
+        actualKillDate: Date,
+        predictedStatus: string,
+        predictedWindow: { min: Date; max: Date }
+    ) => {
+        recordAccuracy(bossName, world, actualKillDate, predictedStatus, predictedWindow);
+    }, []);
+
+    // --- VISUALIZATION HELPERS ---
+    const getSpawnPatternDataCallback = useCallback((
+        bossName: string,
+        world: string | null
+    ): SpawnPatternData => {
+        return getSpawnPatternData(bossName, world, allKills);
+    }, [allKills]);
+
+    return {
+        predictions,
+        accuracyStats,
+        getSpawnPatternData: getSpawnPatternDataCallback,
+        recordPredictionAccuracy: recordPredictionAccuracyCallback
+    };
 }

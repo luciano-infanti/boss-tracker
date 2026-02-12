@@ -2,7 +2,7 @@
 
 import { Search, X, LayoutGrid, List } from 'lucide-react';
 
-import { BossCategory, BOSS_CATEGORY_ICONS } from '@/utils/bossCategories';
+import { BossCategory, BOSS_CATEGORY_ICONS, ALL_FILTER_CATEGORIES } from '@/utils/bossCategories';
 import FilterPill from './FilterPill';
 
 interface SearchBarProps {
@@ -30,10 +30,11 @@ export default function SearchBar({
   showKilledTodayFilter = false,
   showMostKills = true,
   showNeverKilled = true,
+  compact = false,
   counts,
-}: SearchBarProps & { showMostKills?: boolean; showNeverKilled?: boolean }) {
+}: SearchBarProps & { showMostKills?: boolean; showNeverKilled?: boolean; compact?: boolean }) {
 
-  const categories: BossCategory[] = ['Archdemons', 'POI', 'Criaturas'];
+  const categories = ALL_FILTER_CATEGORIES;
 
   const handleSortClick = (sort: string) => {
     if (sortBy === sort) {
@@ -55,7 +56,7 @@ export default function SearchBar({
 
   return (
     <div className="flex flex-col xl:flex-row gap-4 mb-6 xl:items-center">
-      <div className="relative group w-full xl:w-[300px] shrink-0">
+      <div className={`relative group w-full ${compact ? 'xl:w-[260px]' : 'xl:w-[300px]'} shrink-0`}>
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-white transition-colors" size={20} />
         <input
           type="text"

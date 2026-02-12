@@ -1,109 +1,35 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Info, Calendar, TrendingUp, Home, BarChart3 } from 'lucide-react';
-import { ProductSwitcher } from './ProductSwitcher';
-
-import { WORLDS } from '@/utils/constants';
-import { getWorldIcon } from '@/utils/worldIcons';
+import { Menu } from 'lucide-react';
 
 export default function Header() {
     const pathname = usePathname();
 
-    const isActive = (path: string) => pathname === path;
-    const isWorldActive = (world: string) => pathname === `/world/${world}`;
+    const toggleSidebar = () => {
+        window.dispatchEvent(new Event('toggle-sidebar'));
+    };
 
     return (
-        <header className="bg-surface border-b border-border sticky top-0 z-50">
-            {/* Main Navigation Row */}
-            <div className="border-b border-border/50">
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    {/* Left: Product Switcher & Nav */}
-                    <div className="flex items-center gap-6">
-                        {/* Product Switcher */}
-                        <ProductSwitcher />
+        <header className="md:hidden bg-surface border-b border-border sticky top-0 z-50">
+            <div className="max-w-full mx-auto px-4 h-14 flex items-center">
+                {/* Mobile hamburger */}
+                <button
+                    onClick={toggleSidebar}
+                    className="p-1.5 text-secondary hover:text-white transition-colors"
+                    aria-label="Toggle menu"
+                >
+                    <Menu size={20} />
+                </button>
 
-                        {/* Navigation */}
-                        <nav className="hidden md:flex items-center gap-1">
-                            <Link
-                                href="/"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/')
-                                    ? 'bg-purple-500/10 text-purple-400'
-                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                                    }`}
-                            >
-                                <Home size={14} />
-                                Home
-                            </Link>
-                            <Link
-                                href="/stats"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/stats')
-                                    ? 'bg-purple-500/10 text-purple-400'
-                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                                    }`}
-                            >
-                                <BarChart3 size={14} />
-                                Estatísticas
-                            </Link>
-                            <Link
-                                href="/previsoes"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/previsoes')
-                                    ? 'bg-purple-500/10 text-purple-400'
-                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                                    }`}
-                            >
-                                <TrendingUp size={14} />
-                                Previsões
-                            </Link>
-                            <Link
-                                href="/most-wanted"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/most-wanted')
-                                    ? 'bg-purple-500/10 text-purple-400'
-                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                                    }`}
-                            >
-                                <Calendar size={14} />
-                                Procurados
-                            </Link>
-                            <Link
-                                href="/about"
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${isActive('/about')
-                                    ? 'bg-purple-500/10 text-purple-400'
-                                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
-                                    }`}
-                            >
-                                <Info size={14} />
-                                Sobre
-                            </Link>
-                        </nav>
-                    </div>
-
-                </div>
-            </div>
-
-            {/* World Navigation Row */}
-            <div className="bg-surface-hover/30">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-hide">
-                        {WORLDS.map((world) => (
-                            <Link
-                                key={world}
-                                href={`/world/${world}`}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${isWorldActive(world)
-                                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                                    : 'text-secondary hover:text-white hover:bg-surface-hover border border-transparent'
-                                    }`}
-                            >
-                                <img
-                                    src={getWorldIcon(world)}
-                                    alt={world}
-                                    className="w-4 h-4"
-                                />
-                                <span>{world}</span>
-                            </Link>
-                        ))}
-                    </div>
+                {/* Minimal branding for mobile */}
+                <div className="flex items-center gap-2 ml-2">
+                    <img
+                        src="/rubinot-logo.png"
+                        alt="RubinOT"
+                        className="h-7 w-auto rounded-full"
+                    />
+                    <span className="text-sm font-semibold text-white/80">Boss Tracker</span>
                 </div>
             </div>
         </header>

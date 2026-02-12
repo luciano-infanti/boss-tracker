@@ -5,8 +5,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
 import { getAdjustedKillCount } from '@/utils/soulpitUtils';
-import { BossCategory, BOSS_CATEGORY_ICONS, getBossCategory } from '@/utils/bossCategories';
+import { BossCategory, BOSS_CATEGORY_ICONS, getBossCategory, ALL_FILTER_CATEGORIES, isHiddenByDefault } from '@/utils/bossCategories';
 import FilterPill from './FilterPill';
+import { formatNumber } from '@/utils/formatNumber';
 
 interface CalendarDay {
     date: Date;
@@ -23,7 +24,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const categories: BossCategory[] = ['Archdemons', 'POI', 'Criaturas'];
+    const categories = ALL_FILTER_CATEGORIES;
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {
@@ -61,6 +62,8 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                 if (selectedCategories.length > 0) {
                     const category = getBossCategory(bossHistory.bossName);
                     if (!selectedCategories.includes(category)) return;
+                } else if (isHiddenByDefault(bossHistory.bossName)) {
+                    return;
                 }
 
                 bossHistory.chronologicalHistory.forEach(kill => {
@@ -105,6 +108,8 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                     if (selectedCategories.length > 0) {
                         const category = getBossCategory(boss.name);
                         if (!selectedCategories.includes(category)) return;
+                    } else if (isHiddenByDefault(boss.name)) {
+                        return;
                     }
 
                     if (!boss.history || boss.history === 'None') return;
@@ -165,6 +170,8 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                     if (selectedCategories.length > 0) {
                         const category = getBossCategory(kill.bossName);
                         if (!selectedCategories.includes(category)) return;
+                    } else if (isHiddenByDefault(kill.bossName)) {
+                        return;
                     }
 
                     kill.worlds.forEach(w => {
@@ -311,7 +318,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px]">
                                                         <div className="bg-surface-hover text-xs text-white px-2 py-1 rounded shadow-xl border border-border">
                                                             <div className="font-medium text-white">
-                                                                {bossName} {info.count > 1 ? `(${info.count} mortes)` : ''}
+                                                                {bossName} {info.count > 1 ? `(${formatNumber(info.count)} mortes)` : ''}
                                                             </div>
                                                         </div>
                                                         {/* Arrow */}

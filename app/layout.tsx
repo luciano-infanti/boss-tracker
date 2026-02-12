@@ -6,6 +6,7 @@ import { DataProvider } from '@/context/DataContext';
 import { WorldProvider } from '@/context/WorldContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import WorldSidebar from '@/components/WorldSidebar';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -61,15 +62,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {/* Top Navigation */}
               <Header />
 
-              {/* Main Content Area - Centered */}
-              <main className="flex-1 overflow-y-auto bg-transparent relative">
+              {/* Fixed Sidebar (renders its own fixed positioning) */}
+              <WorldSidebar />
+
+              {/* Main Content Area — offset by sidebar width on desktop */}
+              <main className="flex-1 overflow-y-auto bg-transparent relative md:ml-[260px]">
                 <div className="max-w-7xl mx-auto px-4 py-8 md:px-8 md:py-12">
                   {children}
                 </div>
-              </main>
 
-              {/* Footer */}
-              <Footer />
+                {/* Footer */}
+                <Footer />
+              </main>
             </div>
           </WorldProvider>
         </DataProvider>

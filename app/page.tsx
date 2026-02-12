@@ -4,6 +4,7 @@
 
 import { useData } from '@/context/DataContext';
 import { getBossImage } from '@/utils/bossImages';
+import { formatNumber } from '@/utils/formatNumber';
 import { Trophy, Server, Calendar } from 'lucide-react';
 import BossCard from '@/components/BossCard';
 import Loading from '@/components/Loading';
@@ -12,7 +13,7 @@ import PageTransition from '@/components/PageTransition';
 import { getAdjustedKillCount } from '@/utils/soulpitUtils';
 import { useState, useMemo } from 'react';
 import SearchBar from '@/components/SearchBar';
-import { getBossCategory } from '@/utils/bossCategories';
+import { getBossCategory, isHiddenByDefault } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -69,6 +70,8 @@ export default function HomePage() {
                 if (!selectedCategories.includes(category)) {
                     return false;
                 }
+            } else if (isHiddenByDefault(kill.bossName)) {
+                return false;
             }
 
             // 3. Soulpit Filter
@@ -114,7 +117,7 @@ export default function HomePage() {
                                 <Trophy className="text-yellow-400/80" size={18} />
                                 <p className="text-secondary text-xs font-medium uppercase tracking-wide">Total de Mortes</p>
                             </div>
-                            <p className="text-3xl font-semibold text-white">{daily.totalKills}</p>
+                            <p className="text-3xl font-semibold text-white">{formatNumber(daily.totalKills)}</p>
                         </div>
 
                         <div className="bg-surface border border-border rounded-lg p-6">
@@ -122,7 +125,7 @@ export default function HomePage() {
                                 <Server className="text-emerald-400" size={18} />
                                 <p className="text-secondary text-xs font-medium uppercase tracking-wide">Bosses Únicos</p>
                             </div>
-                            <p className="text-3xl font-semibold text-white">{daily.uniqueBosses}</p>
+                            <p className="text-3xl font-semibold text-white">{formatNumber(daily.uniqueBosses)}</p>
                         </div>
 
                         <div className="bg-surface border border-border rounded-lg p-6">
@@ -152,7 +155,7 @@ export default function HomePage() {
                                 </p>
                                 {mostActiveServer && (
                                     <span className="text-xs text-emerald-400">
-                                        {mostActiveServer.count} mortes
+                                        {formatNumber(mostActiveServer.count)} mortes
                                     </span>
                                 )}
                             </div>

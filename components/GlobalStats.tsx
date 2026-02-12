@@ -5,6 +5,7 @@ import { Trophy, Calendar, Server } from 'lucide-react';
 import { CombinedBoss } from '@/types';
 import { getBossCategory } from '@/utils/bossCategories';
 import { calculateAdjustedTotalKills } from '@/utils/soulpitUtils';
+import { formatNumber } from '@/utils/formatNumber';
 import CategoryDropdown from './CategoryDropdown';
 
 import { getWorldIcon } from '@/utils/worldIcons';
@@ -87,7 +88,7 @@ export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
                   <span className="text-secondary font-medium w-4 text-xs text-right">{index + 1}</span>
                   <span className="text-gray-200 text-sm truncate max-w-[140px]">{boss.name}</span>
                 </div>
-                <span className="text-secondary text-xs font-medium group-hover:text-white transition-colors">{boss.adjustedKills} mortes</span>
+                <span className="text-secondary text-xs font-medium group-hover:text-white transition-colors">{formatNumber(boss.adjustedKills)} mortes</span>
               </div>
             ))}
             {topKilledBosses.length === 0 && (
@@ -123,7 +124,7 @@ export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
                   <span className="text-secondary font-medium w-4 text-xs text-right">{index + 1}</span>
                   <span className="text-gray-200 text-sm capitalize">{server.name}</span>
                 </div>
-                <span className="text-secondary text-xs font-medium group-hover:text-white transition-colors">{server.kills} mortes</span>
+                <span className="text-secondary text-xs font-medium group-hover:text-white transition-colors">{formatNumber(server.kills)} mortes</span>
               </div>
             ))}
             {serverStats.length === 0 && (
@@ -148,11 +149,11 @@ export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
           <div className="grid grid-cols-1 gap-6">
             <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
               <p className="text-secondary text-xs mb-1">Total de Bosses Rastreados</p>
-              <p className="text-2xl font-semibold text-white">{totalBossesTracked}</p>
+              <p className="text-2xl font-semibold text-white">{formatNumber(totalBossesTracked)}</p>
             </div>
             <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
               <p className="text-secondary text-xs mb-1">Total de Mortes (Todos Mundos)</p>
-              <p className="text-2xl font-semibold text-emerald-400">{totalGlobalKills}</p>
+              <p className="text-2xl font-semibold text-emerald-400">{formatNumber(totalGlobalKills)}</p>
             </div>
             {serverStats.length > 0 && (
               <div className="p-4 bg-surface-hover/30 rounded-lg border border-border/50">
@@ -166,7 +167,7 @@ export default function GlobalStats({ bosses, worlds }: GlobalStatsProps) {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <p className="text-2xl font-semibold text-white capitalize">{serverStats[0].name}</p>
-                  <span className="text-xs text-emerald-400">{serverStats[0].kills} mortes</span>
+                  <span className="text-xs text-emerald-400">{formatNumber(serverStats[0].kills)} mortes</span>
                 </div>
               </div>
             )}

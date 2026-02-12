@@ -1,28 +1,20 @@
--- Migration to add 'Serenian' to any server lists
--- Note: The application seems to handle servers primarily via application code (WORLDS constant)
--- and through data insertion (bosses table 'stats' jsonb, or character 'world' column).
--- Supabase usually doesn't strictly enforce an enum unless we made one.
--- Based on the API code, 'world' is just a string in 'kill_history' and 'characters'.
--- However, we can add a comment or check if we need to insert a dummy record to initialize it.
--- But usually just adding it to the UI is enough if no foreign key constraints exist.
-
--- Checking if there is a 'worlds' table.
--- API route code shows:
--- const { data: bossesData } = await supabase.from('bosses').select('*');
--- const { data: charactersData } = await supabase.from('characters').select('*');
--- const { data: charHistoryData } = await supabase.from('character_history').select('*');
--- const { data: batch } = await supabase.from('kill_history').select('*');
--- There is no 'worlds' table fetch in the GET route.
--- So adding it to the code is likely sufficient for it to 'exist' as an option.
--- But if we want to add any seed data or ensure consistent enumeration:
-
-BEGIN;
-  -- If we had a worlds table, we would insert here.
-  -- INSERT INTO worlds (name, type) VALUES ('Serenian', 'Optional PVP') ON CONFLICT DO NOTHING;
-
-  -- Since we don't see a explicit worlds table causing constraint errors, 
-  -- this migration is mostly documentation or for future distinct lists.
-  -- We can update any 'metadata' if it exists.
-  
-  COMMIT;
-END;
+-- Migration: Add Serenian II, III, IV worlds
+-- The application handles worlds primarily via the WORLDS constant in utils/constants.ts
+-- and through data file parsing. There is no explicit 'worlds' table with constraints.
+-- World names are stored as plain strings in kill_history, characters, etc.
+--
+-- This migration is documentation for the new worlds added:
+--   - Serenian II  (Optional PVP, select value: 23)
+--   - Serenian III (Optional PVP, select value: 24)
+--   - Serenian IV  (Optional PVP, select value: 25)
+--
+-- All Serenian variants use the same PvP type icon (optional-pvp.gif).
+-- No database schema changes are required — the new worlds are recognized
+-- by adding them to the WORLDS array in utils/constants.ts.
+--
+-- If a 'worlds' table is created in the future, run:
+-- INSERT INTO worlds (name, type) VALUES
+--   ('Serenian II', 'Optional PVP'),
+--   ('Serenian III', 'Optional PVP'),
+--   ('Serenian IV', 'Optional PVP')
+-- ON CONFLICT DO NOTHING;

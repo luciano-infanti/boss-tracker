@@ -3,6 +3,14 @@
  * Inter-Arrival Time (IAT) analysis with Cycle + Multiples logic.
  */
 import { differenceInDays, addDays, isAfter, isBefore, subDays } from "date-fns";
+import {
+    getMinimumInterval,
+    hasKnownPattern,
+    getKnownPattern,
+    LATE_BUFFER_DAYS,
+    DATA_QUALITY_THRESHOLDS,
+    WEIGHT_DECAY
+} from "./bossSpawnConstants";
 
 // --- Types ---
 
@@ -27,6 +35,11 @@ export interface Prediction {
         cyclesSkipped: number; // How many "ghost" windows we skipped
         margin: number; // The +/- days calculated
     };
+
+    // --- Enhanced Confidence Metrics ---
+    dataQuality: 'HIGH' | 'MEDIUM' | 'LOW';
+    sampleSize: number;
+    isLateBuffer?: boolean;  // True if in POSSIBLE_LATE state (1-3 days past max)
 
     // --- Compatibility Fields for UI ---
     probabilityLabel: string;
@@ -53,11 +66,13 @@ export class SpawnPredictor {
     // UPDATED: Store detailed stats in memory so we can return them for charts
     private globalStats: Map<string, {
         avgInterval: number;
+        weightedAvgInterval: number;
         stdDev: number;
         sampleSize: number;
         rawGaps: number[];
         filteredGaps: number[];
         worldGaps: Record<string, number[]>;
+        dataQuality: 'HIGH' | 'MEDIUM' | 'LOW';
     }>;
 
     constructor(allKills: KillRecord[]) {
@@ -66,21 +81,25 @@ export class SpawnPredictor {
 
     /**
      * 1. Aggregates ALL worlds data to find the "True Interval" for the boss.
+     *    Now with sanitization, weighted averages, and world activity weighting.
      */
     private calculateGlobalStats(kills: KillRecord[]) {
         const stats = new Map<string, {
             avgInterval: number;
+            weightedAvgInterval: number;
             stdDev: number;
             sampleSize: number;
             rawGaps: number[];
             filteredGaps: number[];
             worldGaps: Record<string, number[]>;
+            dataQuality: 'HIGH' | 'MEDIUM' | 'LOW';
         }>();
         const killsByBoss = this.groupByBoss(kills);
 
         killsByBoss.forEach((bossKills, bossName) => {
             // Sort all kills purely by date, ignoring world (to find global rhythm)
             const allIntervals: number[] = [];
+            const allKillsWithDates: { interval: number; date: Date }[] = [];
             const killsByWorld = this.groupByWorld(bossKills);
             const worldGaps: Record<string, number[]> = {};
 
@@ -92,6 +111,7 @@ export class SpawnPredictor {
                     // Filter obvious outliers (e.g. 1 day double kills)
                     if (days > 1) {
                         allIntervals.push(days);
+                        allKillsWithDates.push({ interval: days, date: this.parseDate(sorted[i].killedAt) });
                         currentWorldGaps.push(days);
                     }
                 }
@@ -102,21 +122,32 @@ export class SpawnPredictor {
 
             if (allIntervals.length === 0) return;
 
-            // Calculate Mean (Global Average)
-            const sum = allIntervals.reduce((a, b) => a + b, 0);
-            const mean = sum / allIntervals.length;
+            // --- STEP 1: Sanitize Intervals ---
+            const filteredGaps = this.sanitizeIntervals(allIntervals, bossName);
 
-            // Calculate StdDev to determine "Stability"
-            const variance = allIntervals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / allIntervals.length;
+            // --- STEP 2: Calculate Simple Mean (for fallback) ---
+            const sum = filteredGaps.reduce((a, b) => a + b, 0);
+            const mean = sum / filteredGaps.length;
+
+            // --- STEP 3: Calculate Weighted Average (recent kills weigh more) ---
+            const weightedAvg = this.calculateWeightedAverage(allKillsWithDates);
+
+            // --- STEP 4: Calculate StdDev to determine "Stability" ---
+            const variance = filteredGaps.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / filteredGaps.length;
             const stdDev = Math.sqrt(variance);
+
+            // --- STEP 5: Calculate Data Quality ---
+            const dataQuality = this.calculateDataQuality(filteredGaps.length, stdDev);
 
             stats.set(bossName, {
                 avgInterval: mean,
+                weightedAvgInterval: weightedAvg,
                 stdDev,
-                sampleSize: allIntervals.length,
+                sampleSize: filteredGaps.length,
                 rawGaps: allIntervals,
-                filteredGaps: allIntervals, // For now, we are using all valid gaps as "filtered"
-                worldGaps
+                filteredGaps,
+                worldGaps,
+                dataQuality
             });
         });
 
@@ -124,7 +155,86 @@ export class SpawnPredictor {
     }
 
     /**
+     * Sanitize intervals to remove impossible/outlier data.
+     * - Remove intervals < 2 days (impossible double kills)
+     * - Remove intervals < known minimum * 0.5
+     * - Filter outliers > 3 standard deviations
+     */
+    private sanitizeIntervals(intervals: number[], bossName: string): number[] {
+        if (intervals.length === 0) return [];
+
+        const minimumInterval = getMinimumInterval(bossName);
+        const threshold = minimumInterval * 0.5;
+
+        // First pass: Remove obvious invalid data
+        let filtered = intervals.filter(interval => {
+            // Remove impossibly short intervals
+            if (interval < 2) return false;
+            // Remove intervals shorter than half the known minimum
+            if (interval < threshold) return false;
+            return true;
+        });
+
+        if (filtered.length < 3) return filtered;
+
+        // Second pass: Remove outliers > 3 standard deviations
+        const mean = filtered.reduce((a, b) => a + b, 0) / filtered.length;
+        const variance = filtered.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / filtered.length;
+        const stdDev = Math.sqrt(variance);
+
+        // Only filter outliers if we have enough data and significant variance
+        if (stdDev > 1 && filtered.length > 5) {
+            const upperBound = mean + (3 * stdDev);
+            const lowerBound = Math.max(2, mean - (3 * stdDev));
+            filtered = filtered.filter(interval => interval >= lowerBound && interval <= upperBound);
+        }
+
+        return filtered;
+    }
+
+    /**
+     * Calculate weighted average with exponential decay.
+     * Recent kills get more weight: weight = 2^(-daysAgo / halfLifeDays)
+     */
+    private calculateWeightedAverage(killsWithDates: { interval: number; date: Date }[]): number {
+        if (killsWithDates.length === 0) return 0;
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        let totalWeight = 0;
+        let weightedSum = 0;
+
+        killsWithDates.forEach(({ interval, date }) => {
+            const daysAgo = differenceInDays(now, date);
+            // Exponential decay: weight halves every WEIGHT_DECAY.halfLifeDays days
+            let weight = Math.pow(2, -daysAgo / WEIGHT_DECAY.halfLifeDays);
+            // Apply minimum weight
+            weight = Math.max(weight, WEIGHT_DECAY.minWeight);
+
+            weightedSum += interval * weight;
+            totalWeight += weight;
+        });
+
+        return totalWeight > 0 ? weightedSum / totalWeight : 0;
+    }
+
+    /**
+     * Calculate data quality based on sample size and variance.
+     */
+    private calculateDataQuality(sampleSize: number, stdDev: number): 'HIGH' | 'MEDIUM' | 'LOW' {
+        if (sampleSize >= DATA_QUALITY_THRESHOLDS.HIGH.minSamples && stdDev <= DATA_QUALITY_THRESHOLDS.HIGH.maxStdDev) {
+            return 'HIGH';
+        }
+        if (sampleSize >= DATA_QUALITY_THRESHOLDS.MEDIUM.minSamples && stdDev <= DATA_QUALITY_THRESHOLDS.MEDIUM.maxStdDev) {
+            return 'MEDIUM';
+        }
+        return 'LOW';
+    }
+
+    /**
      * 2. Predicts using the Cycle + Multiples logic
+     *    Now with POSSIBLE_LATE buffer to prevent premature cycle skipping.
      */
     public predict(bossName: string, world: string, lastKillDateStr: string): Prediction {
         const stats = this.globalStats.get(bossName);
@@ -137,7 +247,54 @@ export class SpawnPredictor {
             return this.createUnknownPrediction(bossName, world);
         }
 
-        const { avgInterval, stdDev } = stats;
+        // --- Check for known fixed patterns first ---
+        if (hasKnownPattern(bossName)) {
+            const pattern = getKnownPattern(bossName)!;
+            // For fixed-pattern bosses, use the known min/max
+            const targetDate = addDays(lastKillDate, pattern.min);
+            const maxDate = addDays(lastKillDate, pattern.max);
+            const daysSinceLast = differenceInDays(now, lastKillDate);
+
+            let status: Prediction['status'] = 'COOLDOWN';
+            if (isAfter(now, maxDate)) {
+                status = 'OVERDUE';
+            } else if (isAfter(now, targetDate) || this.isSameDay(now, targetDate)) {
+                status = 'WINDOW_OPEN';
+            }
+
+            return {
+                bossName,
+                world,
+                status,
+                nextMinSpawn: targetDate,
+                nextMaxSpawn: maxDate,
+                avgSpawnDate: targetDate,
+                confidence: 95,
+                windowProgress: this.calculateProgress(lastKillDate, targetDate, now),
+                daysUntilMin: differenceInDays(targetDate, now),
+                dataQuality: 'HIGH',
+                sampleSize: stats.sampleSize,
+                probabilityLabel: status === 'WINDOW_OPEN' ? 'Janela Aberta' : status === 'OVERDUE' ? 'Atrasado' : 'Cooldown',
+                confidenceLabel: 'High',
+                lastKill: lastKillDate,
+                daysSinceKill: daysSinceLast,
+                relativeLabel: status === 'COOLDOWN' ? `Abre em ${differenceInDays(targetDate, now)} dias` : 'Padrão Fixo',
+                isLowConfidence: false,
+                stats: {
+                    minGap: pattern.min,
+                    maxGap: pattern.max,
+                    avgGap: pattern.min,
+                    stdDev: 0,
+                    sampleSize: stats.sampleSize,
+                    confidence: 95,
+                    rawGaps: stats.rawGaps,
+                    filteredGaps: stats.filteredGaps,
+                    worldGaps: stats.worldGaps
+                }
+            };
+        }
+
+        const { avgInterval, stdDev, dataQuality } = stats;
 
         // --- STEP A: Calculate Dynamic Margin ---
         // If the boss is very regular (low StdDev), window is tight. 
@@ -161,12 +318,23 @@ export class SpawnPredictor {
         // Target Date = LastKill + (Cycles * Average)
         let targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
 
-        // CRITICAL FIX: If the target window + margin is ALREADY in the past, 
-        // it means we missed this window too. Jump to the next cycle.
-        // We use 'while' to ensure we skip ALL missed windows, not just the previous one.
-        while (isBefore(addDays(targetDate, margin), now)) {
-            cycles++;
-            targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
+        // --- LATE BUFFER LOGIC ---
+        // Instead of immediately jumping to next cycle when past maxSpawn,
+        // check if we're within the late buffer window (POSSIBLE_LATE).
+        let isLateBuffer = false;
+        const currentMaxSpawn = addDays(targetDate, margin);
+        const lateBufferEnd = addDays(currentMaxSpawn, LATE_BUFFER_DAYS);
+
+        if (isAfter(now, currentMaxSpawn) && isBefore(now, lateBufferEnd)) {
+            // We're in the late buffer - DON'T advance cycle yet
+            isLateBuffer = true;
+        } else {
+            // Standard logic: If the target window + margin is ALREADY past late buffer, 
+            // jump to the next cycle.
+            while (isAfter(now, addDays(addDays(targetDate, margin), LATE_BUFFER_DAYS))) {
+                cycles++;
+                targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
+            }
         }
 
         const minSpawn = subDays(targetDate, margin);
@@ -180,8 +348,13 @@ export class SpawnPredictor {
         if (isAfter(now, maxSpawn)) {
             status = 'OVERDUE';
             const overdueBy = differenceInDays(now, maxSpawn);
-            probabilityLabel = 'Atrasado';
-            relativeLabel = overdueBy === 1 ? 'Atrasado 1 dia' : `Atrasado ${overdueBy} dias`;
+            if (isLateBuffer) {
+                probabilityLabel = 'Possível Atraso';
+                relativeLabel = overdueBy === 1 ? 'Atrasado 1 dia (continue checando!)' : `Atrasado ${overdueBy} dias (continue checando!)`;
+            } else {
+                probabilityLabel = 'Atrasado';
+                relativeLabel = overdueBy === 1 ? 'Atrasado 1 dia' : `Atrasado ${overdueBy} dias`;
+            }
         } else if (isAfter(now, minSpawn) || this.isSameDay(now, minSpawn)) {
             status = 'WINDOW_OPEN';
             probabilityLabel = 'Janela Aberta';
@@ -227,6 +400,10 @@ export class SpawnPredictor {
                 cyclesSkipped: cycles - 1,
                 margin
             },
+            // Enhanced fields
+            dataQuality,
+            sampleSize: stats.sampleSize,
+            isLateBuffer,
             // Compatibility
             probabilityLabel,
             confidenceLabel,
@@ -298,6 +475,8 @@ export class SpawnPredictor {
             bossName, world, status: 'UNKNOWN',
             nextMinSpawn: new Date(), nextMaxSpawn: new Date(), avgSpawnDate: new Date(),
             confidence: 0, windowProgress: 0, daysUntilMin: 0,
+            dataQuality: 'LOW',
+            sampleSize: 0,
             probabilityLabel: 'Sem Dados',
             confidenceLabel: 'Low',
             lastKill: new Date(0),

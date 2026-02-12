@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getBossImage } from '@/utils/bossImages';
-import { BossCategory, BOSS_CATEGORY_ICONS, getBossCategory } from '@/utils/bossCategories';
+import { BossCategory, BOSS_CATEGORY_ICONS, getBossCategory, ALL_FILTER_CATEGORIES, isHiddenByDefault } from '@/utils/bossCategories';
 import FilterPill from './FilterPill';
 import { Prediction } from '@/utils/spawnLogic';
 
@@ -22,7 +22,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const categories: BossCategory[] = ['Archdemons', 'POI', 'Criaturas'];
+    const categories = ALL_FILTER_CATEGORIES;
 
     // Helper to get days in month
     const calendarDays = useMemo(() => {
@@ -59,6 +59,8 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
             if (selectedCategories.length > 0) {
                 const category = getBossCategory(pred.bossName);
                 if (!selectedCategories.includes(category)) return;
+            } else if (isHiddenByDefault(pred.bossName)) {
+                return;
             }
 
             // Use nextMinSpawn as the primary date for the calendar

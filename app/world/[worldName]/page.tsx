@@ -11,7 +11,7 @@ import { Boss } from '@/types';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
 import { getAdjustedKillCount, calculateAdjustedTotalKills } from '@/utils/soulpitUtils';
-import { getBossCategory } from '@/utils/bossCategories';
+import { getBossCategory, isHiddenByDefault } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,7 +19,7 @@ import { getWorldIcon } from '@/utils/worldIcons';
 
 export default function WorldPage() {
   const params = useParams();
-  const worldName = params.worldName as string;
+  const worldName = decodeURIComponent(params.worldName as string);
   const { data, isLoading } = useData();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('kills');
@@ -71,6 +71,8 @@ export default function WorldPage() {
       if (selectedCategories.length > 0) {
         const category = getBossCategory(boss.name);
         if (!selectedCategories.includes(category)) return false;
+      } else if (isHiddenByDefault(boss.name)) {
+        return false;
       }
 
       return true;
@@ -172,6 +174,7 @@ export default function WorldPage() {
         onCategoryChange={setSelectedCategories}
         showKilledTodayFilter={true}
         counts={counts}
+        compact
       />
 
       <div className="min-h-screen flex flex-col gap-8">
@@ -217,6 +220,11 @@ export default function WorldPage() {
             })}
           </div>
         )}
+
+        {/* Divider */}
+        <div className="my-10">
+          <hr className="border-white/10" />
+        </div>
 
         <BossCalendar worldName={worldName} />
       </div>

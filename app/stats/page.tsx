@@ -8,7 +8,7 @@ import EmptyState from '@/components/EmptyState';
 import GlobalStats from '@/components/GlobalStats';
 import Loading from '@/components/Loading';
 import PageTransition from '@/components/PageTransition';
-import { getBossCategory } from '@/utils/bossCategories';
+import { getBossCategory, isHiddenByDefault } from '@/utils/bossCategories';
 import NoResults from '@/components/NoResults';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -75,6 +75,8 @@ export default function GlobalPage() {
         const category = getBossCategory(b.name);
         return selectedCategories.includes(category);
       });
+    } else {
+      bosses = bosses.filter(b => !isHiddenByDefault(b.name));
     }
 
     if (sortBy === 'kills') {

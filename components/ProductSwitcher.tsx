@@ -114,7 +114,7 @@ export function ProductSwitcher() {
                             damping: 30,
                             mass: 0.8,
                         }}
-                        className="absolute top-full left-0 mt-2 w-72 p-2 bg-zinc-950/95 backdrop-blur-xl border border-white/[0.06] rounded-2xl shadow-2xl shadow-black/50 z-50"
+                        className="fixed left-3 mt-2 w-72 p-2 bg-zinc-950/95 backdrop-blur-xl border border-white/[0.06] rounded-2xl shadow-2xl shadow-black/50 z-[60]"
                     >
                         {/* Header */}
                         <div className="px-3 py-2 mb-1">
