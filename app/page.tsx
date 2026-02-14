@@ -101,7 +101,9 @@ export default function HomePage() {
     return (
         <PageTransition>
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-white mb-2">Mortes de Hoje</h1>
+                <h1 className="text-2xl font-bold text-white mb-2">
+                    {daily ? `Mortes de ${daily.date}` : 'Mortes de Hoje'}
+                </h1>
             </div>
 
             {!daily ? (

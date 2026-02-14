@@ -238,21 +238,36 @@ export async function GET() {
       const mostRecentDate = uniqueDates[0];
 
       // Get today's date in DD/MM/YYYY format for comparison
+      // Get today's date in DD/MM/YYYY format for comparison (Brazil Time)
       const now = new Date();
-      const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+      const brazilDateStr = now.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      // brazilDateStr is DD/MM/YYYY (usually, but depends on locale exact format, assuming pt-BR matches)
+      // To be safe/consistent with stored format DD/MM/YYYY:
+      const [brDay, brMonth, brYear] = brazilDateStr.split('/'); // Risk if locale format differs
+
+      // Safer way to construct todayStr in DD/MM/YYYY using Intl
+      const formatter = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const parts = formatter.formatToParts(now);
+      const day = parts.find(p => p.type === 'day')?.value;
+      const month = parts.find(p => p.type === 'month')?.value;
+      const year = parts.find(p => p.type === 'year')?.value;
+      const todayStr = `${day}/${month}/${year}`;
 
       const isToday = mostRecentDate === todayStr;
-      console.log(`📅 [API] Most recent date: ${mostRecentDate}, Today: ${todayStr}, Match: ${isToday}`);
+      console.log(`📅 [API] Most recent date: ${mostRecentDate}, Today (BR): ${todayStr}, Match: ${isToday}`);
 
       if (mostRecentDate) {
         if (!isToday) {
-          console.log(`⚠️ [API] Most recent date (${mostRecentDate}) is not today (${todayStr}). Daily kills will be empty.`);
+          console.log(`⚠️ [API] Most recent date (${mostRecentDate}) is not today (${todayStr}). Returning it anyway.`);
         }
 
-        // Filter kill_history for the most recent date, but only if it's today
-        const recentKills = isToday
-          ? (killHistoryData || []).filter((kill: any) => kill.date === mostRecentDate)
-          : [];
+        // Filter kill_history for the most recent date (always return data if available)
+        const recentKills = (killHistoryData || []).filter((kill: any) => kill.date === mostRecentDate);
 
         if (recentKills.length > 0) {
           // Aggregate kills by boss
