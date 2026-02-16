@@ -153,7 +153,6 @@ export const bossExtraData: Record<string, BossExtraInfo> = {
     "Zomba": { wiki: "https://www.tibiawiki.com.br/wiki/Zomba" },
     "Zulazza the Corruptor": { wiki: "https://www.tibiawiki.com.br/wiki/Zulazza_the_Corruptor" },
     "Zushuka": { wiki: "https://www.tibiawiki.com.br/wiki/Zushuka" },
-    "Zushuka": { wiki: "https://www.tibiawiki.com.br/wiki/Zushuka" },
     "Acolyte of Darkness": {
         wiki: "https://www.tibiawiki.com.br/wiki/Acolyte_of_Darkness",
         description: "Tem a mesma aparência de um Necromancer. Aparece em quantidade próximos à basins durante o evento que ocorre em novembro. Faz parte do evento Lightbearer."
