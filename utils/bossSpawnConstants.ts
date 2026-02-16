@@ -48,6 +48,15 @@ export const BOSS_MINIMUM_INTERVALS: Record<string, number> = {
     // Rare Spawns
     'Midnight Panther': 3,
     'White Pale': 7,
+    'Dire Penguin': 3,
+    'Midnight Warrior': 3,
+    'Undead Cavebear': 3,
+    'Water Buffalo': 3,
+    'Crustacea Gigantica': 3,
+    'Midnight Spawn': 3,
+    'Thornfire Wolf': 3,
+    'Crystal Wolf': 3,
+    'Draptor': 3,
 
     // Default for unknown bosses - conservative estimate
     'DEFAULT': 3
@@ -72,6 +81,20 @@ export const BOSS_KNOWN_PATTERNS: Record<string, {
 
     // Raid bosses with known patterns
     'The Welter': { min: 7, max: 14, type: 'RAID' },
+
+    // Lightbearer Event (November)
+    'Bane Bringer': { min: 365, max: 365, type: 'EVENT' },
+    'Bane of Light': { min: 365, max: 365, type: 'EVENT' },
+    'Duskbringer': { min: 365, max: 365, type: 'EVENT' },
+    'Herald of Gloom': { min: 365, max: 365, type: 'EVENT' },
+    'Nightfiend': { min: 365, max: 365, type: 'EVENT' },
+    'Shadow Hound': { min: 365, max: 365, type: 'EVENT' },
+
+    // Seasonal Events
+    'Grynch Clan Goblin': { min: 365, max: 365, type: 'EVENT' }, // Christmas
+    'Undead Jester': { min: 365, max: 365, type: 'EVENT' },      // April Fools
+    'Dryad': { min: 365, max: 365, type: 'EVENT' },              // June
+    'Cake Golem': { min: 365, max: 365, type: 'EVENT' },         // Anniversary
 };
 
 /**

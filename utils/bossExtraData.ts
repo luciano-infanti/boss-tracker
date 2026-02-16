@@ -15,6 +15,7 @@ export interface BossExtraInfo {
     locations?: BossLocation[];
     wiki?: string;
     eventTag?: string;
+    description?: string;
 }
 
 export const bossExtraData: Record<string, BossExtraInfo> = {
@@ -151,7 +152,116 @@ export const bossExtraData: Record<string, BossExtraInfo> = {
     "Zevelon Duskbringer": { wiki: "https://www.tibiawiki.com.br/wiki/Zevelon_Duskbringer" },
     "Zomba": { wiki: "https://www.tibiawiki.com.br/wiki/Zomba" },
     "Zulazza the Corruptor": { wiki: "https://www.tibiawiki.com.br/wiki/Zulazza_the_Corruptor" },
-    "Zushuka": { wiki: "https://www.tibiawiki.com.br/wiki/Zushuka" }
+    "Zushuka": { wiki: "https://www.tibiawiki.com.br/wiki/Zushuka" },
+    "Zushuka": { wiki: "https://www.tibiawiki.com.br/wiki/Zushuka" },
+    "Acolyte of Darkness": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Acolyte_of_Darkness",
+        description: "Tem a mesma aparência de um Necromancer. Aparece em quantidade próximos à basins durante o evento que ocorre em novembro. Faz parte do evento Lightbearer."
+    },
+    "Bane Bringer": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Bane_Bringer",
+        description: "Tem a mesma aparência de um Haunted Treeling. Apenas ataques físicos causam danos significativos nessas criaturas. Faz parte da World Quest Bewitched."
+    },
+    "Bane of Light": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Bane_of_Light",
+        description: "Tem a mesma aparência de um Vampire. Aparece em quantidade próximos a basins durante o evento que ocorre em novembro, The Lightbearer"
+    },
+    "Berrypest": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Berrypest",
+        description: "Essa criatura aparece durante a Annual Autumn Vintage."
+    },
+    "Bride of Night": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Bride_of_Night",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Cake Golem": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Cake_Golem",
+        description: "Esta criatura faz parte da World Quest A Piece of Cake. Note que eles só aparecem durante a primeira parte da quest."
+    },
+    "Crystal Wolf": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Crystal_Wolf",
+        description: "Para encontrá-lo, lure um Thornfire Wolf até a água sagrada no Bog Temple, durante a Thornfire World Change. Pode ser domada com um Diapason"
+    },
+    "Diamond Servant": { wiki: "https://www.tibiawiki.com.br/wiki/Diamond_Servant" },
+    "Dire Penguin": { wiki: "https://www.tibiawiki.com.br/wiki/Dire_Penguin" },
+    "Doomsday Cultist": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Doomsday_Cultist",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Dryad": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Dryad",
+        description: "Faz raras invasões durante o ano nos Dryad Gardens. Durante o evento Flower Month, fazem invasões nas florestas de Ab'Dendriel, Carlin, Edron, Port Hope, além de seus próprios jardins em Cormaya. Quando as invasões são anunciadas elas duram 1 hora e as waves são num total de cinco, sendo a primeira quando aparece a mensagem, e as 4 seguintes a cada 15 minutos."
+    },
+    "Duskbringer": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Duskbringer",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Elf Overseer": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Elf_Overseer",
+        description: "São eles quem vigiam os Firestarters em Shadowthorn. Você precisa matá-los durante o 1º estágio da Thornfire World Change para incendiar a fortaleza e libertar os Firestarters."
+    },
+    "Goblin Leader": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Goblin_Leader",
+        description: "O Goblin Leader encontrado em Femor Hills faz parte da Tower Defence Quest."
+    },
+    "Golden Servant": { wiki: "https://www.tibiawiki.com.br/wiki/Golden_Servant" },
+    "Grynch Clan Goblin": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Grynch_Clan_Goblin",
+        description: "Aparecem aleatoriamente em invasões, eles são anunciados quando estão roubando presentes de uma cidade aleatória do Tibia: 'Goblins of the infamous Grynch Clan are invading xxxx to steal all presents, beware!' Faz parte do Santa Event."
+    },
+    "Herald of Gloom": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Herald_of_Gloom",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Iks Ahpututu": { wiki: "https://www.tibiawiki.com.br/wiki/Iks_Ahpututu" },
+    "Imperial": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Imperial",
+        description: "Criatura de respawn aleatório encontrada ao longo da Isle of Ada. No mesmo SQM podem surgir Deers, Stags ou, de forma mais rara, o Imperial."
+    },
+    "Iron Servant": { wiki: "https://www.tibiawiki.com.br/wiki/Iron_Servant" },
+    "Mad Mage": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Mad_Mage",
+        description: "Faz parte da Their Master's Voice World Change. Para ele aparecer, você deve limpar os fungos da caverna e matar os 20 respawns de golens."
+    },
+    "Midnight Spawn": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Midnight_Spawn",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Midnight Warrior": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Midnight_Warrior",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Nightfiend": { wiki: "https://www.tibiawiki.com.br/wiki/Nightfiend" },
+    "Nightslayer": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Nightslayer",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Raging Fire": { wiki: "https://www.tibiawiki.com.br/wiki/Raging_Fire" },
+    "Shadow Hound": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Shadow_Hound",
+        description: "Faz parte do evento Lightbearer."
+    },
+    "Thornfire Wolf": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Thornfire_Wolf",
+        description: "Para encontrar esta criatura, apague as chamas em Shadowthorn durante a Thornfire World Change."
+    },
+    "Troll Guard": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Troll_Guard",
+        description: "Faz raras invasões no noroeste de Carlin e durante invasões na arena de Thais. As invasões na arena de Thais só ocorrem durante a Mini World Change Thais Kingsday."
+    },
+    "Undead Jester": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Undead_Jester",
+        description: "As invasões de Undead Jesters aparecem como uma parte do evento 'April Month of Pranks'. Elas começam no dia 1º de Abril e se estendem até o server save do dia 15 de Abril. Invasões acontecem em qualquer cidade, a qualquer hora. Nunca se pode prever uma invasão. Usar Dwarven Ring é uma boa idéia, caso contrário, você gastará muito tempo correndo atrás deles."
+    },
+    "Vicious Manbat": { wiki: "https://www.tibiawiki.com.br/wiki/Vicious_Manbat" },
+    "Water Buffalo": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Water_Buffalo",
+        description: "Pequenos grupos de 2 a 6 Water Buffalos podem ser encontrados em Marshland, a cada 4 horas a partir do server save."
+    },
+    "Wild Horse": {
+        wiki: "https://www.tibiawiki.com.br/wiki/Wild_Horse",
+        description: "0-3 Wild Horses vão aparecer a cada três horas (a partir do server save), durante a Horse Station World Change."
+    }
 };
 
 export function getBossExtraInfo(bossName: string): BossExtraInfo | null {

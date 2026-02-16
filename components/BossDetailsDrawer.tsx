@@ -8,6 +8,7 @@ import BossMap from './BossMap';
 import { getBossExtraInfo } from '@/utils/bossExtraData';
 import { getAdjustedKillCount, isSoulpitBoss } from '@/utils/soulpitUtils';
 import { formatNumber } from '@/utils/formatNumber';
+import { BOSS_KNOWN_PATTERNS, BOSS_MINIMUM_INTERVALS } from '@/utils/bossSpawnConstants';
 
 interface BossDetailsDrawerProps {
     boss: Boss | CombinedBoss;
@@ -452,8 +453,27 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                     <div className="bg-surface-hover/30 p-4 rounded-lg border border-border/50 text-center">
                                         <div className="text-xs text-secondary mb-1 uppercase tracking-wide">Frequência</div>
                                         <div className="text-lg font-medium text-white">
-                                            {'spawnFrequency' in boss ? boss.spawnFrequency :
-                                                'typicalSpawnFrequency' in boss ? boss.typicalSpawnFrequency : 'N/A'}
+                                            {(() => {
+                                                let freq = 'spawnFrequency' in boss ? boss.spawnFrequency :
+                                                    'typicalSpawnFrequency' in boss ? boss.typicalSpawnFrequency : 'N/A';
+
+                                                // Fallback if data is missing/N/A
+                                                if (!freq || freq === 'N/A') {
+                                                    const knownPattern = BOSS_KNOWN_PATTERNS[boss.name];
+                                                    if (knownPattern) {
+                                                        return knownPattern.type === 'FIXED'
+                                                            ? `${knownPattern.min} dias (Fixo)`
+                                                            : `${knownPattern.min}-${knownPattern.max} dias`;
+                                                    }
+
+                                                    const minInterval = BOSS_MINIMUM_INTERVALS[boss.name];
+                                                    if (minInterval) {
+                                                        return `~${minInterval} dias`;
+                                                    }
+                                                }
+
+                                                return freq;
+                                            })()}
                                         </div>
                                     </div>
                                     {/* Last Seen - Only for World View */}
@@ -511,6 +531,24 @@ export default function BossDetailsDrawer({ boss, isOpen, onClose, dailyKill, wo
                                     )}
                                 </div>
                             </div>
+
+                            {/* Description Section */}
+                            {(() => {
+                                const extraInfo = getBossExtraInfo(boss.name);
+                                if (extraInfo?.description) {
+                                    return (
+                                        <div className="bg-surface-hover/20 rounded-lg border border-border/50 p-4">
+                                            <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                                                <span className="text-blue-400">ℹ️</span> Informações
+                                            </h3>
+                                            <p className="text-sm text-secondary/90 leading-relaxed">
+                                                {extraInfo.description}
+                                            </p>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
 
                             {/* Extra Info: Loot & Location (Hidden for now) */}
                             {false && (() => {
