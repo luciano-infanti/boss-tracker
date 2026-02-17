@@ -133,17 +133,55 @@ export default function GlobalPage() {
                 "Nenhum boss encontrado"
           } />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((boss) => (
-              <motion.div
-                key={boss.name}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <BossCard boss={boss} type="combined" showNextSpawn={false} viewMode="grid" />
-              </motion.div>
-            ))}
+          <div className="space-y-8">
+            {/* Bosses Section */}
+            {filtered.filter(boss => getBossCategory(boss.name) !== 'Criaturas').length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered
+                  .filter(boss => getBossCategory(boss.name) !== 'Criaturas')
+                  .map((boss) => (
+                    <motion.div
+                      key={boss.name}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <BossCard boss={boss} type="combined" showNextSpawn={false} viewMode="grid" />
+                    </motion.div>
+                  ))}
+              </div>
+            )}
+
+            {/* Divider */}
+            {filtered.some(boss => getBossCategory(boss.name) !== 'Criaturas') &&
+              filtered.some(boss => getBossCategory(boss.name) === 'Criaturas') && (
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-border border-dashed"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-3 text-sm font-medium text-secondary uppercase tracking-wider">Criaturas</span>
+                  </div>
+                </div>
+              )}
+
+            {/* Creatures Section */}
+            {filtered.filter(boss => getBossCategory(boss.name) === 'Criaturas').length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered
+                  .filter(boss => getBossCategory(boss.name) === 'Criaturas')
+                  .map((boss) => (
+                    <motion.div
+                      key={boss.name}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <BossCard boss={boss} type="combined" showNextSpawn={false} viewMode="grid" />
+                    </motion.div>
+                  ))}
+              </div>
+            )}
           </div>
         )}
       </div>

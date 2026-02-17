@@ -4,6 +4,7 @@ import { useData } from '@/context/DataContext';
 import BossCard from '@/components/BossCard';
 import { Skull, Search } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { getBossCategory } from '@/utils/bossCategories';
 
 export default function MostWantedPage() {
     const { data, isLoading } = useData();
@@ -58,22 +59,67 @@ export default function MostWantedPage() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredBosses.map((boss) => (
-                    <div key={boss.name} className="relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-red-900 to-red-600 rounded-lg opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
-                        <BossCard
-                            boss={boss}
-                            type="combined"
-                            isKilledToday={false}
-                            isNew={false}
-                        />
-                        {/* Wanted Stamp */}
-                        <div className="absolute top-4 right-4 rotate-12 border-4 border-red-500/30 text-red-500/30 font-black text-xl px-2 py-1 rounded opacity-50 pointer-events-none select-none">
-                            PROCURADO
-                        </div>
+
+
+            <div className="space-y-8">
+                {/* Bosses Section */}
+                {filteredBosses.filter(b => getBossCategory(b.name) !== 'Criaturas').length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {filteredBosses
+                            .filter(b => getBossCategory(b.name) !== 'Criaturas')
+                            .map((boss) => (
+                                <div key={boss.name} className="relative group">
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-red-900 to-red-600 rounded-lg opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
+                                    <BossCard
+                                        boss={boss}
+                                        type="combined"
+                                        isKilledToday={false}
+                                        isNew={false}
+                                    />
+                                    {/* Wanted Stamp */}
+                                    <div className="absolute top-4 right-4 rotate-12 border-4 border-red-500/30 text-red-500/30 font-black text-xl px-2 py-1 rounded opacity-50 pointer-events-none select-none">
+                                        PROCURADO
+                                    </div>
+                                </div>
+                            ))}
                     </div>
-                ))}
+                )}
+
+                {/* Divider */}
+                {filteredBosses.some(b => getBossCategory(b.name) !== 'Criaturas') &&
+                    filteredBosses.some(b => getBossCategory(b.name) === 'Criaturas') && (
+                        <div className="relative py-4">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div className="w-full border-t border-red-900/30 border-dashed"></div>
+                            </div>
+                            <div className="relative flex justify-center">
+                                <span className="bg-background px-3 text-sm font-medium text-red-500/50 uppercase tracking-wider">Criaturas</span>
+                            </div>
+                        </div>
+                    )}
+
+                {/* Creatures Section */}
+                {filteredBosses.filter(b => getBossCategory(b.name) === 'Criaturas').length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {filteredBosses
+                            .filter(b => getBossCategory(b.name) === 'Criaturas')
+                            .map((boss) => (
+                                <div key={boss.name} className="relative group">
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-red-900 to-red-600 rounded-lg opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
+                                    <BossCard
+                                        boss={boss}
+                                        type="combined"
+                                        isKilledToday={false}
+                                        isNew={false}
+                                    />
+                                    {/* Wanted Stamp */}
+                                    <div className="absolute top-4 right-4 rotate-12 border-4 border-red-500/30 text-red-500/30 font-black text-xl px-2 py-1 rounded opacity-50 pointer-events-none select-none">
+                                        PROCURADO
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+                )}
             </div>
 
             {filteredBosses.length === 0 && (

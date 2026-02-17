@@ -14,6 +14,8 @@ import Loading from '@/components/Loading';
 
 import { getWorldIcon } from '@/utils/worldIcons';
 
+import { isSuppressed } from '@/utils/suppressedBosses';
+
 export default function UpcomingPage() {
     const { data, isLoading } = useData();
     const { selectedWorld, worlds } = useWorld();
@@ -25,7 +27,11 @@ export default function UpcomingPage() {
         setLocalWorld(selectedWorld || 'Auroria');
     }, [selectedWorld]);
 
-    const { predictions } = useBossPredictions(data.killDates, localWorld);
+    const { predictions: rawPredictions } = useBossPredictions(data.killDates, localWorld);
+
+    const predictions = useMemo(() => {
+        return rawPredictions.filter(p => !isSuppressed(p.bossName));
+    }, [rawPredictions]);
 
 
 

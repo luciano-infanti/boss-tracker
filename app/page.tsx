@@ -183,37 +183,95 @@ export default function HomePage() {
                                         "Nenhum boss morto hoje com os filtros atuais"
                             } />
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {sortedKills.map((kill) => {
-                                    const boss = data.combined.find(b => b.name === kill.bossName) || {
-                                        name: kill.bossName,
-                                        totalKills: kill.totalKills,
-                                        totalSpawnDays: 0,
-                                        appearsInWorlds: 0,
-                                        typicalSpawnFrequency: 'N/A',
-                                        perWorldStats: []
-                                    };
+                            <div className="space-y-8">
+                                {/* Bosses Section */}
+                                {sortedKills.filter(kill => getBossCategory(kill.bossName) !== 'Criaturas').length > 0 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {sortedKills
+                                            .filter(kill => getBossCategory(kill.bossName) !== 'Criaturas')
+                                            .map((kill) => {
+                                                const boss = data.combined.find(b => b.name === kill.bossName) || {
+                                                    name: kill.bossName,
+                                                    totalKills: kill.totalKills,
+                                                    totalSpawnDays: 0,
+                                                    appearsInWorlds: 0,
+                                                    typicalSpawnFrequency: 'N/A',
+                                                    perWorldStats: []
+                                                };
 
-                                    const isNew = boss.totalKills === kill.totalKills;
+                                                const isNew = boss.totalKills === kill.totalKills;
 
-                                    return (
-                                        <motion.div
-                                            key={kill.bossName}
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ duration: 0.4, ease: "easeInOut" }}
-                                        >
-                                            <BossCard
-                                                boss={boss}
-                                                type="combined"
-                                                isKilledToday={true}
-                                                isNew={isNew}
-                                                dailyKill={kill}
-                                                viewMode="grid"
-                                            />
-                                        </motion.div>
-                                    );
-                                })}
+                                                return (
+                                                    <motion.div
+                                                        key={kill.bossName}
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                    >
+                                                        <BossCard
+                                                            boss={boss}
+                                                            type="combined"
+                                                            isKilledToday={true}
+                                                            isNew={isNew}
+                                                            dailyKill={kill}
+                                                            viewMode="grid"
+                                                        />
+                                                    </motion.div>
+                                                );
+                                            })}
+                                    </div>
+                                )}
+
+                                {/* Divider if both exist */}
+                                {sortedKills.some(kill => getBossCategory(kill.bossName) !== 'Criaturas') &&
+                                    sortedKills.some(kill => getBossCategory(kill.bossName) === 'Criaturas') && (
+                                        <div className="relative py-4">
+                                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                <div className="w-full border-t border-border border-dashed"></div>
+                                            </div>
+                                            <div className="relative flex justify-center">
+                                                <span className="bg-background px-3 text-sm font-medium text-secondary uppercase tracking-wider">Criaturas</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                {/* Creatures Section */}
+                                {sortedKills.filter(kill => getBossCategory(kill.bossName) === 'Criaturas').length > 0 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {sortedKills
+                                            .filter(kill => getBossCategory(kill.bossName) === 'Criaturas')
+                                            .map((kill) => {
+                                                const boss = data.combined.find(b => b.name === kill.bossName) || {
+                                                    name: kill.bossName,
+                                                    totalKills: kill.totalKills,
+                                                    totalSpawnDays: 0,
+                                                    appearsInWorlds: 0,
+                                                    typicalSpawnFrequency: 'N/A',
+                                                    perWorldStats: []
+                                                };
+
+                                                const isNew = boss.totalKills === kill.totalKills;
+
+                                                return (
+                                                    <motion.div
+                                                        key={kill.bossName}
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                                                    >
+                                                        <BossCard
+                                                            boss={boss}
+                                                            type="combined"
+                                                            isKilledToday={true}
+                                                            isNew={isNew}
+                                                            dailyKill={kill}
+                                                            viewMode="grid"
+                                                        />
+                                                    </motion.div>
+                                                );
+                                            })}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

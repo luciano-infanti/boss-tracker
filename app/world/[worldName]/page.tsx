@@ -186,38 +186,97 @@ export default function WorldPage() {
                   "No bosses found"
           } />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((boss) => {
-              const isKilledToday = data.daily?.kills.some(k => {
-                if (k.bossName !== boss.name) return false;
-                const worldKill = k.worlds.find(w => w.world === worldName);
-                if (!worldKill) return false;
-                return getAdjustedKillCount(boss.name, worldKill.count) > 0;
-              });
+          <div className="space-y-8">
+            {/* Bosses Section */}
+            {filtered.filter(boss => getBossCategory(boss.name) !== 'Criaturas').length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered
+                  .filter(boss => getBossCategory(boss.name) !== 'Criaturas')
+                  .map((boss) => {
+                    const isKilledToday = data.daily?.kills.some(k => {
+                      if (k.bossName !== boss.name) return false;
+                      const worldKill = k.worlds.find(w => w.world === worldName);
+                      if (!worldKill) return false;
+                      return getAdjustedKillCount(boss.name, worldKill.count) > 0;
+                    });
 
-              const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
-              const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
-              const isNew = isKilledToday && worldKill ? boss.totalKills === worldKill.count : false;
+                    const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
+                    const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
+                    const isNew = isKilledToday && worldKill ? boss.totalKills === worldKill.count : false;
 
-              return (
-                <motion.div
-                  key={boss.name}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                >
-                  <BossCard
-                    boss={boss}
-                    type="world"
-                    isKilledToday={isKilledToday}
-                    isNew={isNew}
-                    dailyKill={isKilledToday ? dailyKill : undefined}
-                    worldName={worldName}
-                    viewMode="grid"
-                  />
-                </motion.div>
-              );
-            })}
+                    return (
+                      <motion.div
+                        key={boss.name}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                      >
+                        <BossCard
+                          boss={boss}
+                          type="world"
+                          isKilledToday={isKilledToday}
+                          isNew={isNew}
+                          dailyKill={isKilledToday ? dailyKill : undefined}
+                          worldName={worldName}
+                          viewMode="grid"
+                        />
+                      </motion.div>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Divider */}
+            {filtered.some(boss => getBossCategory(boss.name) !== 'Criaturas') &&
+              filtered.some(boss => getBossCategory(boss.name) === 'Criaturas') && (
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-border border-dashed"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-3 text-sm font-medium text-secondary uppercase tracking-wider">Criaturas</span>
+                  </div>
+                </div>
+              )}
+
+            {/* Creatures Section */}
+            {filtered.filter(boss => getBossCategory(boss.name) === 'Criaturas').length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered
+                  .filter(boss => getBossCategory(boss.name) === 'Criaturas')
+                  .map((boss) => {
+                    const isKilledToday = data.daily?.kills.some(k => {
+                      if (k.bossName !== boss.name) return false;
+                      const worldKill = k.worlds.find(w => w.world === worldName);
+                      if (!worldKill) return false;
+                      return getAdjustedKillCount(boss.name, worldKill.count) > 0;
+                    });
+
+                    const dailyKill = data.daily?.kills.find(k => k.bossName === boss.name);
+                    const worldKill = dailyKill?.worlds.find(w => w.world === worldName);
+                    const isNew = isKilledToday && worldKill ? boss.totalKills === worldKill.count : false;
+
+                    return (
+                      <motion.div
+                        key={boss.name}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                      >
+                        <BossCard
+                          boss={boss}
+                          type="world"
+                          isKilledToday={isKilledToday}
+                          isNew={isNew}
+                          dailyKill={isKilledToday ? dailyKill : undefined}
+                          worldName={worldName}
+                          viewMode="grid"
+                        />
+                      </motion.div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         )}
 
