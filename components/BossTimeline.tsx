@@ -8,17 +8,21 @@ interface BossTimelineProps {
     maxGap: number;
     daysSince: number;
     status: 'COOLDOWN' | 'WINDOW_OPEN' | 'OVERDUE' | 'UNKNOWN';
+    tightMinGap?: number;
+    tightMaxGap?: number;
 }
 
 /**
  * Minimal spawn timeline - VISUAL ONLY, no text.
- * Gray = cooldown, Green = window open, Red tick = overdue
+ * Dark green = outer window, Bright green = IQR inner window, White dot = current day
  */
 export default function BossTimeline({
     minGap,
     maxGap,
     daysSince,
-    status
+    status,
+    tightMinGap,
+    tightMaxGap
 }: BossTimelineProps) {
     const [isHovered, setIsHovered] = useState(false);
 
@@ -28,10 +32,14 @@ export default function BossTimeline({
     const windowEnd = (maxGap / visualMax) * 100;
     const tickPos = Math.min(100, Math.max(0, (daysSince / visualMax) * 100));
 
-    const tickColor = status === 'OVERDUE' ? 'bg-red-500' :
-        status === 'WINDOW_OPEN' ? 'bg-emerald-500' : 'bg-white';
+    // IQR inner window positions
+    const hasTightWindow = tightMinGap !== undefined && tightMaxGap !== undefined
+        && tightMinGap !== tightMaxGap
+        && (tightMinGap !== minGap || tightMaxGap !== maxGap);
+    const tightStart = hasTightWindow ? (tightMinGap! / visualMax) * 100 : 0;
+    const tightEnd = hasTightWindow ? (tightMaxGap! / visualMax) * 100 : 0;
 
-    // Calculate days until window closes (for tooltip)
+    // Tooltip text
     const daysUntilClose = maxGap - daysSince;
     const tooltipText = status === 'WINDOW_OPEN'
         ? `Fecha em ${daysUntilClose} dia${daysUntilClose !== 1 ? 's' : ''}`
@@ -41,20 +49,31 @@ export default function BossTimeline({
 
     return (
         <div
-            className="relative h-1.5 w-full bg-surface-hover/50 rounded-full cursor-pointer"
+            className="relative h-2 w-full bg-white/10 rounded-full cursor-pointer overflow-hidden"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Window zone */}
+            {/* Outer window zone */}
             <div
-                className={`absolute top-0 h-full rounded-full ${status === 'WINDOW_OPEN' ? 'bg-emerald-500/80' : 'bg-emerald-500/20'
+                className={`absolute top-0 h-full rounded-full ${status === 'WINDOW_OPEN' ? 'bg-emerald-700/60' : 'bg-emerald-800/40'
                     }`}
                 style={{ left: `${windowStart}%`, width: `${windowEnd - windowStart}%` }}
             />
 
-            {/* Tick */}
+            {/* IQR inner window zone (P25–P75) */}
+            {hasTightWindow && (
+                <div
+                    className={`absolute top-0 h-full rounded-full ${status === 'WINDOW_OPEN'
+                            ? 'bg-emerald-400/90'
+                            : 'bg-emerald-400/50'
+                        }`}
+                    style={{ left: `${tightStart}%`, width: `${tightEnd - tightStart}%` }}
+                />
+            )}
+
+            {/* Tick — always white */}
             <motion.div
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${tickColor} ring-1 ring-black/30`}
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white ring-1 ring-black/30"
                 initial={{ left: 0 }}
                 animate={{ left: `${tickPos}%` }}
                 transition={{ duration: 0.3 }}

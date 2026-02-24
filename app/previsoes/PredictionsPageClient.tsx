@@ -14,6 +14,9 @@ import Loading from '@/components/Loading';
 import { getWorldIcon } from '@/utils/worldIcons';
 
 import { isSuppressed } from '@/utils/suppressedBosses';
+import { getBossCategory } from '@/utils/bossCategories';
+
+const formatShort = (d: Date) => `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
 
 export default function PredictionsPageClient() {
     const { data, isLoading } = useData();
@@ -29,13 +32,14 @@ export default function PredictionsPageClient() {
     const { predictions: rawPredictions } = useBossPredictions(data.killDates, localWorld);
 
     const predictions = useMemo(() => {
-        return rawPredictions.filter(p => !isSuppressed(p.bossName));
+        return rawPredictions.filter(p => !isSuppressed(p.bossName) && getBossCategory(p.bossName) !== 'Criaturas');
     }, [rawPredictions]);
 
     // Group predictions
     const groupedPredictions = useMemo(() => {
         const groups = {
             'Window Open': [] as Prediction[],  // Actively huntable NOW
+            'Opens Today': [] as Prediction[],  // Opens today but still in COOLDOWN
             'Overdue': [] as Prediction[],      // Likely ghosts/missed
             'Tomorrow': [] as Prediction[],
             'Next 7 Days': [] as Prediction[],
@@ -60,7 +64,7 @@ export default function PredictionsPageClient() {
                 const predDate = new Date(pred.nextMinSpawn.getFullYear(), pred.nextMinSpawn.getMonth(), pred.nextMinSpawn.getDate());
 
                 if (predDate.getTime() === today.getTime()) {
-                    groups['Window Open'].push(pred); // Opens today = effectively open
+                    groups['Opens Today'].push(pred); // #7 FIX: Separate group instead of overriding engine status
                 }
                 else if (predDate.getTime() === tomorrow.getTime()) {
                     groups['Tomorrow'].push(pred);
@@ -73,6 +77,9 @@ export default function PredictionsPageClient() {
                 }
             }
         });
+
+        // Sort 'Opens Today' by boss name
+        groups['Opens Today'].sort((a, b) => a.bossName.localeCompare(b.bossName));
 
         // Sort 'Window Open': closest to closing first (highest progress)
         groups['Window Open'].sort((a, b) => b.windowProgress - a.windowProgress);
@@ -134,6 +141,7 @@ export default function PredictionsPageClient() {
 
                             const groupTitle = {
                                 'Window Open': 'Janela Aberta',
+                                'Opens Today': 'Abre Hoje',
                                 'Overdue': 'Atrasados',
                                 'Tomorrow': 'Amanhã',
                                 'Next 7 Days': 'Próximos 7 Dias',
@@ -141,12 +149,14 @@ export default function PredictionsPageClient() {
                             }[group] || group;
 
                             const isWindowOpen = group === 'Window Open';
+                            const isOpensToday = group === 'Opens Today';
                             const isOverdue = group === 'Overdue';
 
                             return (
                                 <div key={group} className="space-y-4">
                                     <div className="flex flex-col gap-1">
                                         <h2 className={`text-lg font-semibold flex items-center gap-2 ${isWindowOpen ? 'text-emerald-400' :
+                                            isOpensToday ? 'text-amber-400' :
                                             isOverdue ? 'text-red-400' : 'text-secondary'
                                             }`}>
                                             {isWindowOpen && <span className="relative flex h-3 w-3">
@@ -185,7 +195,7 @@ export default function PredictionsPageClient() {
                                             };
 
                                             return (
-                                                <div key={`${pred.bossName}-${pred.world}-${idx}`} className="relative">
+                                                <div key={`${pred.bossName}-${pred.world}-${idx}`} className="relative group/legend">
                                                     <BossCard
                                                         boss={bossData}
                                                         type="world"
@@ -204,9 +214,76 @@ export default function PredictionsPageClient() {
                                                                 maxGap={pred.stats?.maxGap || 1}
                                                                 daysSince={pred.daysSinceKill}
                                                                 status={pred.status}
+                                                                tightMinGap={pred.stats?.tightMinGap}
+                                                                tightMaxGap={pred.stats?.tightMaxGap}
                                                             />
                                                         </div>
                                                     </BossCard>
+
+                                                    {/* Hover legend */}
+                                                    {(() => {
+                                                        const now = new Date();
+                                                        now.setHours(0, 0, 0, 0);
+                                                        const daysUntilOpen = Math.ceil((pred.nextMinSpawn.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                                        const daysUntilClose = Math.ceil((pred.nextMaxSpawn.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                                        const hasTight = pred.tightMinSpawn && pred.tightMaxSpawn && pred.stats?.tightMinGap !== pred.stats?.tightMaxGap;
+
+                                                        const outerStatusText = pred.status === 'WINDOW_OPEN'
+                                                            ? `Fecha em ${daysUntilClose} dia${daysUntilClose !== 1 ? 's' : ''}`
+                                                            : pred.status === 'OVERDUE'
+                                                                ? `Atrasado ${Math.abs(daysUntilClose)} dia${Math.abs(daysUntilClose) !== 1 ? 's' : ''}`
+                                                                : `Abre em ${daysUntilOpen} dia${daysUntilOpen !== 1 ? 's' : ''}`;
+
+                                                        // Inner window status
+                                                        let innerStatusText = '';
+                                                        if (hasTight && pred.tightMaxSpawn) {
+                                                            const daysUntilTightClose = Math.ceil((pred.tightMaxSpawn.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                                            const tightOpen = pred.tightMinSpawn && now >= pred.tightMinSpawn;
+                                                            const tightClosed = now > pred.tightMaxSpawn;
+                                                            if (tightOpen && !tightClosed) {
+                                                                innerStatusText = `Fecha em ${daysUntilTightClose} dia${daysUntilTightClose !== 1 ? 's' : ''}`;
+                                                            }
+                                                        }
+
+                                                        return (
+                                                            <div className="absolute left-0 right-0 -bottom-1 translate-y-full opacity-0 group-hover/legend:opacity-100 transition-opacity duration-150 z-30 pointer-events-none">
+                                                                <div className="bg-black/95 border border-white/10 rounded-lg px-3 py-2 text-[11px] space-y-2 shadow-xl">
+                                                                    {/* Outer window */}
+                                                                    <div>
+                                                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-800/60 border border-emerald-700/50 shrink-0"></span>
+                                                                            <span className="text-secondary font-medium">Possível</span>
+                                                                        </div>
+                                                                        <div className="pl-4 flex items-center justify-between gap-3">
+                                                                            <span className="text-white">{formatShort(pred.nextMinSpawn)} até {formatShort(pred.nextMaxSpawn)}</span>
+                                                                            <span className={`text-[10px] ${pred.status === 'OVERDUE' ? 'text-red-400' : pred.status === 'WINDOW_OPEN' ? 'text-emerald-400' : 'text-secondary'}`}>
+                                                                                {outerStatusText}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Inner window */}
+                                                                    {hasTight && (
+                                                                        <>
+                                                                            <div className="border-t border-white/5"></div>
+                                                                            <div>
+                                                                                <div className="flex items-center gap-1.5 mb-0.5">
+                                                                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
+                                                                                    <span className="text-emerald-300 font-medium">Provável</span>
+                                                                                </div>
+                                                                                <div className="pl-4 flex items-center justify-between gap-3">
+                                                                                    <span className="text-white">{formatShort(pred.tightMinSpawn!)} até {formatShort(pred.tightMaxSpawn!)}</span>
+                                                                                    {innerStatusText && (
+                                                                                        <span className="text-[10px] text-emerald-400">{innerStatusText}</span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                             );
                                         })}

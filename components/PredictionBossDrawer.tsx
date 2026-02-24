@@ -166,12 +166,22 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
 
                                     {/* Timeline Visualization */}
                                     <div className="p-4 rounded-lg bg-surface-hover/30 border border-border/50">
-                                        <div className="text-sm text-secondary mb-3">Ciclo de Spawn</div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-sm text-secondary">Ciclo de Spawn</span>
+                                            <div className="flex items-center gap-3 text-[10px] text-secondary">
+                                                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-800/50 inline-block"></span>Janela</span>
+                                                {prediction.stats?.tightMinGap !== undefined && prediction.stats?.tightMaxGap !== undefined && prediction.stats.tightMinGap !== prediction.stats.tightMaxGap && (
+                                                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-400/80 inline-block"></span>P25–P75</span>
+                                                )}
+                                            </div>
+                                        </div>
                                         <BossTimeline
                                             minGap={stats?.minGap || 1}
                                             maxGap={stats?.maxGap || 1}
                                             daysSince={prediction.daysSinceKill}
                                             status={prediction.status}
+                                            tightMinGap={stats?.tightMinGap}
+                                            tightMaxGap={stats?.tightMaxGap}
                                         />
                                     </div>
 
@@ -219,15 +229,38 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                     </div>
 
                                     {/* Key Dates */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-surface-hover/50 p-3 rounded-lg border border-border/50">
-                                            <div className="text-xs text-secondary mb-1">Janela Abre</div>
-                                            <div className="font-medium text-white">{formatDate(prediction.nextMinSpawn)}</div>
+                                    <div className="space-y-3">
+                                        {/* Outer Window */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-surface-hover/50 p-3 rounded-lg border border-emerald-500/20">
+                                                <div className="text-xs text-secondary mb-1">Janela Abre</div>
+                                                <div className="font-medium text-white">{formatDate(prediction.nextMinSpawn)}</div>
+                                            </div>
+                                            <div className="bg-surface-hover/50 p-3 rounded-lg border border-emerald-500/20">
+                                                <div className="text-xs text-secondary mb-1">Janela Fecha</div>
+                                                <div className="font-medium text-white">{formatDate(prediction.nextMaxSpawn)}</div>
+                                            </div>
                                         </div>
-                                        <div className="bg-surface-hover/50 p-3 rounded-lg border border-border/50">
-                                            <div className="text-xs text-secondary mb-1">Janela Fecha</div>
-                                            <div className="font-medium text-white">{formatDate(prediction.nextMaxSpawn)}</div>
-                                        </div>
+
+                                        {/* IQR Tight Window */}
+                                        {prediction.tightMinSpawn && prediction.tightMaxSpawn && stats?.tightMinGap !== stats?.tightMaxGap && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-emerald-500/5 p-3 rounded-lg border border-emerald-400/20">
+                                                    <div className="text-xs text-emerald-400/80 mb-1">Zona Provável (P25)</div>
+                                                    <div className="font-medium text-emerald-300">{formatDate(prediction.tightMinSpawn)}</div>
+                                                </div>
+                                                <div className="bg-emerald-500/5 p-3 rounded-lg border border-emerald-400/20">
+                                                    <div className="text-xs text-emerald-400/80 mb-1">Zona Provável (P75)</div>
+                                                    <div className="font-medium text-emerald-300">{formatDate(prediction.tightMaxSpawn)}</div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {prediction.tightMinSpawn && prediction.tightMaxSpawn && stats?.tightMinGap !== stats?.tightMaxGap && (
+                                            <p className="text-[10px] text-secondary/70 px-1">
+                                                A zona provável (amarela) representa os percentis 25–75 dos intervalos históricos — 50% das kills ocorrem nessa faixa.
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Last Seen */}
@@ -269,6 +302,20 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                                     <td className="px-4 py-3 text-white font-mono text-right">{stats?.stdDev?.toFixed(2) ?? '?'} dias</td>
                                                     <td className="px-4 py-3 text-xs text-secondary/70">Medida de consistência</td>
                                                 </tr>
+                                                {stats?.p25 !== undefined && stats?.p75 !== undefined && stats.p25 !== stats.p75 && (
+                                                    <>
+                                                        <tr className="border-b border-border/30 bg-emerald-500/5">
+                                                            <td className="px-4 py-3 text-emerald-400">P25</td>
+                                                            <td className="px-4 py-3 text-emerald-300 font-mono text-right">{stats.p25.toFixed(1)} dias</td>
+                                                            <td className="px-4 py-3 text-xs text-emerald-400/70">25% das kills antes</td>
+                                                        </tr>
+                                                        <tr className="border-b border-border/30 bg-emerald-500/5">
+                                                            <td className="px-4 py-3 text-emerald-400">P75</td>
+                                                            <td className="px-4 py-3 text-emerald-300 font-mono text-right">{stats.p75.toFixed(1)} dias</td>
+                                                            <td className="px-4 py-3 text-xs text-emerald-400/70">75% das kills antes</td>
+                                                        </tr>
+                                                    </>
+                                                )}
                                                 <tr className="border-b border-border/30">
                                                     <td className="px-4 py-3 text-secondary">Confiança</td>
                                                     <td className="px-4 py-3 text-white font-mono text-right">{prediction.confidence}%</td>
@@ -400,6 +447,22 @@ export default function PredictionBossDrawer({ prediction, isOpen, onClose }: Pr
                                                     Mantidos: {stats?.filteredGaps?.length} intervalos | Removidos: {(stats?.rawGaps?.length ?? 0) - (stats?.filteredGaps?.length ?? 0)} outliers
                                                 </div>
                                             </div>
+
+                                            {/* Step 2.5: IQR */}
+                                            {stats?.p25 !== undefined && stats?.p75 !== undefined && stats.p25 !== stats.p75 && (
+                                                <div>
+                                                    <div className="text-emerald-400 font-bold mb-1">2.5. Calcular IQR (P25–P75)</div>
+                                                    <div className="text-secondary text-xs mb-1">
+                                                        O Intervalo Interquartil representa a faixa onde 50% dos kills historicamente ocorrem — a zona de maior probabilidade.
+                                                    </div>
+                                                    <div className="bg-emerald-500/10 p-2 rounded text-xs font-mono text-emerald-300 border border-emerald-500/20">
+                                                        P25 = {stats.p25.toFixed(1)} dias | P75 = {stats.p75.toFixed(1)} dias
+                                                    </div>
+                                                    <div className="text-xs text-secondary mt-1">
+                                                        Zona provável: {stats.p25.toFixed(1)}–{stats.p75.toFixed(1)} dias após a última kill
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Step 3 */}
                                             <div>

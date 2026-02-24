@@ -2,38 +2,25 @@ import { useMemo, useCallback } from 'react';
 import { SpawnPredictor, KillRecord, Prediction } from '@/utils/spawnLogic';
 import { BossKillHistory } from '@/types';
 import {
-    recordPredictionAccuracy as recordAccuracy,
-    getAccuracyStats,
-    AccuracyStats
-} from '@/utils/accuracyTracking';
-import {
     getSpawnPatternData,
     SpawnPatternData
 } from '@/utils/spawnVisualization';
 
 export interface UseBossPredictionsResult {
     predictions: Prediction[];
-    accuracyStats: AccuracyStats;
     getSpawnPatternData: (bossName: string, world: string | null) => SpawnPatternData;
-    recordPredictionAccuracy: (
-        bossName: string,
-        world: string,
-        actualKillDate: Date,
-        predictedStatus: string,
-        predictedWindow: { min: Date; max: Date }
-    ) => void;
 }
 
 export function useBossPredictions(
     killDates: BossKillHistory[] | undefined,
     selectedWorld: string
 ): UseBossPredictionsResult {
-    // Bosses to exclude from predictions
+    // #12 FIX: Cleaned blacklist — removed entries already in SUPPRESSED_BOSSES
+    // and entries that don't exist in the data. Only prediction-specific exclusions.
     const PREDICTION_BLACKLIST = [
         'Frostbell', 'Frostreaper',
-        'Ferumbras Mortal Shell', 'Bakragore', 'The Percht Queen', 'The World Devourer',
-        'Mahatheb', 'Yakchal', 'Undead Cavebear', 'Crustacea Gigantica', 'Oodok', 'Arthem',
-        'Ghazbaran', "Gaz'haragoth",
+        'Bakragore', 'The Percht Queen', 'The World Devourer',
+        'Undead Cavebear', 'Crustacea Gigantica', 'Oodok', 'Arthem',
         'Midnight Panther', 'Feroxa', 'Dreadful Disruptor'
     ];
 
@@ -65,6 +52,10 @@ export function useBossPredictions(
 
         const results: Prediction[] = [];
 
+        // #1 FIX: Prepare "today" for kill-detected-today check
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         killDates.forEach(boss => {
             if (PREDICTION_BLACKLIST.includes(boss.bossName)) return;
 
@@ -86,6 +77,19 @@ export function useBossPredictions(
 
                 const lastKill = sortedHistory[0];
                 const prediction = predictor.predict(boss.bossName, world, lastKill.date);
+
+                // #1 FIX: If kill detected today, override WINDOW_OPEN → COOLDOWN
+                const [ld, lm, ly] = lastKill.date.split('/').map(Number);
+                const lastKillDate = new Date(ly, lm - 1, ld);
+                lastKillDate.setHours(0, 0, 0, 0);
+                const isKilledToday = lastKillDate.getTime() === today.getTime();
+
+                if (isKilledToday && prediction.status === 'WINDOW_OPEN') {
+                    prediction.status = 'COOLDOWN';
+                    prediction.probabilityLabel = 'Cooldown';
+                    prediction.relativeLabel = 'Morto hoje — cooldown iniciado';
+                    prediction.windowProgress = 0;
+                }
 
                 // Only add if we have valid stats (not UNKNOWN)
                 if (prediction.status !== 'UNKNOWN') {
@@ -139,21 +143,6 @@ export function useBossPredictions(
 
     }, [predictor, killDates, selectedWorld]);
 
-    // --- ACCURACY TRACKING ---
-    const accuracyStats = useMemo(() => {
-        return getAccuracyStats();
-    }, []);
-
-    const recordPredictionAccuracyCallback = useCallback((
-        bossName: string,
-        world: string,
-        actualKillDate: Date,
-        predictedStatus: string,
-        predictedWindow: { min: Date; max: Date }
-    ) => {
-        recordAccuracy(bossName, world, actualKillDate, predictedStatus, predictedWindow);
-    }, []);
-
     // --- VISUALIZATION HELPERS ---
     const getSpawnPatternDataCallback = useCallback((
         bossName: string,
@@ -164,8 +153,6 @@ export function useBossPredictions(
 
     return {
         predictions,
-        accuracyStats,
-        getSpawnPatternData: getSpawnPatternDataCallback,
-        recordPredictionAccuracy: recordPredictionAccuracyCallback
+        getSpawnPatternData: getSpawnPatternDataCallback
     };
 }

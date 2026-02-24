@@ -357,21 +357,7 @@ export default function BossCard({
             ${isZeroKills ? 'opacity-80' : ''}
           `}
         >
-          {/* Tooltip */}
-          <AnimatePresence>
-            {showTooltip && (boss as any).confidence !== undefined && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-                animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
-                exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-                transition={{ duration: 0.2 }}
-                className="absolute -top-10 left-12 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
-              >
-                {(boss as any).confidence}% Confiança
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+
 
           {/* Animated Tag Dots - Absolute positioned */}
           <AnimatedTagDots position="top-2 right-3" />
@@ -422,7 +408,7 @@ export default function BossCard({
                   <div className="flex items-center gap-1.5">
                     <Calendar size={12} className="text-secondary/70" />
                     <span>
-                      Próx: <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                      <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
                         {nextSpawnInfo.date}
                       </span>
                     </span>
@@ -572,22 +558,7 @@ export default function BossCard({
           ${isZeroKills ? 'opacity-80' : ''}
         `}
       >
-        {/* Tooltip */}
-        {/* Tooltip */}
-        <AnimatePresence>
-          {showTooltip && (boss as any).confidence !== undefined && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-              animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
-              exit={{ opacity: 0, scale: 0.9, y: 10, x: "-50%" }}
-              transition={{ duration: 0.2 }}
-              className="absolute -top-10 left-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50 border border-white/10 shadow-xl pointer-events-none"
-            >
-              {(boss as any).confidence}% Confiança
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45 border-r border-b border-white/10"></div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
 
         {/* Animated Tag Dots - Absolute positioned */}
         <AnimatedTagDots position="top-3 right-3" />
@@ -638,7 +609,7 @@ export default function BossCard({
                   <Calendar size={12} className="text-secondary/70" />
                   <div className="flex items-center">
                     <span>
-                      {nextSpawnInfo.isOverdue ? 'Esperado: ' : 'Próx: '}<span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
+                      <span className={`${nextSpawnInfo.isOverdue ? 'text-red-400' : 'text-secondary'}`}>
                         {nextSpawnInfo.date}
                       </span>
                     </span>

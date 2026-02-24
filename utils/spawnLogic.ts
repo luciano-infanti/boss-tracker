@@ -48,6 +48,10 @@ export interface Prediction {
     daysSinceKill: number;
     relativeLabel: string;
     isLowConfidence: boolean;
+    // --- IQR Tight Window (P25–P75) ---
+    tightMinSpawn?: Date;
+    tightMaxSpawn?: Date;
+
     stats?: {
         minGap: number;
         maxGap: number;
@@ -58,6 +62,10 @@ export interface Prediction {
         rawGaps?: number[];
         filteredGaps?: number[];
         worldGaps?: Record<string, number[]>;
+        tightMinGap?: number;
+        tightMaxGap?: number;
+        p25?: number;
+        p75?: number;
     };
 }
 
@@ -73,6 +81,8 @@ export class SpawnPredictor {
         filteredGaps: number[];
         worldGaps: Record<string, number[]>;
         dataQuality: 'HIGH' | 'MEDIUM' | 'LOW';
+        p25: number;
+        p75: number;
     }>;
 
     constructor(allKills: KillRecord[]) {
@@ -93,6 +103,8 @@ export class SpawnPredictor {
             filteredGaps: number[];
             worldGaps: Record<string, number[]>;
             dataQuality: 'HIGH' | 'MEDIUM' | 'LOW';
+            p25: number;
+            p75: number;
         }>();
         const killsByBoss = this.groupByBoss(kills);
 
@@ -139,6 +151,10 @@ export class SpawnPredictor {
             // --- STEP 5: Calculate Data Quality ---
             const dataQuality = this.calculateDataQuality(filteredGaps.length, stdDev);
 
+            // --- STEP 6: Calculate IQR (P25–P75) ---
+            const p25 = this.computePercentile(filteredGaps, 25);
+            const p75 = this.computePercentile(filteredGaps, 75);
+
             stats.set(bossName, {
                 avgInterval: mean,
                 weightedAvgInterval: weightedAvg,
@@ -147,7 +163,9 @@ export class SpawnPredictor {
                 rawGaps: allIntervals,
                 filteredGaps,
                 worldGaps,
-                dataQuality
+                dataQuality,
+                p25,
+                p75
             });
         });
 
@@ -250,16 +268,50 @@ export class SpawnPredictor {
         // --- Check for known fixed patterns first ---
         if (hasKnownPattern(bossName)) {
             const pattern = getKnownPattern(bossName)!;
-            // For fixed-pattern bosses, use the known min/max
-            const targetDate = addDays(lastKillDate, pattern.min);
-            const maxDate = addDays(lastKillDate, pattern.max);
             const daysSinceLast = differenceInDays(now, lastKillDate);
+
+            // #5 FIX: Advance cycles for fixed-pattern bosses when overdue
+            const fpCycleDuration = pattern.max > pattern.min ? pattern.max : pattern.min;
+            let fpCycles = 1;
+            if (daysSinceLast > fpCycleDuration) {
+                fpCycles = Math.ceil(daysSinceLast / fpCycleDuration);
+            }
+
+            const targetDate = addDays(lastKillDate, fpCycles * pattern.min);
+            const maxDate = addDays(lastKillDate, fpCycles * pattern.max);
 
             let status: Prediction['status'] = 'COOLDOWN';
             if (isAfter(now, maxDate)) {
                 status = 'OVERDUE';
             } else if (isAfter(now, targetDate) || this.isSameDay(now, targetDate)) {
                 status = 'WINDOW_OPEN';
+            }
+
+            // #6 FIX: Status-aware windowProgress
+            let fpProgress: number;
+            if (status === 'COOLDOWN') {
+                const totalCooldown = differenceInDays(targetDate, lastKillDate);
+                fpProgress = totalCooldown > 0 ? (daysSinceLast / totalCooldown) * 100 : 0;
+            } else if (status === 'WINDOW_OPEN') {
+                const windowSize = differenceInDays(maxDate, targetDate);
+                const intoWindow = differenceInDays(now, targetDate);
+                fpProgress = windowSize > 0 ? (intoWindow / windowSize) * 100 : 100;
+            } else {
+                // OVERDUE — how far past the max
+                const windowSize = differenceInDays(maxDate, targetDate);
+                const intoWindow = differenceInDays(now, targetDate);
+                fpProgress = windowSize > 0 ? (intoWindow / windowSize) * 100 : 150;
+            }
+
+            const daysUntilOpen = differenceInDays(targetDate, now);
+            let fpRelativeLabel = '';
+            if (status === 'COOLDOWN') {
+                fpRelativeLabel = daysUntilOpen === 1 ? 'Abre amanhã' : `Abre em ${daysUntilOpen} dias`;
+            } else if (status === 'WINDOW_OPEN') {
+                fpRelativeLabel = 'Padrão Fixo';
+            } else {
+                const overdueBy = differenceInDays(now, maxDate);
+                fpRelativeLabel = `Atrasado ${overdueBy} dias (ciclo ${fpCycles})`;
             }
 
             return {
@@ -270,45 +322,71 @@ export class SpawnPredictor {
                 nextMaxSpawn: maxDate,
                 avgSpawnDate: targetDate,
                 confidence: 95,
-                windowProgress: this.calculateProgress(lastKillDate, targetDate, now),
-                daysUntilMin: differenceInDays(targetDate, now),
+                windowProgress: Math.min(Math.max(fpProgress, 0), 200),
+                daysUntilMin: daysUntilOpen,
+                cycleInfo: {
+                    cycleDuration: fpCycleDuration,
+                    cyclesSkipped: fpCycles - 1,
+                    margin: pattern.max - pattern.min
+                },
                 dataQuality: 'HIGH',
                 sampleSize: stats.sampleSize,
                 probabilityLabel: status === 'WINDOW_OPEN' ? 'Janela Aberta' : status === 'OVERDUE' ? 'Atrasado' : 'Cooldown',
                 confidenceLabel: 'High',
                 lastKill: lastKillDate,
                 daysSinceKill: daysSinceLast,
-                relativeLabel: status === 'COOLDOWN' ? `Abre em ${differenceInDays(targetDate, now)} dias` : 'Padrão Fixo',
+                relativeLabel: fpRelativeLabel,
                 isLowConfidence: false,
+                // Fixed-pattern bosses: tight window = outer window (no IQR needed)
+                tightMinSpawn: targetDate,
+                tightMaxSpawn: maxDate,
                 stats: {
-                    minGap: pattern.min,
-                    maxGap: pattern.max,
+                    minGap: differenceInDays(targetDate, lastKillDate),
+                    maxGap: differenceInDays(maxDate, lastKillDate),
                     avgGap: pattern.min,
                     stdDev: 0,
                     sampleSize: stats.sampleSize,
                     confidence: 95,
                     rawGaps: stats.rawGaps,
                     filteredGaps: stats.filteredGaps,
-                    worldGaps: stats.worldGaps
+                    worldGaps: stats.worldGaps,
+                    tightMinGap: differenceInDays(targetDate, lastKillDate),
+                    tightMaxGap: differenceInDays(maxDate, lastKillDate),
+                    p25: stats.p25,
+                    p75: stats.p75
                 }
             };
         }
 
-        const { avgInterval, stdDev, dataQuality } = stats;
+        const { avgInterval, weightedAvgInterval, stdDev, dataQuality } = stats;
+
+        // #2 FIX: Use weighted average (recent kills weigh more), fallback to simple
+        let effectiveInterval = weightedAvgInterval > 0 ? weightedAvgInterval : avgInterval;
+        let effectiveStdDev = stdDev;
+
+        // #9 FIX: Prefer per-world stats when enough data is available
+        const worldGapData = stats.worldGaps[world];
+        if (worldGapData && worldGapData.length >= 3) {
+            const worldAvg = worldGapData.reduce((a, b) => a + b, 0) / worldGapData.length;
+            const worldVar = worldGapData.reduce((a, b) => a + Math.pow(b - worldAvg, 2), 0) / worldGapData.length;
+            effectiveInterval = worldAvg;
+            effectiveStdDev = Math.sqrt(worldVar);
+        }
 
         // --- STEP A: Calculate Dynamic Margin ---
-        // If the boss is very regular (low StdDev), window is tight. 
-        // We clamp it: Minimum +/- 1 day, Maximum +/- 3 days
-        let margin = Math.ceil(stdDev);
+        // #4 FIX: Dynamic cap proportional to interval instead of hard cap at 3
+        let margin = Math.ceil(effectiveStdDev);
         if (margin < 1) margin = 1;
-        if (margin > 3) margin = 3;
+        const maxMargin = Math.max(2, Math.ceil(effectiveInterval * 0.4));
+        if (margin > maxMargin) margin = maxMargin;
 
         // --- STEP B: Calculate Cycles ---
         // How many days have passed since the last kill?
         const daysSinceLast = differenceInDays(now, lastKillDate);
 
         // How many "cycles" of the average interval fit into this time?
-        let cycles = Math.round(daysSinceLast / avgInterval);
+        // #3 FIX: Use Math.floor to prevent premature window promotion
+        let cycles = Math.floor(daysSinceLast / effectiveInterval);
 
         // If we are currently "before" the first cycle (e.g. 5 days passed, avg 14), 
         // we assume we are aiming for the 1st cycle.
@@ -316,7 +394,7 @@ export class SpawnPredictor {
 
         // --- STEP C: Project the Date ---
         // Target Date = LastKill + (Cycles * Average)
-        let targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
+        let targetDate = addDays(lastKillDate, Math.round(cycles * effectiveInterval));
 
         // --- LATE BUFFER LOGIC ---
         // Instead of immediately jumping to next cycle when past maxSpawn,
@@ -333,7 +411,7 @@ export class SpawnPredictor {
             // jump to the next cycle.
             while (isAfter(now, addDays(addDays(targetDate, margin), LATE_BUFFER_DAYS))) {
                 cycles++;
-                targetDate = addDays(lastKillDate, Math.round(cycles * avgInterval));
+                targetDate = addDays(lastKillDate, Math.round(cycles * effectiveInterval));
             }
         }
 
@@ -369,21 +447,59 @@ export class SpawnPredictor {
         }
 
         // --- STEP E: Calculate Confidence ---
+        // #13 FIX: Use dataQuality and coefficient of variation
         let confidence = 0;
-        if (stats.sampleSize > 5) confidence += 0.3;
-        if (stats.sampleSize > 10) confidence += 0.2;
-        if (stdDev < 2) confidence += 0.3; // Very stable boss
-        else if (stdDev < 5) confidence += 0.1;
-
-        // Penalty for high cycle count (prediction gets fuzzier the further out we guess)
+        // Base from data quality
+        if (dataQuality === 'HIGH') confidence += 0.5;
+        else if (dataQuality === 'MEDIUM') confidence += 0.3;
+        else confidence += 0.1;
+        // Sample size bonus (diminishing returns, capped at 0.3)
+        confidence += Math.min(0.3, stats.sampleSize * 0.02);
+        // Stability bonus from coefficient of variation
+        const cv = effectiveStdDev / effectiveInterval;
+        if (cv < 0.15) confidence += 0.2;
+        else if (cv < 0.3) confidence += 0.1;
+        // Penalty for high cycle count
         confidence -= (cycles - 1) * 0.1;
-        if (confidence < 0.1) confidence = 0.1;
-        if (confidence > 1) confidence = 1;
+        confidence = Math.max(0.1, Math.min(1, confidence));
 
         const isLowConfidence = confidence < 0.4;
         const confidenceLabel = confidence > 0.75 ? 'High' : confidence > 0.4 ? 'Medium' : 'Low';
-        const windowProgress = this.calculateProgress(lastKillDate, minSpawn, now);
+
+        // #6 FIX: Status-aware windowProgress
+        let windowProgress: number;
+        if (status === 'COOLDOWN') {
+            const totalCooldown = differenceInDays(minSpawn, lastKillDate);
+            windowProgress = totalCooldown > 0 ? (daysSinceLast / totalCooldown) * 100 : 0;
+        } else if (status === 'WINDOW_OPEN') {
+            const windowSize = differenceInDays(maxSpawn, minSpawn);
+            const intoWindow = differenceInDays(now, minSpawn);
+            windowProgress = windowSize > 0 ? (intoWindow / windowSize) * 100 : 100;
+        } else {
+            // OVERDUE — progress past the window
+            const windowSize = differenceInDays(maxSpawn, minSpawn);
+            const intoWindow = differenceInDays(now, minSpawn);
+            windowProgress = windowSize > 0 ? (intoWindow / windowSize) * 100 : 150;
+        }
+        windowProgress = Math.max(0, windowProgress);
+
         const daysUntilMin = differenceInDays(minSpawn, now);
+
+        // --- IQR Tight Window ---
+        // Use per-world P25/P75 if available, otherwise global
+        let tightP25 = stats.p25;
+        let tightP75 = stats.p75;
+        if (worldGapData && worldGapData.length >= 5) {
+            tightP25 = this.computePercentile(worldGapData, 25);
+            tightP75 = this.computePercentile(worldGapData, 75);
+        }
+        const outerMinGap = differenceInDays(minSpawn, lastKillDate);
+        const outerMaxGap = differenceInDays(maxSpawn, lastKillDate);
+        // Clamp tight window to never exceed the outer window
+        const tightMinGapDays = Math.max(outerMinGap, Math.round(cycles * tightP25));
+        const tightMaxGapDays = Math.min(outerMaxGap, Math.round(cycles * tightP75));
+        const tightMinSpawn = addDays(lastKillDate, tightMinGapDays);
+        const tightMaxSpawn = addDays(lastKillDate, tightMaxGapDays);
 
         return {
             bossName,
@@ -396,7 +512,7 @@ export class SpawnPredictor {
             windowProgress,
             daysUntilMin,
             cycleInfo: {
-                cycleDuration: avgInterval,
+                cycleDuration: effectiveInterval,
                 cyclesSkipped: cycles - 1,
                 margin
             },
@@ -411,6 +527,9 @@ export class SpawnPredictor {
             daysSinceKill: daysSinceLast,
             relativeLabel,
             isLowConfidence,
+            // IQR tight window
+            tightMinSpawn,
+            tightMaxSpawn,
             stats: {
                 // FIXED: Return cumulative days from LastKill for timeline compatibility
                 minGap: differenceInDays(minSpawn, lastKillDate),
@@ -422,7 +541,12 @@ export class SpawnPredictor {
                 // Compatibility for Drawer charts
                 rawGaps: stats.rawGaps,
                 filteredGaps: stats.filteredGaps,
-                worldGaps: stats.worldGaps
+                worldGaps: stats.worldGaps,
+                // IQR
+                tightMinGap: tightMinGapDays,
+                tightMaxGap: tightMaxGapDays,
+                p25: tightP25,
+                p75: tightP75
             }
         };
     }
@@ -462,6 +586,22 @@ export class SpawnPredictor {
             d1.getFullYear() === d2.getFullYear();
     }
 
+    /**
+     * Compute the Pth percentile of a sorted array of numbers.
+     * Uses linear interpolation between closest ranks.
+     */
+    private computePercentile(values: number[], p: number): number {
+        if (values.length === 0) return 0;
+        const sorted = [...values].sort((a, b) => a - b);
+        if (sorted.length === 1) return sorted[0];
+        const rank = (p / 100) * (sorted.length - 1);
+        const lower = Math.floor(rank);
+        const upper = Math.ceil(rank);
+        if (lower === upper) return sorted[lower];
+        const fraction = rank - lower;
+        return sorted[lower] + fraction * (sorted[upper] - sorted[lower]);
+    }
+
     private calculateProgress(start: Date, target: Date, now: Date): number {
         const total = differenceInDays(target, start);
         const current = differenceInDays(now, start);
@@ -485,7 +625,8 @@ export class SpawnPredictor {
             isLowConfidence: true,
             stats: {
                 minGap: 0, maxGap: 0, avgGap: 0, stdDev: 0, sampleSize: 0, confidence: 0,
-                rawGaps: [], filteredGaps: [], worldGaps: {}
+                rawGaps: [], filteredGaps: [], worldGaps: {},
+                tightMinGap: 0, tightMaxGap: 0, p25: 0, p75: 0
             }
         };
     }
