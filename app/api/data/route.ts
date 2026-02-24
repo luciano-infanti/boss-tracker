@@ -9,6 +9,29 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export const dynamic = 'force-dynamic';
 
+function getEffectiveKillDate(): string {
+  // Tibia server save is at 10:00 AM America/Sao_Paulo time.
+  // The cycle runs from 10:00 AM today to 09:59 AM tomorrow.
+  // By subtracting 10 hours, we beautifully align this 24-hour cycle to the calendar day
+  // that the cycle started on (e.g., 24 Feb 10:01 AM and 25 Feb 09:59 AM both become 24 Feb).
+  const now = new Date();
+  const shiftedTime = new Date(now.getTime() - 10 * 60 * 60 * 1000);
+
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  
+  const parts = formatter.formatToParts(shiftedTime);
+  const day = parts.find(p => p.type === 'day')?.value;
+  const month = parts.find(p => p.type === 'month')?.value;
+  const year = parts.find(p => p.type === 'year')?.value;
+  
+  return `${day}/${month}/${year}`;
+}
+
 export async function GET() {
   try {
     console.log('GET /api/data - Fetching data from Supabase');
@@ -237,26 +260,8 @@ export async function GET() {
       // Use the most recent date, but ONLY if it's today
       const mostRecentDate = uniqueDates[0];
 
-      // Get today's date in DD/MM/YYYY format for comparison
-      // Get today's date in DD/MM/YYYY format for comparison (Brazil Time)
-      const now = new Date();
-      const brazilDateStr = now.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-      // brazilDateStr is DD/MM/YYYY (usually, but depends on locale exact format, assuming pt-BR matches)
-      // To be safe/consistent with stored format DD/MM/YYYY:
-      const [brDay, brMonth, brYear] = brazilDateStr.split('/'); // Risk if locale format differs
-
-      // Safer way to construct todayStr in DD/MM/YYYY using Intl
-      const formatter = new Intl.DateTimeFormat('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-      const parts = formatter.formatToParts(now);
-      const day = parts.find(p => p.type === 'day')?.value;
-      const month = parts.find(p => p.type === 'month')?.value;
-      const year = parts.find(p => p.type === 'year')?.value;
-      const todayStr = `${day}/${month}/${year}`;
+      // Get today's date adjusted for Tibia server save
+      const todayStr = getEffectiveKillDate();
 
       const isToday = mostRecentDate === todayStr;
       console.log(`📅 [API] Most recent date: ${mostRecentDate}, Today (BR): ${todayStr}, Match: ${isToday}`);
@@ -328,11 +333,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 });
     }
 
+    const effectiveDate = getEffectiveKillDate();
+    
+    // Helper to safely determine if a date from the scraper is the "current" run's date
+    // and should be replaced by our robust backend effective date.
+    const now = new Date();
+    const getStr = (d: Date) => {
+       const day = String(d.getDate()).padStart(2, '0');
+       const month = String(d.getMonth() + 1).padStart(2, '0');
+       const year = d.getFullYear();
+       return `${day}/${month}/${year}`;
+    };
+    const todayLocal = getStr(now);
+    const tmrLocal = getStr(new Date(now.getTime() + 86400000));
+    const ydayLocal = getStr(new Date(now.getTime() - 86400000));
+    
+    const sanitizeDate = (dateStr: string) => {
+      if (dateStr === data.daily?.date || dateStr === effectiveDate || dateStr === todayLocal || dateStr === tmrLocal || dateStr === ydayLocal) {
+        return effectiveDate;
+      }
+      return dateStr;
+    };
+
     // 0. Save Daily Update to Metadata
     if (data.daily) {
+      const updatedDaily = {
+        ...data.daily,
+        date: effectiveDate // Override external scraper date completely
+      };
+      
       const { error } = await supabase.from('metadata').upsert({
         key: 'daily_update',
-        value: data.daily
+        value: updatedDaily
       });
       if (error) console.error('Error saving daily update:', error);
     }
@@ -367,7 +399,7 @@ export async function POST(request: Request) {
         if (!error && char.history) {
           const historyRecords = char.history.map(h => ({
             character_name: char.name,
-            date: h.date,
+            date: sanitizeDate(h.date),
             level: h.level,
             experience: h.experience,
             daily_raw: h.daily_raw,
@@ -383,13 +415,13 @@ export async function POST(request: Request) {
 
     // 3. Upsert Kill History
     if (data.killDates) {
-      console.log(`📝 Upserting kill history for ${data.killDates.length} bosses...`);
+      console.log(`📝 Upserting kill history for ${data.killDates.length} bosses with effective date ${effectiveDate}...`);
       for (const record of data.killDates) {
         for (const [world, kills] of Object.entries(record.killsByWorld)) {
           const killRecords = kills.map(k => ({
             boss_name: record.bossName,
             world: world,
-            date: k.date,
+            date: sanitizeDate(k.date),
             count: k.count
           }));
           if (killRecords.length > 0) {
@@ -431,8 +463,8 @@ export async function POST(request: Request) {
       console.log('Creating backup in Supabase Storage...');
       let dateStr = new Date().toISOString().split('T')[0]; // Default to today YYYY-MM-DD
 
-      if (data.daily?.date) {
-        dateStr = data.daily.date.replace(/\//g, '-');
+      if (effectiveDate) {
+        dateStr = effectiveDate.replace(/\//g, '-');
       }
 
       const filename = `backup-${dateStr}.json`; // No folder prefix needed for bucket root, or use 'backups/' if preferred structure
