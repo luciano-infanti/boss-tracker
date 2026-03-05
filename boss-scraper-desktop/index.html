@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Boss Tracker Distributed Scraper</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        --bg: #020617;
+        --card: rgba(30, 41, 59, 0.6);
+        --border: rgba(51, 65, 85, 0.4);
+        --text: #f8fafc;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --success: #22c55e;
+        --error: #ef4444;
+        --subtext: #94a3b8;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Outfit", sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        /* Background ambient glows */
+        background-image:
+          radial-gradient(
+            circle at 15% 50%,
+            rgba(59, 130, 246, 0.15),
+            transparent 25%
+          ),
+          radial-gradient(
+            circle at 85% 30%,
+            rgba(139, 92, 246, 0.15),
+            transparent 25%
+          );
+      }
+
+      /* Draggable window title bar */
+      .titlebar {
+        height: 40px;
+        -webkit-app-region: drag;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        font-weight: 500;
+        color: var(--subtext);
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .content {
+        flex: 1;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+      .subtitle {
+        color: var(--subtext);
+        font-size: 14px;
+        margin-top: 4px;
+      }
+
+      button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        outline: none;
+      }
+      button:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+      }
+      button:disabled {
+        background: var(--border);
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+      }
+
+      /* Glass Panels */
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .terminal {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 12px;
+        padding: 16px;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 13px;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: #cbd5e1;
+        line-height: 1.5;
+      }
+
+      .log-info {
+        color: #94a3b8;
+      }
+      .log-success {
+        color: var(--success);
+        font-weight: 500;
+      }
+      .log-error {
+        color: var(--error);
+        font-weight: 500;
+      }
+
+      .results-row {
+        display: flex;
+        gap: 16px;
+        height: 120px;
+      }
+
+      .stat-card {
+        flex: 1;
+        padding: 20px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .stat-val {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .stat-label {
+        font-size: 13px;
+        color: var(--subtext);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="titlebar">Scraper Distributed Client</div>
+    <div class="content">
+      <div class="header">
+        <div>
+          <h1>Boss Tracker Engine</h1>
+          <div class="subtitle">
+            Gather today's global kill statistics safely.
+          </div>
+        </div>
+        <button id="runBtn">🚀 Run Scraper</button>
+      </div>
+
+      <div class="results-row">
+        <div class="panel stat-card">
+          <div class="stat-val" id="totalWorlds">0/14</div>
+          <div class="stat-label">Worlds Scanned</div>
+        </div>
+        <div class="panel stat-card">
+          <div class="stat-val" id="totalKills">0</div>
+          <div class="stat-label">Bosses Uploaded</div>
+        </div>
+      </div>
+
+      <!-- Terminal Pane -->
+      <div class="panel" style="flex: 1; min-height: 0">
+        <h3
+          style="
+            font-size: 14px;
+            color: var(--subtext);
+            margin-bottom: 12px;
+            font-weight: 500;
+          "
+        >
+          LIVE LOGS
+        </h3>
+        <div class="terminal" id="terminal">
+          <div class="log-info">
+            Ready to start scraping. Click 'Run Scraper' above.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const term = document.getElementById("terminal");
+      const btn = document.getElementById("runBtn");
+      let worldsScanned = 0;
+      let totalKills = 0;
+
+      function appendLog(text, type = "info") {
+        const div = document.createElement("div");
+
+        if (text.includes("[ERR")) type = "error";
+        if (text.includes("[OK]")) type = "success";
+        if (text.includes("[SUCCESS]")) type = "success";
+
+        div.className = `log-${type}`;
+        div.textContent = text;
+        term.appendChild(div);
+        term.scrollTop = term.scrollHeight;
+
+        // Update counters based on strings
+        if (text.includes("[OK]")) {
+          worldsScanned++;
+          document.getElementById("totalWorlds").textContent =
+            `${worldsScanned}/14`;
+
+          // rudimentary extraction of kills
+          const match = text.match(/— (\d+) bosses/);
+          if (match) {
+            totalKills += parseInt(match[1]);
+            document.getElementById("totalKills").textContent = totalKills;
+          }
+        }
+      }
+
+      btn.addEventListener("click", () => {
+        btn.disabled = true;
+        btn.textContent = "Scraping in progress...";
+        term.innerHTML = "";
+        worldsScanned = 0;
+        totalKills = 0;
+        document.getElementById("totalWorlds").textContent = "0/14";
+        document.getElementById("totalKills").textContent = "0";
+        appendLog("Starting distributed scrape engine...");
+        window.api.startScraper();
+      });
+
+      window.api.onLog((data) => {
+        appendLog(data.message, data.type);
+      });
+
+      window.api.onDone((results) => {
+        btn.disabled = false;
+        btn.textContent = "🚀 Run Scraper";
+        appendLog("Scrape completely finished.", "success");
+      });
+
+      window.api.onError((err) => {
+        btn.disabled = false;
+        btn.textContent = "⚠️ Failed! Retry";
+        appendLog(`CRITICAL ERROR: ${err}`, "error");
+      });
+    </script>
+  </body>
+</html>

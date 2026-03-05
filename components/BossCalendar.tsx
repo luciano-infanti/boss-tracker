@@ -284,7 +284,7 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                 <div className={`text-right text-xs mb-2 font-medium ${isToday ? 'text-primary' : 'text-secondary'}`}>
                                     {day.date.getDate()}
                                 </div>
-                                <div className="flex flex-wrap gap-1">
+                                <div className="w-full">
                                     {/* Group kills by boss name */}
                                     {(() => {
                                         const groupedKills: { [key: string]: { count: number, world: string, timestamp: string } } = {};
@@ -295,7 +295,11 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                             groupedKills[kill.bossName].count++;
                                         });
 
-                                        return Object.entries(groupedKills).map(([bossName, info]) => {
+                                        const entries = Object.entries(groupedKills);
+                                        const bosses = entries.filter(([name]) => getBossCategory(name) !== 'Criaturas');
+                                        const creatures = entries.filter(([name]) => getBossCategory(name) === 'Criaturas');
+
+                                        const renderItem = ([bossName, info]: [string, { count: number, world: string, timestamp: string }]) => {
                                             const bossImg = getBossImage(bossName);
                                             return (
                                                 <div
@@ -326,7 +330,27 @@ export default function BossCalendar({ worldName }: { worldName?: string }) {
                                                     </div>
                                                 </div>
                                             );
-                                        });
+                                        };
+
+                                        return (
+                                            <div className="flex flex-col gap-2 w-full">
+                                                {bosses.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {bosses.map(renderItem)}
+                                                    </div>
+                                                )}
+                                                
+                                                {bosses.length > 0 && creatures.length > 0 && (
+                                                    <div className="w-full h-px bg-border/50 my-1 rounded-full" />
+                                                )}
+
+                                                {creatures.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {creatures.map(renderItem)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
                                     })()}
                                 </div>
                             </div>

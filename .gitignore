@@ -32,3 +32,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# desktop scraper
+boss-scraper-desktop/node_modules/
+boss-scraper-desktop/dist/
+boss-scraper-desktop/release/
+

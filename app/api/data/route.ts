@@ -10,12 +10,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export const dynamic = 'force-dynamic';
 
 function getEffectiveKillDate(): string {
-  // Tibia server save is at 10:00 AM America/Sao_Paulo time.
-  // The cycle runs from 10:00 AM today to 09:59 AM tomorrow.
-  // By subtracting 10 hours, we beautifully align this 24-hour cycle to the calendar day
-  // that the cycle started on (e.g., 24 Feb 10:01 AM and 25 Feb 09:59 AM both become 24 Feb).
+  // Use current local time (BRT) without SS offset since we are scraping the last 24h
   const now = new Date();
-  const shiftedTime = new Date(now.getTime() - 10 * 60 * 60 * 1000);
 
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'America/Sao_Paulo',
@@ -24,7 +20,7 @@ function getEffectiveKillDate(): string {
     year: 'numeric'
   });
   
-  const parts = formatter.formatToParts(shiftedTime);
+  const parts = formatter.formatToParts(now);
   const day = parts.find(p => p.type === 'day')?.value;
   const month = parts.find(p => p.type === 'month')?.value;
   const year = parts.find(p => p.type === 'year')?.value;

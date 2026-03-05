@@ -1,0 +1,39 @@
+{
+  "name": "boss-scraper-desktop",
+  "version": "1.0.0",
+  "description": "Standalone desktop scraper for Boss Tracker",
+  "main": "dist/main.js",
+  "scripts": {
+    "build:ts": "tsc",
+    "copy:assets": "copyfiles \"*.html\" dist/",
+    "build": "npm run build:ts && npm run copy:assets",
+    "start": "npm run build && electron .",
+    "build:exe": "npm run build && electron-builder --win --x64"
+  },
+  "bin": "dist/scraper.js",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "puppeteer-real-browser": "^1.3.17"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "copyfiles": "^2.4.1",
+    "electron": "^40.6.1",
+    "electron-builder": "^26.8.1",
+    "puppeteer": "^24.37.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "build": {
+    "appId": "com.lucianoinfanti.bossscraper",
+    "productName": "Boss Scraper",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asar": false
+  }
+}
