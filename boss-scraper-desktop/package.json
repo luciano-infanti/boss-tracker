@@ -12,6 +12,7 @@
   },
   "bin": "dist/scraper.js",
   "dependencies": {
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "puppeteer-real-browser": "^1.3.17"
   },

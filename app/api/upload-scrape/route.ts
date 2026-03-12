@@ -37,10 +37,72 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'No rows to upsert.' }, { status: 200 });
     }
 
-    // Upsert data to Supabase
+    // Determine the unique effective dates + past 2 days to form a 3-day rolling window
+    const baseDate = new Date();
+    const strToday = rowsToUpsert[0]?.date || ''; // Assuming the scraper correctly sends the effective date
+    
+    // In case we want to be foolproof, calculate the 3 strings manually from current time:
+    const getStr = (d: Date) => {
+       const day = String(d.getDate()).padStart(2, '0');
+       const month = String(d.getMonth() + 1).padStart(2, '0');
+       const year = d.getFullYear();
+       return `${day}/${month}/${year}`;
+    };
+    
+    const dToday = new Date(baseDate.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const dYest = new Date(dToday.getTime() - 24 * 60 * 60 * 1000);
+    const dDayBefore = new Date(dToday.getTime() - 48 * 60 * 60 * 1000);
+    
+    const recentDays = [getStr(dToday), getStr(dYest), getStr(dDayBefore)];
+
+    const finalRowsToUpsert: any[] = [];
+
+    let recentKillsData: any[] = [];
+    if (recentDays.length > 0) {
+      const { data: rKills } = await supabase
+        .from('kill_history')
+        .select('*')
+        .in('date', recentDays);
+      recentKillsData = rKills || [];
+    }
+
+    // Process and diff rows
+    for (const row of rowsToUpsert) {
+      // Sum the kills for this boss in this world over the last 3 days
+      const bossRecentRecords = recentKillsData.filter(
+        (y) => y.boss_name === row.boss_name && y.world === row.world
+      );
+
+      const recentSum = bossRecentRecords.reduce((sum, record) => sum + record.count, 0);
+
+      if (row.count > recentSum) {
+        // If the 24h count is higher than the summation of the last 3 DB days, new kills occurred!
+        // We record ONLY the mathematical difference as today's kills
+        finalRowsToUpsert.push({
+          boss_name: row.boss_name,
+          world: row.world,
+          date: row.date || getStr(dToday), // fallback
+          count: row.count - recentSum // strictly the new kills
+        });
+      }
+      // If row.count <= recentSum, no *new* kills happened in the overlapping window, so we omit this row.
+    }
+
+    if (finalRowsToUpsert.length === 0) {
+      await supabase.from('scraper_logs').insert({
+        scraper_name: scraperName,
+        records_upserted: 0,
+        status: 'SUCCESS_DUPLICATES_IGNORED',
+        ip_address: ipAddress,
+        log_message: `Scraper found ${rowsToUpsert.length} kills, but all were overlapped duplicates from yesterday.`
+      });
+      return NextResponse.json({ message: 'All found kills were overlapping duplicates.' }, { status: 200 });
+    }
+
+    // Upsert validated final data to Supabase
     const { data, error } = await supabase
       .from('kill_history')
-      .upsert(rowsToUpsert, { onConflict: 'boss_name,world,date' });
+      .upsert(finalRowsToUpsert, { onConflict: 'boss_name,world,date' });
 
     if (error) {
       console.error('[API] Supabase Upsert Error:', error);

@@ -199,11 +199,7 @@ export default function UpcomingBossCalendar({ predictions, worldName }: Upcomin
                                                         <div className="text-[10px] text-secondary mt-1">
                                                             Intervalo Médio: {pred.stats?.avgGap ?? '?'} dias
                                                         </div>
-                                                        <div className={`text-[10px] font-bold mt-1 ${pred.confidenceLabel === 'High' ? 'text-emerald-400' :
-                                                            pred.confidenceLabel === 'Medium' ? 'text-yellow-400' : 'text-red-400'
-                                                            }`}>
-                                                            Confiança: {pred.confidenceLabel}
-                                                        </div>
+
                                                         {isOverdue && (
                                                             <div className="text-[10px] text-red-400 font-bold mt-1">
                                                                 ATRASADO

@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boss, CombinedBoss } from '@/types';
@@ -67,7 +69,7 @@ const getConfidenceBadge = () => {
 import { calculateAdjustedTotalKills, getAdjustedKillCount } from '@/utils/soulpitUtils';
 import { getBossExtraInfo } from '@/utils/bossExtraData';
 import { useData } from '@/context/DataContext';
-import BossDetailsDrawer from './BossDetailsDrawer';
+
 
 import { DailyKill } from '@/types';
 
@@ -101,7 +103,7 @@ export default function BossCard({
   status
 }: BossCardProps & { showNextSpawn?: boolean; viewMode?: 'grid' | 'list'; hideStats?: boolean; showLastKill?: boolean }) {
   const { data } = useData();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const navRouter = useRouter();
   const bossImage = getBossImage(boss.name);
   const bossExtra = getBossExtraInfo(boss.name);
   const eventTag = bossExtra?.eventTag;
@@ -149,7 +151,7 @@ export default function BossCard({
     if (onClick) {
       onClick(boss);
     } else {
-      setIsDrawerOpen(true);
+      navRouter.push(`/boss/${encodeURIComponent(boss.name)}`);
     }
   };
 
@@ -391,12 +393,7 @@ export default function BossCard({
               <div className="flex items-center gap-2">
                 <h3 className="font-medium text-white text-sm truncate group-hover:text-primary transition-colors flex items-center gap-2">
                   {boss.name}
-                  {!hideConfidence && (boss as any).confidence !== undefined && (
-                    <div className={`w-2 h-2 rounded-full ${(boss as any).confidenceLabel === 'High' ? 'bg-emerald-500' :
-                      (boss as any).confidenceLabel === 'Medium' ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`} />
-                  )}
+
                 </h3>
               </div>
 
@@ -486,13 +483,6 @@ export default function BossCard({
           </div>
         </motion.div>
 
-        <BossDetailsDrawer
-          boss={boss}
-          isOpen={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          dailyKill={dailyKill}
-          worldName={type === 'world' ? worldName : undefined}
-        />
       </>
     );
   }
@@ -591,12 +581,7 @@ export default function BossCard({
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-medium text-white text-sm truncate pr-2 group-hover:text-primary transition-colors flex items-center gap-2">
                 {boss.name}
-                {!hideConfidence && (boss as any).confidence !== undefined && (
-                  <div className={`w-2 h-2 rounded-full ${(boss as any).confidenceLabel === 'High' ? 'bg-emerald-500' :
-                    (boss as any).confidenceLabel === 'Medium' ? 'bg-yellow-500' :
-                      'bg-red-500'
-                    }`} />
-                )}
+
               </h3>
             </div>
 
@@ -613,7 +598,7 @@ export default function BossCard({
                         {nextSpawnInfo.date}
                       </span>
                     </span>
-                    {!hideConfidence && getConfidenceBadge()}
+
                   </div>
                 </div>
               )}
@@ -689,13 +674,6 @@ export default function BossCard({
         )}
       </motion.div>
 
-      <BossDetailsDrawer
-        boss={boss}
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        dailyKill={dailyKill}
-        worldName={type === 'world' ? worldName : undefined}
-      />
     </>
   );
 }

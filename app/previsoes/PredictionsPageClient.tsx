@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useData } from '@/context/DataContext';
 import { useWorld } from '@/context/WorldContext';
 import { useBossPredictions } from '@/hooks/useBossPredictions';
 import { Prediction } from '@/utils/spawnLogic';
 import BossTimeline from '@/components/BossTimeline';
 import BossCard from '@/components/BossCard';
-import PredictionBossDrawer from '@/components/PredictionBossDrawer';
+
 import { List as ListIcon } from 'lucide-react';
 import Loading from '@/components/Loading';
 
@@ -22,6 +23,7 @@ export default function PredictionsPageClient() {
     const { data, isLoading } = useData();
     const { selectedWorld, worlds } = useWorld();
     const [selectedPrediction, setSelectedPrediction] = useState<any | null>(null);
+    const predRouter = useRouter();
     const [localWorld, setLocalWorld] = useState<string>(selectedWorld || 'Auroria');
 
     // Sync local world with global world when it changes (but keep Auroria as fallback)
@@ -206,7 +208,7 @@ export default function PredictionsPageClient() {
                                                         hideStats={true}
                                                         showLastKill={false}
                                                         hideConfidence={true}
-                                                        onClick={() => setSelectedPrediction(pred)}
+                                                        onClick={() => predRouter.push(`/boss/${encodeURIComponent(pred.bossName)}`)}
                                                     >
                                                         <div className="w-full mt-2">
                                                             <BossTimeline
@@ -295,11 +297,7 @@ export default function PredictionsPageClient() {
                 </>
             )}
 
-            <PredictionBossDrawer
-                prediction={selectedPrediction}
-                isOpen={!!selectedPrediction}
-                onClose={() => setSelectedPrediction(null)}
-            />
+
         </div>
     );
 }

@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "scrape": "cd ../boss-tracker-vps && npm run scrape"
+    "scrape": "cd ../boss-tracker-vps && npm run scrape",
+    "scrape:background": "cd ../boss-tracker-vps && npx pm2 start npm --name boss-scraper-bg -- run schedule",
+    "scrape:stop": "cd ../boss-tracker-vps && npx pm2 stop boss-scraper-bg",
+    "scrape:logs": "cd ../boss-tracker-vps && npx pm2 logs boss-scraper-bg",
+    "scrape:status": "cd ../boss-tracker-vps && npx pm2 status boss-scraper-bg"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.86.0",

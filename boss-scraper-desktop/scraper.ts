@@ -8,9 +8,9 @@ const scraperName = process.env.SCRAPER_NAME || "Anonymous Scraper";
 
 const BOSS_SET = new Set<string>(TRACKED_BOSSES);
 
-function getEffectiveKillDate(): string {
-  // Use current local time (BRT) without SS offset since we are scraping the last 24h
-  const now = new Date();
+function getEffectiveKillDate(dateObj: Date = new Date()): string {
+  // Use provided date or current local time (BRT) without SS offset since we are scraping the last 24h
+  const now = dateObj;
 
   const formatter = new Intl.DateTimeFormat("en-GB", {
     timeZone: "America/Sao_Paulo",
@@ -60,10 +60,12 @@ export async function scrapeAllWorlds(onLog: (msg: string, isError?: boolean) =>
 
         if (killed.length > 0) {
           const supabaseWorldName = WORLD_ID_TO_SUPABASE_NAME[world.id] || world.name;
+          const yesterdayDate = getEffectiveKillDate(new Date(new Date().getTime() - 24 * 60 * 60 * 1000));
           const rows = killed.map((boss) => ({
             boss_name: boss.race_name,
             world: supabaseWorldName,
             date: effectiveDate,
+            yesterday_date: yesterdayDate,
             count: boss.creatures_killed_24h
           }));
           

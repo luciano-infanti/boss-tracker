@@ -39,10 +39,10 @@ export const WORLDS = [
   { id: 17, name: "Bellum" },
   { id: 18, name: "Mystian" },
   { id: 21, name: "Tenebrium" },
-  { id: 22, name: "SerenianI" },
-  { id: 23, name: "SerenianII" },
-  { id: 24, name: "SerenianIII" },
-  { id: 25, name: "SerenianIV" },
+  { id: 22, name: "Serenian" },
+  { id: 23, name: "Etherian" },
+  { id: 24, name: "Halorian" },
+  { id: 25, name: "Divinian" },
 ];
 
 export const WORLD_ID_TO_SUPABASE_NAME: Record<number, string> = {
@@ -57,7 +57,7 @@ export const WORLD_ID_TO_SUPABASE_NAME: Record<number, string> = {
   18: "Mystian",
   21: "Tenebrium",
   22: "Serenian",
-  23: "Serenian II",
-  24: "Serenian III",
-  25: "Serenian IV",
+  23: "Etherian",
+  24: "Halorian",
+  25: "Divinian",
 };
