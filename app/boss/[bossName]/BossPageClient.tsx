@@ -416,13 +416,13 @@ export default function BossPageClient({ bossName }: BossPageClientProps) {
                                 <>
                                     <div className="flex">
                                         {/* Y-axis labels */}
-                                        <div className="flex flex-col-reverse justify-between pr-2 py-0 w-8 shrink-0 h-56">
+                                        <div className="flex flex-col-reverse justify-between pr-2 py-0 w-8 shrink-0 h-[450px]">
                                             {yTicks.map(v => (
                                                 <span key={v} className="text-[10px] text-secondary font-mono text-right leading-none">{v}</span>
                                             ))}
                                         </div>
                                         {/* Chart area */}
-                                        <div className="flex-1 relative h-56">
+                                        <div className="flex-1 relative h-[450px]">
                                             {/* Gridlines */}
                                             {yTicks.map(v => (
                                                 <div
@@ -432,11 +432,11 @@ export default function BossPageClient({ bossName }: BossPageClientProps) {
                                                 />
                                             ))}
                                             {/* Bars */}
-                                            <div className="relative flex items-end gap-1.5 h-full z-10">
+                                            <div className="relative flex items-end gap-1.5 h-full z-10 px-1">
                                                 {stackedMonthlyActivity.map((m) => {
                                                     const barHeight = (m.total / yMax) * 100;
                                                     return (
-                                                        <div key={m.label} className="flex-1 flex flex-col items-center group relative">
+                                                        <div key={m.label} className="flex-1 relative h-full flex flex-col justify-end group">
                                                             {/* Tooltip */}
                                                             <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none" style={{ left: '50%', transform: 'translateX(-50%)' }}>
                                                                 <div className="bg-black/95 border border-white/10 rounded-lg px-3 py-2 text-[11px] shadow-xl w-max">
@@ -458,30 +458,20 @@ export default function BossPageClient({ bossName }: BossPageClientProps) {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            {/* Count label above bar */}
-                                                            <div className="text-[10px] text-secondary font-mono mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{m.total}</div>
-                                                            {/* Stacked Bar */}
+
+                                                            {/* Count label above bar (Absolute) */}
                                                             <div
-                                                                className="w-full flex flex-col-reverse rounded-t-sm overflow-hidden cursor-pointer transition-all group-hover:brightness-110"
-                                                                style={{ height: `${barHeight}%`, minHeight: m.total > 0 ? '3px' : '0' }}
+                                                                className="absolute w-full text-center text-[10px] text-secondary font-mono opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mb-1"
+                                                                style={{ bottom: `${barHeight}%` }}
                                                             >
-                                                                {activeWorlds.map(world => {
-                                                                    const count = m.worlds[world] || 0;
-                                                                    if (count === 0) return null;
-                                                                    const segHeight = (count / m.total) * 100;
-                                                                    return (
-                                                                        <div
-                                                                            key={world}
-                                                                            className="w-full"
-                                                                            style={{
-                                                                                height: `${segHeight}%`,
-                                                                                backgroundColor: WORLD_COLORS[world] || '#666',
-                                                                                minHeight: '1px',
-                                                                            }}
-                                                                        />
-                                                                    );
-                                                                })}
+                                                                {m.total}
                                                             </div>
+
+                                                            {/* Unified Bar */}
+                                                            <div
+                                                                className="w-full rounded-t-sm overflow-hidden cursor-pointer transition-all group-hover:bg-primary/40 bg-slate-500/30 border-x border-t border-white/5 shadow-lg"
+                                                                style={{ height: `${barHeight}%`, minHeight: m.total > 0 ? '4px' : '0' }}
+                                                            />
                                                         </div>
                                                     );
                                                 })}
@@ -495,15 +485,6 @@ export default function BossPageClient({ bossName }: BossPageClientProps) {
                                                 <div key={m.label} className="flex-1 text-[9px] text-secondary text-center truncate">{m.label}</div>
                                             ))}
                                         </div>
-                                    </div>
-                                    {/* Legend */}
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 pt-3 border-t border-border/30">
-                                        {activeWorlds.map(world => (
-                                            <div key={world} className="flex items-center gap-1.5 text-[10px] text-secondary">
-                                                <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: WORLD_COLORS[world] || '#666' }} />
-                                                {world}
-                                            </div>
-                                        ))}
                                     </div>
                                 </>
                             );
