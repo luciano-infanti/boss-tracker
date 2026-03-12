@@ -81,6 +81,10 @@ export const BOSS_KNOWN_PATTERNS: Record<string, {
 
     // Raid bosses with known patterns
     'The Welter': { min: 7, max: 14, type: 'RAID' },
+    'Orshabaal': { min: 14, max: 30, type: 'RAID' },
+    'Ghazbaran': { min: 21, max: 42, type: 'RAID' },
+    'Morgaroth': { min: 21, max: 42, type: 'RAID' },
+    'Morshabaal': { min: 14, max: 30, type: 'RAID' },
 
     // Lightbearer Event (November)
     'Bane Bringer': { min: 365, max: 365, type: 'EVENT' },
